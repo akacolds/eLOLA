@@ -1,1 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eLOLA - Masuk & Registrasi</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>eLOLA System</h2>
+    <p style="color:var(--muted); margin-bottom:16px;">Kelola sampah daur ulang terintegrasi berbasis poin.</p>
 
+    <!-- Tab Tombol -->
+    <div style="display:flex; gap:10px; margin-bottom:16px;">
+      <button type="button" id="tabLogin" class="btn-secondary">Masuk</button>
+      <button type="button" id="tabRegister" class="btn-secondary">Daftar Warga</button>
+    </div>
+
+    <!-- Form Login -->
+    <form id="formLogin">
+      <div class="form-group">
+        <label>Email atau NIK/NIP</label>
+        <input type="text" id="loginEmail" placeholder="nama@email.com atau NIK (mis: 74710123)" required>
+        <small style="color:var(--muted)">Jika input angka NIK/NIP murni, sistem otomatis membaca @elola.id</small>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" required>
+      </div>
+      <button type="submit">Masuk</button>
+    </form>
+
+    <!-- Form Register Warga -->
+    <form id="formRegister" style="display:none;">
+      <div class="form-group">
+        <label>Nama Lengkap</label>
+        <input type="text" id="regNama" required>
+      </div>
+      <div class="form-group">
+        <label>NIK</label>
+        <input type="text" id="regNik" maxlength="16" required>
+      </div>
+      <div class="form-group">
+        <label>Email Aktif</label>
+        <input type="email" id="regEmail" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="regPassword" minlength="6" required>
+      </div>
+      <div class="form-group">
+        <label>Kelurahan</label>
+        <input type="text" id="regKelurahan" value="Lalolara" required>
+      </div>
+      <div class="form-group">
+        <label>RT (contoh: RT01, RT02)</label>
+        <input type="text" id="regRT" placeholder="RT01" required>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="regIsASN" style="width:auto;"> Saya adalah Aparatur Sipil Negara (ASN)</label>
+      </div>
+      <div id="asnFields" style="display:none;">
+        <div class="form-group">
+          <label>NIP</label>
+          <input type="text" id="regNip">
+        </div>
+        <div class="form-group">
+          <label>Instansi / OPD</label>
+          <input type="text" id="regInstansi" placeholder="Misal: Dinas Lingkungan Hidup">
+        </div>
+      </div>
+      <button type="submit">Daftar Akun Warga</button>
+    </form>
+    
+    <div style="margin-top:20px; border-top:1px dashed var(--border); padding-top:10px; text-align:center;">
+      <a href="/peringkat.html" style="color:var(--primary); font-weight:600; text-decoration:none;">🏆 Lihat Papan Peringkat Terbuka</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { showToast } from './js/utils.js';
+
+    const tabLogin = document.getElementById('tabLogin');
+    const tabRegister = document.getElementById('tabRegister');
+    const formLogin = document.getElementById('formLogin');
+    const formRegister = document.getElementById('formRegister');
+    const regIsASN = document.getElementById('regIsASN');
+    const asnFields = document.getElementById('asnFields');
+
+    tabLogin.addEventListener('click', () => {
+      formLogin.style.display = 'block'; formRegister.style.display = 'none';
+      tabLogin.classList.remove('btn-secondary'); tabRegister.classList.add('btn-secondary');
+    });
+    tabRegister.addEventListener('click', () => {
+      formLogin.style.display = 'none'; formRegister.style.display = 'block';
+      tabRegister.classList.remove('btn-secondary'); tabLogin.classList.add('btn-secondary');
+    });
+    regIsASN.addEventListener('change', () => {
+      asnFields.style.display = regIsASN.checked ? 'block' : 'none';
+    });
+
+    const routeByRole = (peran) => {
+      if (peran === 'petugas') window.location.href = '/petugas/verifikasi.html';
+      else if (peran === 'admin') window.location.href = '/admin/dashboard.html';
+      else window.location.href = '/warga/setoran.html';
+    };
+
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      let emailInput = document.getElementById('loginEmail').value.trim();
+      const pass = document.getElementById('loginPassword').value;
+      if (!emailInput.includes('@')) emailInput = `${emailInput}@elola.id`;
+
+      try {
+        const cred = await signInWithEmailAndPassword(auth, emailInput, pass);
+        const userDoc = await getDoc(doc(db, "users", cred.user.uid));
+        if (!userDoc.exists()) throw new Error("Data profil tidak ditemukan!");
+        routeByRole(userDoc.data().peran);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    formRegister.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('regEmail').value.trim();
+      const pass = document.getElementById('regPassword').value;
+      const nama = document.getElementById('regNama').value.trim();
+      const nik = document.getElementById('regNik').value.trim();
+      const kelurahan = document.getElementById('regKelurahan').value.trim().toLowerCase();
+      const rt = document.getElementById('regRT').value.trim().toUpperCase();
+      const isASN = regIsASN.checked;
+      const nip = isASN ? document.getElementById('regNip').value.trim() : null;
+      const instansi = isASN ? document.getElementById('regInstansi').value.trim() : null;
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        await setDoc(doc(db, "users", cred.user.uid), {
+          nama, nik, email,
+          peran: 'warga',
+          isASN, nip, instansi,
+          kelurahan, rt,
+          unitBankSampah: isASN ? 'Bank Sampah Balai Kota' : `Bank Sampah ${kelurahan}`,
+          saldoPoin: 0,
+          totalKg: 0,
+          dibuatPada: serverTimestamp()
+        });
+        showToast("Registrasi berhasil!", "success");
+        window.location.href = '/warga/setoran.html';
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  </script>
+</body>
+</html>

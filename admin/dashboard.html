@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eLOLA - Dashboard Eksekutif</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container container-wide">
+    <header>
+      <div>
+        <h3>Dashboard Admin & DLH</h3>
+        <p style="color:var(--muted)">Pemantauan Kepatuhan ASN & Volume Sampah</p>
+      </div>
+      <div>
+        <a href="/peringkat.html" style="font-weight:600; text-decoration:none; margin-right:12px;">🏆 Papan RT</a>
+        <button id="btnLogout" class="btn-secondary" style="width:auto;">Keluar</button>
+      </div>
+    </header>
+
+    <!-- 4 Kartu KPI -->
+    <div class="grid-stats">
+      <div class="stat-box">
+        <div class="stat-num" id="kpiTotalAsn">0</div>
+        <div class="stat-label">Total ASN Terdaftar</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="kpiKepatuhan">0%</div>
+        <div class="stat-label">% Kepatuhan (≥2kg/bln)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="kpiVolumeKg">0</div>
+        <div class="stat-label">Total Sampah (kg)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="kpiPoin">0</div>
+        <div class="stat-label">Total Poin Beredar</div>
+      </div>
+    </div>
+
+    <!-- Grafik Volume RT Sederhana -->
+    <div class="card">
+      <h3>Volume Sampah per RT</h3>
+      <div id="chartVolumeRt" style="display:flex; flex-direction:column; gap:8px;">Memuat data RT...</div>
+    </div>
+
+    <!-- Tabel Kepatuhan ASN per Instansi -->
+    <div class="card">
+      <h3>Kepatuhan ASN per Instansi (Bulan Ini)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Instansi / OPD</th>
+            <th>Total ASN</th>
+            <th>Patuh (≥2 kg)</th>
+            <th>Tingkat Kepatuhan</th>
+          </tr>
+        </thead>
+        <tbody id="asnTableBody">
+          <tr><td colspan="4">Memuat data ASN...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module" src="/js/dashboard.js"></script>
+</body>
+</html>

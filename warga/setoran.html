@@ -1,1 +1,58 @@
+<<<<<<< HEAD
 
+=======
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eLOLA - Setor Sampah</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h3 id="userName">Memuat...</h3>
+        <p style="color:var(--muted);" id="userUnit">-</p>
+      </div>
+      <div>
+        <button id="btnLogout" class="btn-secondary" style="width:auto; padding:6px 10px;">Keluar</button>
+      </div>
+    </header>
+
+    <nav style="margin-bottom:16px;">
+      <a href="/warga/setoran.html" style="color:var(--text);">📝 Setor</a>
+      <a href="/warga/dompet.html">👛 Dompet Poin</a>
+      <a href="/peringkat.html">🏆 Papan Peringkat</a>
+    </nav>
+
+    <h2>Kirim Setoran Sampah</h2>
+    <form id="formSetor">
+      <label>1. Pilih Kategori Sampah</label>
+      <div class="category-chips" id="categoryChips">Memuat kategori...</div>
+      <input type="hidden" id="selectedCategory" required>
+      <input type="hidden" id="selectedWeight" value="0">
+
+      <div class="form-group">
+        <label>2. Estimasi Berat (kg)</label>
+        <input type="number" step="0.1" id="estimasiKg" min="0.1" placeholder="Misal: 1.5" required>
+        <small style="color:var(--muted)">Estimasi Poin: <strong id="estPoin">0</strong> poin</small>
+      </div>
+
+      <div class="form-group">
+        <label>3. Foto Sampah (Verifikasi Ganda)</label>
+        <input type="file" id="fotoInput" accept="image/*" required>
+      </div>
+
+      <button type="submit" id="btnKirim">Kirim Antrean Setoran</button>
+    </form>
+
+    <h3 style="margin-top:24px;">Setoran Terbaru Anda (Maks 5)</h3>
+    <div id="listSetoran">Memuat data...</div>
+  </div>
+
+  <script type="module" src="/js/setoran.js"></script>
+</body>
+</html>
+>>>>>>> 99f32c1 (p)

@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuth() {
+      return request.auth != null;
+    }
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isRole(r) {
+      return isAuth() && getUserData().peran == r;
+    }
+
+    // Profil Users
+    match /users/{userId} {
+      allow read: if isAuth();
+      // Warga dilarang mengubah peran atau saldoPoin miliknya sendiri
+      allow update: if (request.auth.uid == userId && 
+                        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['peran', 'saldoPoin', 'totalKg']))
+                    || isRole('petugas') || isRole('admin');
+      allow create: if isAuth();
+    }
+
+    // Transaksi Setoran
+    match /transaksi_setoran/{id} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isRole('petugas') || isRole('admin'));
+      allow create: if isAuth() && request.resource.data.uid == request.auth.uid && request.resource.data.status == 'menunggu';
+      allow update: if isRole('petugas') || isRole('admin');
+    }
+
+    // Riwayat Poin & Penukaran Poin
+    match /riwayat_poin/{id} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isRole('admin'));
+      allow create: if isRole('petugas') || isAuth();
+    }
+    match /penukaran_poin/{id} {
+      allow read, create: if isAuth();
+      allow update: if isRole('admin') || isRole('petugas');
+    }
+
+    // Kategori & Reward
+    match /kategori_sampah/{id} {
+      allow read: if true;
+      allow write: if isRole('admin');
+    }
+    match /poin_reward/{id} {
+      allow read: if true;
+      allow update: if isAuth(); // untuk pengurangan stok transaksi
+      allow write: if isRole('admin');
+    }
+
+    // Rekap Data
+    match /rekap_rt/{id} {
+      allow read: if true;
+      allow write: if isRole('petugas') || isRole('admin');
+    }
+    match /rekap_kepatuhan_asn/{id} {
+      allow read: if isRole('admin') || isRole('petugas');
+      allow write: if isRole('petugas') || isRole('admin');
+    }
+  }
+}

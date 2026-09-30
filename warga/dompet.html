@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eLOLA - Dompet Poin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h3>Dompet Poin Warga</h3>
+      <button id="btnLogout" class="btn-secondary" style="width:auto;">Keluar</button>
+    </header>
+
+    <nav style="margin-bottom:16px;">
+      <a href="/warga/setoran.html">📝 Setor</a>
+      <a href="/warga/dompet.html" style="color:var(--text);">👛 Dompet Poin</a>
+      <a href="/peringkat.html">🏆 Papan Peringkat</a>
+    </nav>
+
+    <!-- Kartu Saldo Realtime -->
+    <div class="card" style="background:#dcfce7; border-color:#86efac;">
+      <p style="color:var(--muted); font-size:12px;">Saldo Poin Tersedia</p>
+      <div style="font-size:2rem; font-weight:800; color:var(--primary);" id="saldoPoin">0</div>
+      <p style="font-weight:600;" id="nilaiRupiah">Rp0</p>
+    </div>
+
+    <!-- Katalog Hadiah -->
+    <h3>Katalog Hadiah Penukaran</h3>
+    <div id="rewardList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+      Memuat katalog...
+    </div>
+
+    <!-- Riwayat Poin -->
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>Riwayat Poin</h3>
+      <select id="filterRiwayat" style="width:auto; padding:4px 8px;">
+        <option value="semua">Semua</option>
+        <option value="masuk">Masuk</option>
+        <option value="keluar">Keluar</option>
+      </select>
+    </div>
+    <div id="riwayatList">Memuat catatan...</div>
+  </div>
+
+  <script type="module" src="/js/dompet.js"></script>
+</body>
+</html>
