@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>eLOLA - Masuk & Daftar</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="logo">🌱 eLOLA</a>
+        <ul class="nav-menu">
+          <li><a href="peringkat.html">🏆 Papan Peringkat</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="container" style="max-width: 460px">
+      <div class="card" style="margin-top: 2rem">
+        <h1
+          style="
+            font-size: 1.4rem;
+            text-align: center;
+            color: var(--primary-dark);
+          "
+        >
+          Masuk ke eLOLA
+        </h1>
+        <p
+          style="
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 1.25rem;
+          "
+        >
+          Bank Sampah Digital Kelurahan Lalolara
+        </p>
+
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem">
+          <button
+            id="btnTabLogin"
+            class="btn btn-primary btn-block btn-sm"
+            onclick="showTab('login')"
+          >
+            Masuk
+          </button>
+          <button
+            id="btnTabRegister"
+            class="btn btn-secondary btn-block btn-sm"
+            onclick="showTab('register')"
+          >
+            Daftar Warga/ASN
+          </button>
+        </div>
+
+        <!-- Form Login -->
+        <form id="formLogin" onsubmit="prosesLogin(event)">
+          <div class="form-group">
+            <label class="form-label">Peran Pengguna</label>
+            <select id="loginRole" class="form-input" required>
+              <option value="warga">Warga / ASN (Penyetor)</option>
+              <option value="petugas">Petugas Bank Sampah (Verifikator)</option>
+              <option value="admin">Admin DLH / Kelurahan (Monitoring)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email / NIK / NIP</label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="contoh@gmail.com"
+              required
+              value="warga@elola.id"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kata Sandi</label>
+            <input
+              type="password"
+              class="form-input"
+              placeholder="••••••••"
+              required
+              value="123456"
+            />
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Masuk</button>
+        </form>
+
+        <!-- Form Register Warga/ASN -->
+        <form
+          id="formRegister"
+          style="display: none"
+          onsubmit="prosesRegister(event)"
+        >
+          <div class="form-group">
+            <label class="form-label">Nama Lengkap</label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="Nama sesuai KTP"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">NIK (16 Digit)</label>
+            <input
+              type="text"
+              maxlength="16"
+              class="form-input"
+              placeholder="7471xxxxxxxxxxxx"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <div style="display: flex; gap: 1rem">
+              <label
+                ><input
+                  type="radio"
+                  name="roleType"
+                  value="warga"
+                  checked
+                  onchange="toggleAsn(false)"
+                />
+                Warga</label
+              >
+              <label
+                ><input
+                  type="radio"
+                  name="roleType"
+                  value="asn"
+                  onchange="toggleAsn(true)"
+                />
+                ASN</label
+              >
+            </div>
+          </div>
+          <div
+            id="boxAsn"
+            style="
+              display: none;
+              background: var(--bg);
+              padding: 0.75rem;
+              border-radius: 8px;
+              margin-bottom: 1rem;
+            "
+          >
+            <div class="form-group">
+              <label class="form-label">Instansi / OPD</label>
+              <select class="form-input">
+                <option>Dinas Lingkungan Hidup (DLH)</option>
+                <option>Bappeda Kota Kendari</option>
+                <option>Kecamatan Kambu</option>
+                <option>Kelurahan Lalolara</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Kelurahan</label>
+              <input type="text" class="form-input" value="Lalolara" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">RT</label>
+              <select class="form-input">
+                <option>RT 01</option>
+                <option>RT 02</option>
+                <option selected>RT 03</option>
+                <option>RT 04</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input
+              type="email"
+              class="form-input"
+              placeholder="email@gmail.com"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kata Sandi</label>
+            <input type="password" class="form-input" required />
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">
+            Daftarkan Akun
+          </button>
+        </form>
+      </div>
+
+      <div
+        style="
+          text-align: center;
+          font-size: 0.85rem;
+          color: var(--muted);
+          margin-top: 1rem;
+        "
+      >
+        Pintasan peran:
+        <a href="warga/setoran.html">Warga</a> •
+        <a href="petugas/verifikasi.html">Petugas</a> •
+        <a href="admin/dashboard.html">Admin</a>
+      </div>
+    </main>
+
+    <script>
+      function showTab(tab) {
+        const isLogin = tab === "login";
+        document.getElementById("formLogin").style.display = isLogin
+          ? "block"
+          : "none";
+        document.getElementById("formRegister").style.display = isLogin
+          ? "none"
+          : "block";
+        document.getElementById("btnTabLogin").className = isLogin
+          ? "btn btn-primary btn-block btn-sm"
+          : "btn btn-secondary btn-block btn-sm";
+        document.getElementById("btnTabRegister").className = isLogin
+          ? "btn btn-secondary btn-block btn-sm"
+          : "btn btn-primary btn-block btn-sm";
+      }
+      function toggleAsn(isAsn) {
+        document.getElementById("boxAsn").style.display = isAsn
+          ? "block"
+          : "none";
+      }
+      function prosesLogin(e) {
+        e.preventDefault();
+        const role = document.getElementById("loginRole").value;
+        if (role === "warga") window.location.href = "warga/setoran.html";
+        else if (role === "petugas")
+          window.location.href = "petugas/verifikasi.html";
+        else window.location.href = "admin/dashboard.html";
+      }
+      function prosesRegister(e) {
+        e.preventDefault();
+        alert("Akun berhasil dibuat! Silakan masuk.");
+        showTab("login");
+      }
+    </script>
+  </body>
+</html>
+<!--  -->
