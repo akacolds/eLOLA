@@ -1,15 +1,14 @@
-// eLOLA/js/supabase.js
+
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-// Ganti nilai default ini dengan URL & Anon Key Supabase Anda
-export const SUPABASE_URL = localStorage.getItem('ELOLA_SB_URL') || 'https://YOUR_SUPABASE_PROJECT.supabase.co';
-export const SUPABASE_KEY = localStorage.getItem('ELOLA_SB_KEY') || 'YOUR_SUPABASE_ANON_KEY';
+export const SUPABASE_URL = localStorage.getItem('ELOLA_SB_URL') || 'https://sezmeitlvzcvqleutdxl.supabase.co';
+export const SUPABASE_KEY = localStorage.getItem('ELOLA_SB_KEY') || 'sb_publishable_lAfH12E4Opmc9qmeLhmxAw_nP9XpKju';
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true }
 });
 
-// Guard session & role
+
 export async function periksaSesi(peranBoleh = []) {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
