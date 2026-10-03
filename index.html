@@ -1,160 +1,383 @@
+--- START OF FILE eLOLA/index.html ---
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eLOLA - Masuk & Registrasi</title>
-  <link rel="stylesheet" href="/css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>eLOLA – Masuk & Daftar</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,600&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --hijau-tua: #284d32;
+    --hijau: #3b6b47;
+    --hijau-logo: #58b45d;
+    --daun: #b9e6a8;
+    --sage: #bcd6b3;
+    --latar: #eef1ec;
+    --putih: #f9faf8;
+    --teks: #1d2b21;
+    --abu: #66766b;
+    --garis: #cdd6cb;
+    --merah: #b3261e;
+    --font-judul: "Fraunces", Georgia, serif;
+    --font: "Instrument Sans", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: var(--font); color: var(--teks); background: var(--latar);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .kartu {
+    display: grid; grid-template-columns: 5fr 6fr; width: 100%; max-width: 900px;
+    border-radius: 22px; overflow: hidden; background: var(--putih);
+    box-shadow: 0 12px 32px rgba(40, 77, 50, .14);
+  }
+  .kiri { background: var(--hijau-tua); color: #fff; padding: 36px 34px; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo svg { width: 42px; height: 42px; flex: none; }
+  .logo b { display: block; font-family: var(--font-judul); font-size: 1.6rem; line-height: 1; }
+  .logo small { font-size: .62rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #cfe3d0; }
+  .kiri h2 { font-family: var(--font-judul); font-weight: 700; font-size: 2rem; line-height: 1.2; }
+  .kiri h2 em { color: var(--daun); font-weight: 600; }
+  .kiri p { margin-top: 14px; color: #d6e6d6; font-size: .92rem; line-height: 1.6; }
+  .kanan { padding: 34px 34px 28px; }
+  .peran { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .peran button {
+    text-align: left; padding: 12px; border-radius: 14px; cursor: pointer;
+    border: 1.5px solid var(--garis); background: transparent; font-family: var(--font); color: var(--teks);
+  }
+  .peran button.aktif { background: var(--sage); border-color: var(--hijau-tua); }
+  .peran svg { width: 22px; height: 22px; stroke: var(--hijau-tua); fill: none; stroke-width: 1.7; margin-bottom: 10px; display: block; }
+  .peran b { display: block; font-size: .88rem; line-height: 1.25; margin-bottom: 2px; }
+  .peran span { font-size: .72rem; line-height: 1.3; color: var(--abu); display: block; }
+  .tab { display: flex; gap: 24px; border-bottom: 1.5px solid var(--garis); margin: 24px 0 4px; }
+  .tab button {
+    border: 0; background: none; padding: 8px 0 10px; font: 600 .95rem var(--font); color: var(--abu);
+    cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
+  }
+  .tab button.aktif { color: var(--teks); border-bottom-color: var(--hijau-tua); }
+  label { display: block; font-size: .82rem; font-weight: 600; margin: 16px 0 6px; }
+  input, select {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--garis); border-radius: 12px;
+    font: .95rem var(--font); background: #fff; color: var(--teks);
+  }
+  input:focus, select:focus { outline: none; border-color: var(--hijau); box-shadow: 0 0 0 3px rgba(88, 180, 93, .25); }
+  button:focus-visible { outline: 3px solid rgba(88, 180, 93, .5); outline-offset: 2px; }
+  .sandi { position: relative; }
+  .sandi input { padding-right: 48px; }
+  .lihat { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: none; color: var(--abu); cursor: pointer; }
+  .lihat:hover { color: var(--hijau); background: var(--latar); }
+  .lihat svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .lihat .mata-buka { display: none; }
+  .lihat.tampil .mata-buka { display: block; }
+  .lihat.tampil .mata-tutup { display: none; }
+  .dua { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pesan { min-height: 1.3em; margin: 12px 0 8px; font-size: .84rem; color: var(--abu); }
+  .pesan.ok { color: var(--hijau); }
+  .tombol {
+    width: 100%; padding: 14px; border: 0; border-radius: 999px; background: var(--hijau); color: #fff;
+    font: 700 1rem var(--font); cursor: pointer; transition: background .15s;
+  }
+  .tombol:not(:disabled):hover { background: var(--hijau-tua); }
+  .tombol:disabled { opacity: .4; cursor: not-allowed; }
+  .bantuan { margin-top: 16px; font-size: .78rem; color: var(--abu); text-align: center; line-height: 1.5; }
+  .notif { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 11px 14px; border-radius: 12px; font-size: .86rem; line-height: 1.4; }
+  .notif button { flex: none; border: 0; background: none; font: 700 .84rem var(--font); color: inherit; text-decoration: underline; cursor: pointer; padding: 4px; }
+  .notif.ok { background: #e2f3dc; color: #1f5a2c; }
+  .notif.info { background: #fff4d6; color: #7a5a00; }
+  .notif.err { background: #fde8e6; color: #8f1d17; }
+  .hidden { display: none; }
+  .catatan-kecil { margin-top: 6px; font-size: .76rem; color: var(--abu); }
+  @media (max-width: 480px) { .peran span { display: none; } }
+  @media (max-width: 760px) {
+    .kartu { grid-template-columns: 1fr; }
+    .kiri { padding: 22px 24px; gap: 0; }
+    .kiri h2, .kiri p { display: none; }
+    .kanan { padding: 24px 22px 24px; }
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h2>eLOLA System</h2>
-    <p style="color:var(--muted); margin-bottom:16px;">Kelola sampah daur ulang terintegrasi berbasis poin.</p>
 
-    <!-- Tab Tombol -->
-    <div style="display:flex; gap:10px; margin-bottom:16px;">
-      <button type="button" id="tabLogin" class="btn-secondary">Masuk</button>
-      <button type="button" id="tabRegister" class="btn-secondary">Daftar Warga</button>
+<main class="kartu">
+  <section class="kiri">
+    <div class="logo">
+      <svg viewBox="0 0 42 42" aria-hidden="true">
+        <rect width="42" height="42" rx="11" fill="#58b45d"/>
+        <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
+        <path d="M21 14v17" stroke="#58b45d" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <div><b>eLOLA</b><small>Bank Sampah Digital</small></div>
+    </div>
+    <div>
+      <h2>Buku tabungan sampah, <em>versi digital</em> untuk seluruh warga dan ASN.</h2>
+      <p>Setiap setoran jadi poin yang tersimpan aman.</p>
+    </div>
+  </section>
+
+  <section class="kanan">
+    <div class="peran" role="group" aria-label="Jenis pengguna">
+      <button type="button" id="pWarga" class="aktif">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg>
+        <b>Warga</b><span>Setor sampah &amp; kumpulkan poin</span>
+      </button>
+      <button type="button" id="pAsn">
+        <svg viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg>
+        <b>ASN</b><span>Setor sampah &amp; penuhi kepatuhan</span>
+      </button>
+      <button type="button" id="pPetugas">
+        <svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+        <b>Petugas / Admin</b><span>Verifikasi &amp; pantau data</span>
+      </button>
     </div>
 
-    <!-- Form Login -->
-    <form id="formLogin">
-      <div class="form-group">
-        <label>Email atau NIK/NIP</label>
-        <input type="text" id="loginEmail" placeholder="nama@email.com atau NIK (mis: 74710123)" required>
-        <small style="color:var(--muted)">Jika input angka NIK/NIP murni, sistem otomatis membaca @elola.id</small>
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="loginPassword" required>
-      </div>
-      <button type="submit">Masuk</button>
-    </form>
-
-    <!-- Form Register Warga -->
-    <form id="formRegister" style="display:none;">
-      <div class="form-group">
-        <label>Nama Lengkap</label>
-        <input type="text" id="regNama" required>
-      </div>
-      <div class="form-group">
-        <label>NIK</label>
-        <input type="text" id="regNik" maxlength="16" required>
-      </div>
-      <div class="form-group">
-        <label>Email Aktif</label>
-        <input type="email" id="regEmail" required>
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="regPassword" minlength="6" required>
-      </div>
-      <div class="form-group">
-        <label>Kelurahan</label>
-        <input type="text" id="regKelurahan" value="Lalolara" required>
-      </div>
-      <div class="form-group">
-        <label>RT (contoh: RT01, RT02)</label>
-        <input type="text" id="regRT" placeholder="RT01" required>
-      </div>
-      <div class="form-group">
-        <label><input type="checkbox" id="regIsASN" style="width:auto;"> Saya adalah Aparatur Sipil Negara (ASN)</label>
-      </div>
-      <div id="asnFields" style="display:none;">
-        <div class="form-group">
-          <label>NIP</label>
-          <input type="text" id="regNip">
-        </div>
-        <div class="form-group">
-          <label>Instansi / OPD</label>
-          <input type="text" id="regInstansi" placeholder="Misal: Dinas Lingkungan Hidup">
-        </div>
-      </div>
-      <button type="submit">Daftar Akun Warga</button>
-    </form>
-    
-    <div style="margin-top:20px; border-top:1px dashed var(--border); padding-top:10px; text-align:center;">
-      <a href="/peringkat.html" style="color:var(--primary); font-weight:600; text-decoration:none;">🏆 Lihat Papan Peringkat Terbuka</a>
+    <div class="tab" role="tablist">
+      <button type="button" id="tMasuk" class="aktif">Masuk</button>
+      <button type="button" id="tDaftar">Daftar Akun</button>
     </div>
-  </div>
 
-  <script type="module">
-    import { auth, db } from './js/firebase-config.js';
-    import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { showToast } from './js/utils.js';
+    <div id="notif" class="notif hidden" role="status"></div>
 
-    const tabLogin = document.getElementById('tabLogin');
-    const tabRegister = document.getElementById('tabRegister');
-    const formLogin = document.getElementById('formLogin');
-    const formRegister = document.getElementById('formRegister');
-    const regIsASN = document.getElementById('regIsASN');
-    const asnFields = document.getElementById('asnFields');
+    <form id="fMasuk" novalidate>
+      <label for="idMasuk" id="lblIdMasuk">Email</label>
+      <input id="idMasuk" type="email" autocomplete="username" placeholder="nama@email.com">
+      <label for="sMasuk">Kata Sandi</label>
+      <div class="sandi">
+        <input id="sMasuk" type="password" autocomplete="current-password" placeholder="••••••••">
+        <button type="button" class="lihat" data-t="sMasuk" aria-label="Tampilkan kata sandi">
+          <svg class="mata-tutup" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 6.1A10.6 10.6 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 6.7C3.9 8.5 2 12 2 12s3.5 6 10 6c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+          <svg class="mata-buka" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <p class="pesan" id="pMasuk" aria-live="polite"></p>
+      <button class="tombol" id="bMasuk" type="submit" disabled>Masuk ke eLOLA →</button>
+    </form>
 
-    tabLogin.addEventListener('click', () => {
-      formLogin.style.display = 'block'; formRegister.style.display = 'none';
-      tabLogin.classList.remove('btn-secondary'); tabRegister.classList.add('btn-secondary');
+    <form id="fDaftar" class="hidden" novalidate>
+      <label for="nama">Nama Lengkap</label>
+      <input id="nama" type="text" autocomplete="name">
+
+      <div id="blokAsn" class="hidden">
+        <label for="nikNip">NIP / NIK</label>
+        <input id="nikNip" type="text" inputmode="numeric" placeholder="NIP 18 angka atau NIK 16 angka">
+      </div>
+
+      <div class="dua">
+        <div>
+          <label for="kel">Kelurahan</label>
+          <select id="kel"><option value="">Pilih</option><option>Kadia</option><option>Lalolara</option></select>
+        </div>
+        <div>
+          <label for="rt">RT</label>
+          <select id="rt"><option value="">Pilih</option><option>RT 01</option><option>RT 02</option><option>RT 03</option><option>RT 04</option><option>RT 05</option></select>
+        </div>
+      </div>
+
+      <label for="emailDaftar">Email</label>
+      <input id="emailDaftar" type="email" autocomplete="email" placeholder="nama@email.com">
+
+      <label for="sDaftar">Kata Sandi eLOLA (minimal 6 karakter)</label>
+      <div class="sandi">
+        <input id="sDaftar" type="password" autocomplete="new-password">
+        <button type="button" class="lihat" data-t="sDaftar" aria-label="Tampilkan kata sandi">
+          <svg class="mata-tutup" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 6.1A10.6 10.6 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 6.7C3.9 8.5 2 12 2 12s3.5 6 10 6c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+          <svg class="mata-buka" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <p class="catatan-kecil">Buat sandi baru khusus eLOLA.</p>
+
+      <p class="pesan" id="pDaftar" aria-live="polite"></p>
+      <button class="tombol" id="bDaftar" type="submit" disabled>Buat akun eLOLA →</button>
+    </form>
+
+    <p class="bantuan" id="bantuan"></p>
+  </section>
+</main>
+
+<script type="module">
+  import { sb, arahKeRole } from './js/supabase.js';
+
+  const $ = (id) => document.getElementById(id);
+  let kartu = "warga", masuk = true;
+  const petugas = () => kartu === "petugas";
+
+  const bersih = (v) => v.replace(/\s/g, "");
+  const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
+  function notif(tipe, teks, aksi) {
+    const n = $("notif");
+    n.className = "notif " + tipe;
+    n.replaceChildren();
+    const p = document.createElement("span");
+    p.textContent = teks;
+    n.append(p);
+    if (aksi) {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = aksi.label; b.onclick = aksi.klik;
+      n.append(b);
+    }
+  }
+  const tutupNotif = () => { $("notif").className = "notif hidden"; };
+
+  function errMasuk() {
+    const id = $("idMasuk").value.trim();
+    if (!emailOk(id)) return "isi email yang valid (contoh: nama@email.com).";
+    if (!$("sMasuk").value) return "isi kata sandi.";
+    return "";
+  }
+  function errDaftar() {
+    if (!$("nama").value.trim()) return "isi nama lengkap.";
+    if (kartu === "asn" && !/^(\d{16}|\d{18})$/.test(bersih($("nikNip").value))) return "NIP harus 18 angka atau NIK 16 angka.";
+    if (!$("kel").value) return "pilih kelurahan.";
+    if (!$("rt").value) return "pilih RT.";
+    if (!emailOk($("emailDaftar").value)) return "isi email yang valid.";
+    if ($("sDaftar").value.length < 6) return "kata sandi minimal 6 karakter.";
+    return "";
+  }
+  function petunjuk(err, idPesan, idTombol) {
+    $(idPesan).textContent = err ? "Belum lengkap: " + err : "Semua data sudah terisi dengan benar ✓";
+    $(idPesan).classList.toggle("ok", !err);
+    $(idTombol).disabled = !!err;
+  }
+  function cekSemua() {
+    petunjuk(errMasuk(), "pMasuk", "bMasuk");
+    petunjuk(errDaftar(), "pDaftar", "bDaftar");
+  }
+  ["fMasuk", "fDaftar"].forEach(f => {
+    $(f).addEventListener("input", cekSemua);
+    $(f).addEventListener("change", cekSemua);
+  });
+
+  function segarkan() {
+    if (petugas()) masuk = true;
+    ["warga", "asn", "petugas"].forEach(k => $("p" + k[0].toUpperCase() + k.slice(1)).classList.toggle("aktif", kartu === k));
+    $("tDaftar").classList.toggle("hidden", petugas());
+    $("tMasuk").classList.toggle("aktif", masuk);
+    $("tDaftar").classList.toggle("aktif", !masuk);
+    $("fMasuk").classList.toggle("hidden", !masuk);
+    $("fDaftar").classList.toggle("hidden", masuk);
+    $("blokAsn").classList.toggle("hidden", kartu !== "asn");
+
+    $("lblIdMasuk").textContent = "Email";
+    $("idMasuk").placeholder = petugas() ? "petugas@elola.id / admin@elola.id" : "nama@email.com";
+    $("bantuan").textContent = petugas()
+      ? "Akun petugas dan admin didaftarkan oleh administrator sistem."
+      : "Lupa kata sandi? Hubungi admin kelurahan Anda untuk pemulihan akun.";
+    cekSemua();
+  }
+
+  const pilihKartu = (k) => () => { kartu = k; tutupNotif(); segarkan(); };
+  $("pWarga").onclick = pilihKartu("warga");
+  $("pAsn").onclick = pilihKartu("asn");
+  $("pPetugas").onclick = pilihKartu("petugas");
+  $("tMasuk").onclick = () => { masuk = true; tutupNotif(); segarkan(); };
+  $("tDaftar").onclick = () => { masuk = false; tutupNotif(); segarkan(); };
+
+  document.querySelectorAll(".lihat").forEach(b => b.onclick = () => {
+    const k = $(b.dataset.t), buka = k.type === "password";
+    k.type = buka ? "text" : "password";
+    b.classList.toggle("tampil", buka);
+    b.setAttribute("aria-label", buka ? "Sembunyikan kata sandi" : "Tampilkan kata sandi");
+  });
+
+  // Masuk Supabase
+  $("fMasuk").onsubmit = async (e) => {
+    e.preventDefault();
+    if (errMasuk()) return;
+    const btn = $("bMasuk");
+    btn.disabled = true;
+    btn.textContent = "Memverifikasi...";
+
+    const email = $("idMasuk").value.trim().toLowerCase();
+    const sandi = $("sMasuk").value;
+
+    const { data: authData, error: authErr } = await sb.auth.signInWithPassword({ email, password: sandi });
+    if (authErr) {
+      btn.disabled = false;
+      btn.textContent = "Masuk ke eLOLA →";
+      return notif("err", authErr.message === "Invalid login credentials" ? "Email atau kata sandi keliru." : authErr.message);
+    }
+
+    const { data: user, error: profileErr } = await sb
+      .from('users')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    if (profileErr || !user) {
+      btn.disabled = false;
+      btn.textContent = "Masuk ke eLOLA →";
+      return notif("err", "Profil pengguna tidak ditemukan.");
+    }
+
+    if (kartu === "petugas" && !['petugas', 'admin'].includes(user.peran)) {
+      btn.disabled = false;
+      btn.textContent = "Masuk ke eLOLA →";
+      return notif("err", "Akun ini terdaftar sebagai " + user.peran + ". Pilih kartu yang sesuai.");
+    }
+
+    notif("ok", "Berhasil masuk. Mengalihkan...");
+    setTimeout(() => arahKeRole(user.peran), 500);
+  };
+
+  // Daftar Supabase
+  $("fDaftar").onsubmit = async (e) => {
+    e.preventDefault();
+    if (errDaftar()) return;
+    const btn = $("bDaftar");
+    btn.disabled = true;
+    btn.textContent = "Membuat akun...";
+
+    const email = $("emailDaftar").value.trim().toLowerCase();
+    const sandi = $("sDaftar").value;
+    const nama = $("nama").value.trim();
+    const nikNip = kartu === "asn" ? bersih($("nikNip").value) : null;
+    const kelurahan = $("kel").value;
+    const rt = $("rt").value;
+
+    const { data: authData, error: signUpErr } = await sb.auth.signUp({ email, password: sandi });
+    if (signUpErr) {
+      btn.disabled = false;
+      btn.textContent = "Buat akun eLOLA →";
+      return notif("err", signUpErr.message);
+    }
+
+    const { error: profileErr } = await sb.from('users').insert({
+      id: authData.user.id,
+      nama,
+      email,
+      peran: kartu,
+      is_asn: kartu === "asn",
+      nik_nip: nikNip,
+      kelurahan,
+      rt,
+      saldo_poin: 0,
+      total_kg: 0
     });
-    tabRegister.addEventListener('click', () => {
-      formLogin.style.display = 'none'; formRegister.style.display = 'block';
-      tabRegister.classList.remove('btn-secondary'); tabLogin.classList.add('btn-secondary');
-    });
-    regIsASN.addEventListener('change', () => {
-      asnFields.style.display = regIsASN.checked ? 'block' : 'none';
-    });
 
-    const routeByRole = (peran) => {
-      if (peran === 'petugas') window.location.href = '/petugas/verifikasi.html';
-      else if (peran === 'admin') window.location.href = '/admin/dashboard.html';
-      else window.location.href = '/warga/setoran.html';
-    };
+    if (profileErr) {
+      btn.disabled = false;
+      btn.textContent = "Buat akun eLOLA →";
+      return notif("err", "Gagal menyimpan profil: " + profileErr.message);
+    }
 
-    formLogin.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      let emailInput = document.getElementById('loginEmail').value.trim();
-      const pass = document.getElementById('loginPassword').value;
-      if (!emailInput.includes('@')) emailInput = `${emailInput}@elola.id`;
+    notif("ok", "Pendaftaran berhasil! Akun langsung masuk.");
+    setTimeout(() => arahKeRole(kartu), 600);
+  };
 
-      try {
-        const cred = await signInWithEmailAndPassword(auth, emailInput, pass);
-        const userDoc = await getDoc(doc(db, "users", cred.user.uid));
-        if (!userDoc.exists()) throw new Error("Data profil tidak ditemukan!");
-        routeByRole(userDoc.data().peran);
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
+  // Cek apakah sudah login sebelumnya
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    const { data: u } = await sb.from('users').select('peran, nama').eq('id', session.user.id).single();
+    if (u) {
+      notif("info", "Sudah masuk sebagai " + u.nama + ".", {
+        label: "Buka Halaman",
+        klik: () => arahKeRole(u.peran)
+      });
+    }
+  }
 
-    formRegister.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('regEmail').value.trim();
-      const pass = document.getElementById('regPassword').value;
-      const nama = document.getElementById('regNama').value.trim();
-      const nik = document.getElementById('regNik').value.trim();
-      const kelurahan = document.getElementById('regKelurahan').value.trim().toLowerCase();
-      const rt = document.getElementById('regRT').value.trim().toUpperCase();
-      const isASN = regIsASN.checked;
-      const nip = isASN ? document.getElementById('regNip').value.trim() : null;
-      const instansi = isASN ? document.getElementById('regInstansi').value.trim() : null;
-
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        await setDoc(doc(db, "users", cred.user.uid), {
-          nama, nik, email,
-          peran: 'warga',
-          isASN, nip, instansi,
-          kelurahan, rt,
-          unitBankSampah: isASN ? 'Bank Sampah Balai Kota' : `Bank Sampah ${kelurahan}`,
-          saldoPoin: 0,
-          totalKg: 0,
-          dibuatPada: serverTimestamp()
-        });
-        showToast("Registrasi berhasil!", "success");
-        window.location.href = '/warga/setoran.html';
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
-    });
-  </script>
+  segarkan();
+</script>
 </body>
 </html>

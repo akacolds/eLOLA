@@ -1,12 +1,11 @@
-<<<<<<< HEAD
-
-=======
+--- START OF FILE eLOLA/warga/setoran.html ---
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>eLOLA - Setor Sampah</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -14,45 +13,150 @@
     <header>
       <div>
         <h3 id="userName">Memuat...</h3>
-        <p style="color:var(--muted);" id="userUnit">-</p>
+        <p style="color:var(--abu); font-size:12px;" id="userUnit">-</p>
       </div>
       <div>
-        <button id="btnLogout" class="btn-secondary" style="width:auto; padding:6px 10px;">Keluar</button>
+        <button id="btnLogout" class="btn-secondary" style="width:auto; padding:6px 12px; font-size:12px;">Keluar</button>
       </div>
     </header>
 
-    <nav style="margin-bottom:16px;">
-      <a href="/warga/setoran.html" style="color:var(--text);">📝 Setor</a>
+    <nav>
+      <a href="/warga/setoran.html" class="active">📝 Setor</a>
       <a href="/warga/dompet.html">👛 Dompet Poin</a>
-      <a href="/peringkat.html">🏆 Papan Peringkat</a>
+      <a href="/peringkat.html">🏆 Peringkat</a>
     </nav>
 
     <h2>Kirim Setoran Sampah</h2>
     <form id="formSetor">
-      <label>1. Pilih Kategori Sampah</label>
-      <div class="category-chips" id="categoryChips">Memuat kategori...</div>
-      <input type="hidden" id="selectedCategory" required>
-      <input type="hidden" id="selectedWeight" value="0">
-
       <div class="form-group">
-        <label>2. Estimasi Berat (kg)</label>
-        <input type="number" step="0.1" id="estimasiKg" min="0.1" placeholder="Misal: 1.5" required>
-        <small style="color:var(--muted)">Estimasi Poin: <strong id="estPoin">0</strong> poin</small>
+        <label>1. Pilih Kategori Sampah</label>
+        <div class="category-chips" id="categoryChips">Memuat kategori...</div>
+        <input type="hidden" id="selectedCategory" required>
+        <input type="hidden" id="categoryRate" value="0">
       </div>
 
       <div class="form-group">
-        <label>3. Foto Sampah (Verifikasi Ganda)</label>
-        <input type="file" id="fotoInput" accept="image/*" required>
+        <label>2. Estimasi Berat (kg)</label>
+        <input type="number" step="0.1" id="estimasiKg" min="0.1" placeholder="Contoh: 1.5" required>
+        <small style="color:var(--abu); display:block; margin-top:4px;">Estimasi Poin: <strong id="estPoin">0</strong> poin</small>
+      </div>
+
+      <div class="form-group">
+        <label>3. Foto Sampah (Opsional)</label>
+        <input type="file" id="fotoInput" accept="image/*">
       </div>
 
       <button type="submit" id="btnKirim">Kirim Antrean Setoran</button>
     </form>
 
-    <h3 style="margin-top:24px;">Setoran Terbaru Anda (Maks 5)</h3>
-    <div id="listSetoran">Memuat data...</div>
+    <h3 style="margin-top:28px;">Riwayat 5 Setoran Terakhir</h3>
+    <div id="listSetoran" style="margin-top:8px;">Memuat riwayat...</div>
   </div>
 
-  <script type="module" src="/js/setoran.js"></script>
+  <script type="module">
+    import { sb, periksaSesi, keluarSesi } from '/js/supabase.js';
+
+    const $ = (id) => document.getElementById(id);
+    const auth = await periksaSesi(['warga', 'asn']);
+    if (!auth) throw new Error("Tidak berhak");
+
+    $('userName').textContent = auth.profil.nama + (auth.profil.is_asn ? ' (ASN)' : '');
+    $('userUnit').textContent = `${auth.profil.kelurahan || '-'} • ${auth.profil.rt || '-'}`;
+    $('btnLogout').onclick = keluarSesi;
+
+    // Muat Kategori
+    const { data: kategoriList } = await sb.from('kategori_sampah').select('*').order('id');
+    const chipContainer = $('categoryChips');
+    chipContainer.innerHTML = '';
+    
+    (kategoriList || []).forEach(kat => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = `${kat.nama} (${kat.poin_per_kg} pt/kg)`;
+      chip.onclick = () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        $('selectedCategory').value = kat.nama;
+        $('categoryRate').value = kat.poin_per_kg;
+        hitungPoin();
+      };
+      chipContainer.appendChild(chip);
+    });
+
+    function hitungPoin() {
+      const kg = parseFloat($('estimasiKg').value) || 0;
+      const rate = parseInt($('categoryRate').value) || 0;
+      $('estPoin').textContent = Math.round(kg * rate);
+    }
+    $('estimasiKg').addEventListener('input', hitungPoin);
+
+    // Kirim Setoran
+    $('formSetor').onsubmit = async (e) => {
+      e.preventDefault();
+      const kat = $('selectedCategory').value;
+      const kg = parseFloat($('estimasiKg').value);
+      if (!kat || !kg) return alert("Pilih kategori dan isi estimasi berat.");
+
+      const btn = $('btnKirim');
+      btn.disabled = true;
+      btn.textContent = "Mengirim...";
+
+      const estPoin = parseInt($('estPoin').textContent) || 0;
+      const { error } = await sb.from('transaksi_setoran').insert({
+        user_id: auth.session.user.id,
+        kategori: kat,
+        berat_kg: kg,
+        estimasi_poin: estPoin,
+        status: 'menunggu'
+      });
+
+      btn.disabled = false;
+      btn.textContent = "Kirim Antrean Setoran";
+
+      if (error) {
+        alert("Gagal mengirim setoran: " + error.message);
+      } else {
+        $('formSetor').reset();
+        $('estPoin').textContent = "0";
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        muatRiwayat();
+      }
+    };
+
+    // Muat 5 Riwayat Terakhir
+    async function muatRiwayat() {
+      const { data: setoran } = await sb
+        .from('transaksi_setoran')
+        .select('*')
+        .eq('user_id', auth.session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      const list = $('listSetoran');
+      if (!setoran || setoran.length === 0) {
+        list.innerHTML = '<p style="color:var(--abu);">Belum ada setoran.</p>';
+        return;
+      }
+
+      list.innerHTML = setoran.map(s => `
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <b>${s.kategori}</b> (${s.berat_kg} kg)
+            <div style="font-size:12px; color:var(--abu); margin-top:2px;">
+              ${new Date(s.created_at).toLocaleDateString('id-ID')}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span class="badge badge-${s.status}">${s.status}</span>
+            <div style="font-size:12px; font-weight:700; color:var(--hijau-tua); margin-top:4px;">
+              ${s.status === 'terverifikasi' ? '+' + s.poin_diterima : '~' + s.estimasi_poin} pt
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    muatRiwayat();
+  </script>
 </body>
 </html>
->>>>>>> 99f32c1 (p)

@@ -1,23 +1,23 @@
+--- START OF FILE eLOLA/peringkat.html ---
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>eLOLA - Papan Peringkat RT</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <div class="container">
     <header>
       <h2>🏆 Papan Peringkat RT</h2>
-      <a href="/index.html" style="text-decoration:none; font-weight:600; color:var(--primary);">Halaman Utama</a>
+      <a href="/index.html" style="text-decoration:none; font-weight:600; color:var(--hijau-tua);">Halaman Utama</a>
     </header>
-    <p style="color:var(--muted); font-size:12px;">Skor = Total Poin RT ÷ Jumlah Kepala Keluarga (KK)</p>
+    <p style="color:var(--abu); font-size:12px;">Skor = Total Poin Warga RT ÷ Jumlah KK</p>
 
-    <!-- Podium Top 3 -->
     <div class="podium" id="podiumContainer"></div>
 
-    <!-- Tabel Lengkap -->
     <table>
       <thead>
         <tr>
@@ -28,11 +28,84 @@
         </tr>
       </thead>
       <tbody id="leaderboardBody">
-        <tr><td colspan="4">Memuat data...</td></tr>
+        <tr><td colspan="4">Menghitung peringkat...</td></tr>
       </tbody>
     </table>
   </div>
 
-  <script type="module" src="/js/peringkat.js"></script>
+  <script type="module">
+    import { sb } from '/js/supabase.js';
+
+    const $ = (id) => document.getElementById(id);
+
+    async function muatPeringkat() {
+      const [{ data: masterRt }, { data: warga }] = await Promise.all([
+        sb.from('rekap_rt').select('*'),
+        sb.from('users').select('kelurahan, rt, saldo_poin, total_kg')
+      ]);
+
+      const mapRt = {};
+      (masterRt || []).forEach(r => {
+        mapRt[`${r.kelurahan}__${r.rt}`] = {
+          kel: r.kelurahan,
+          rt: r.rt,
+          kk: r.jumlah_kk,
+          totalPoin: 0,
+          totalKg: 0
+        };
+      });
+
+      (warga || []).forEach(w => {
+        const k = `${w.kelurahan}__${w.rt}`;
+        if (!mapRt[k]) {
+          mapRt[k] = { kel: w.kelurahan, rt: w.rt, kk: 40, totalPoin: 0, totalKg: 0 };
+        }
+        mapRt[k].totalPoin += (w.saldo_poin || 0);
+        mapRt[k].totalKg += (parseFloat(w.total_kg) || 0);
+      });
+
+      const daftar = Object.values(mapRt).map(item => ({
+        ...item,
+        skor: Math.round(item.totalPoin / (item.kk || 1))
+      })).sort((a, b) => b.skor - a.skor);
+
+      // Render Podium Top 3
+      const podium = $('podiumContainer');
+      const p1 = daftar[0] || { rt: '-', skor: 0 };
+      const p2 = daftar[1] || { rt: '-', skor: 0 };
+      const p3 = daftar[2] || { rt: '-', skor: 0 };
+
+      podium.innerHTML = `
+        <div class="podium-slot podium-2">
+          <strong>🥈 2</strong>
+          <div style="font-size:12px; margin-top:4px;">${p2.rt}</div>
+          <small style="color:var(--abu);">${p2.skor} pt/KK</small>
+        </div>
+        <div class="podium-slot podium-1">
+          <strong>🥇 1</strong>
+          <div style="font-size:13px; font-weight:700; margin-top:4px;">${p1.rt}</div>
+          <small style="color:var(--hijau-tua); font-weight:600;">${p1.skor} pt/KK</small>
+        </div>
+        <div class="podium-slot podium-3">
+          <strong>🥉 3</strong>
+          <div style="font-size:12px; margin-top:4px;">${p3.rt}</div>
+          <small style="color:var(--abu);">${p3.skor} pt/KK</small>
+        </div>
+      `;
+
+      // Render Tabel
+      const tbody = $('leaderboardBody');
+      tbody.innerHTML = daftar.map((d, idx) => `
+        <tr>
+          <td><strong>#${idx + 1}</strong></td>
+          <td>${d.rt} - ${d.kel}</td>
+          <td>${d.totalKg.toFixed(1)} kg</td>
+          <td><strong>${d.skor}</strong></td>
+        </tr>
+      `).join('');
+    }
+
+    muatPeringkat();
+  </script>
 </body>
 </html>
