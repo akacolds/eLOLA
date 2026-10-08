@@ -1,37 +1,79 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eLOLA - Dompet Poin</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+  <title>eLOLA - Dompet Poin & Hadiah</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <div class="container">
+    
+    <!-- Top Header -->
     <header>
-      <h3>Dompet Poin Warga</h3>
-      <button id="btnLogout" class="btn-secondary" style="width:auto; padding:6px 12px; font-size:12px;">Keluar</button>
+      <div>
+        <div class="brand-badge" style="font-size: 0.725rem; padding: 0.2rem 0.6rem; margin-bottom: 0.35rem;">
+          🌱 DOMPET NASABAH
+        </div>
+        <h3 id="userName">Dompet Poin Sampah</h3>
+        <p id="userUnit">-</p>
+      </div>
+      <div class="header-actions">
+        <button id="btnLogout" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.8rem; color: var(--danger); border-color: #fca5a5;">
+          Keluar
+        </button>
+      </div>
     </header>
 
+    <!-- Navigasi -->
     <nav>
-      <a href="/warga/setoran.html">📝 Setor</a>
+      <a href="/warga/setoran.html">📝 Setor Sampah</a>
       <a href="/warga/dompet.html" class="active">👛 Dompet Poin</a>
-      <a href="/peringkat.html">🏆 Peringkat</a>
+      <a href="/peringkat.html">🏆 Peringkat RT</a>
     </nav>
 
-    <div class="card" style="background:#eef7ec; border-color:var(--sage);">
-      <p style="color:var(--abu); font-size:12px;">Saldo Poin Anda</p>
-      <div style="font-size:2.2rem; font-weight:700; color:var(--hijau-tua); font-family:var(--font-judul);" id="saldoPoin">0</div>
-      <p style="font-weight:600; font-size:13px; color:var(--hijau);" id="nilaiRupiah">Rp0</p>
+    <!-- Saldo Poin Card -->
+    <div class="card card-highlight" style="padding: 1.75rem 1.5rem; text-align: center; border: 1.5px solid var(--primary-border);">
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
+        Total Saldo Poin Anda
+      </div>
+      <div style="font-size: 3rem; font-weight: 800; color: var(--forest-900); margin: 0.35rem 0 0.1rem 0; line-height: 1.1;" id="saldoPoin">
+        0
+      </div>
+      <div style="font-size: 0.95rem; font-weight: 700; color: var(--primary);" id="nilaiRupiah">
+        Setara Rp0
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.65rem;">
+        Konversi: 1 Poin = Rp100 &bull; Poin dapat ditukar hadiah sembako atau token
+      </div>
     </div>
 
-    <h3 style="margin-top:20px;">Katalog Hadiah</h3>
-    <div id="rewardList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:24px;">Memuat...</div>
+    <!-- Katalog Hadiah -->
+    <div style="margin-top: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+        <h3 style="margin: 0; font-size: 1.15rem; color: var(--forest-900);">🎁 Katalog Penukaran Hadiah</h3>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Stok Terbatas</span>
+      </div>
+      <div id="rewardList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div class="card text-center" style="grid-column: 1 / -1; color: var(--text-muted);">
+          Memuat katalog hadiah...
+        </div>
+      </div>
+    </div>
 
-    <h3 style="margin-top:20px;">Riwayat Mutasi Poin</h3>
-    <div id="riwayatList" style="margin-top:8px;">Memuat riwayat...</div>
+    <!-- Riwayat Mutasi Poin -->
+    <div style="margin-top: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+        <h3 style="margin: 0; font-size: 1.15rem; color: var(--forest-900);">📋 Riwayat Mutasi Poin</h3>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Masuk & Keluar</span>
+      </div>
+      <div id="riwayatList">
+        <div class="card text-center" style="color: var(--text-muted);">
+          Memuat riwayat...
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script type="module">
@@ -39,8 +81,10 @@
 
     const $ = (id) => document.getElementById(id);
     const auth = await periksaSesi(['warga', 'asn']);
-    if (!auth) throw new Error("Tidak berhak");
+    if (!auth) throw new Error("Tidak berhak mengakses");
 
+    $('userName').textContent = auth.profil.nama + (auth.profil.is_asn ? ' (ASN)' : '');
+    $('userUnit').textContent = `Wilayah: ${auth.profil.kelurahan || 'Kadia'} • ${auth.profil.rt || 'RT 01'}`;
     $('btnLogout').onclick = keluarSesi;
 
     function renderSaldo(poin) {
@@ -51,37 +95,52 @@
 
     // Katalog Hadiah
     async function muatReward() {
-      const { data: rewards } = await sb.from('poin_reward').select('*').order('poin_dibutuhkan');
+      const { data: rewards, error } = await sb.from('poin_reward').select('*').order('poin_dibutuhkan');
       const box = $('rewardList');
-      if (!rewards || rewards.length === 0) {
-        box.innerHTML = '<p style="color:var(--abu); grid-column:span 2;">Belum ada reward aktif.</p>';
+      if (error || !rewards || rewards.length === 0) {
+        box.innerHTML = '<div class="card text-center" style="grid-column:1/-1; color:var(--text-muted);">Belum ada hadiah aktif tersedia.</div>';
         return;
       }
-      box.innerHTML = rewards.map(r => `
-        <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
+
+      // Dedup reward berdasarkan judul jika ada
+      const uniqueRewards = [];
+      const seenTitles = new Set();
+      rewards.forEach(r => {
+        if (!seenTitles.has(r.judul)) {
+          seenTitles.add(r.judul);
+          uniqueRewards.push(r);
+        }
+      });
+
+      box.innerHTML = uniqueRewards.map(r => `
+        <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between; border-top: 3px solid var(--primary);">
           <div>
-            <b>${r.judul}</b>
-            <div style="color:var(--hijau-tua); font-weight:700; margin:4px 0;">${r.poin_dibutuhkan} poin</div>
-            <small style="color:var(--abu);">Stok: ${r.stok}</small>
+            <b style="color:var(--forest-900); font-size:0.95rem;">${r.judul}</b>
+            <div style="color:var(--primary); font-weight:800; font-size:1.15rem; margin:0.4rem 0 0.2rem;">
+              ${r.poin_dibutuhkan} <span style="font-size:0.8rem; font-weight:600;">poin</span>
+            </div>
+            <small style="color:var(--text-muted);">Sisa Stok: <strong>${r.stok}</strong> unit</small>
           </div>
-          <button class="btn-tukar" data-id="${r.id}" data-poin="${r.poin_dibutuhkan}" data-judul="${r.judul}" style="margin-top:10px; padding:6px 10px; font-size:12px;">Tukar</button>
+          <button class="btn btn-tukar btn-tukar-reward" data-id="${r.id}" data-poin="${r.poin_dibutuhkan}" data-judul="${r.judul}" style="margin-top:0.85rem; padding:0.55rem 0.85rem; font-size:0.825rem;">
+            Tukar Poin
+          </button>
         </div>
       `).join('');
 
-      document.querySelectorAll('.btn-tukar').forEach(b => {
+      document.querySelectorAll('.btn-tukar-reward').forEach(b => {
         b.onclick = () => tukarPoin(b.dataset.id, parseInt(b.dataset.poin), b.dataset.judul);
       });
     }
 
     async function tukarPoin(rewardId, butuhPoin, judul) {
       if ((auth.profil.saldo_poin || 0) < butuhPoin) {
-        return alert("Poin Anda tidak mencukupi untuk penukaran ini.");
+        return alert("Poin Anda tidak mencukupi untuk menukar hadiah ini.");
       }
-      if (!confirm(`Tukar ${butuhPoin} poin untuk ${judul}?`)) return;
+      if (!confirm(`Konfirmasi penukaran ${butuhPoin} poin untuk ${judul}?`)) return;
 
       const sisa = auth.profil.saldo_poin - butuhPoin;
       const { error: errUpdate } = await sb.from('users').update({ saldo_poin: sisa }).eq('id', auth.session.user.id);
-      if (errUpdate) return alert("Gagal memproses penukaran.");
+      if (errUpdate) return alert("Gagal memproses penukaran: " + errUpdate.message);
 
       await sb.from('riwayat_poin').insert({
         user_id: auth.session.user.id,
@@ -93,13 +152,14 @@
       await sb.from('penukaran_poin').insert({
         user_id: auth.session.user.id,
         reward_id: rewardId,
-        poin_dipakai: butuhPoin
+        poin_dipakai: butuhPoin,
+        status: 'diajukan'
       });
 
       auth.profil.saldo_poin = sisa;
       renderSaldo(sisa);
       muatRiwayat();
-      alert("Penukaran berhasil dicatat!");
+      alert("Penukaran berhasil dicatat! Silakan ambil hadiah di pos bank sampah.");
     }
 
     // Riwayat Poin
@@ -112,20 +172,26 @@
 
       const box = $('riwayatList');
       if (!riwayat || riwayat.length === 0) {
-        box.innerHTML = '<p style="color:var(--abu);">Belum ada riwayat mutasi poin.</p>';
+        box.innerHTML = '<div class="card text-center" style="color:var(--text-muted); padding:1.5rem;">Belum ada riwayat mutasi poin.</div>';
         return;
       }
-      box.innerHTML = riwayat.map(r => `
-        <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px;">
-          <div>
-            <b>${r.judul}</b>
-            <div style="font-size:11px; color:var(--abu);">${new Date(r.created_at).toLocaleDateString('id-ID')}</div>
+
+      box.innerHTML = riwayat.map(r => {
+        const isMasuk = (r.poin > 0) || r.tipe === 'masuk';
+        const tgl = new Date(r.created_at).toLocaleDateString('id-ID', { dateStyle: 'medium' });
+
+        return `
+          <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:0.95rem 1.15rem; margin-bottom:0.65rem;">
+            <div>
+              <b style="color:var(--forest-900); font-size:0.9rem;">${r.judul}</b>
+              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${tgl}</div>
+            </div>
+            <div style="font-weight:800; font-size:1rem; color:${isMasuk ? 'var(--primary)' : 'var(--danger)'};">
+              ${isMasuk ? '+' : ''}${r.poin} pt
+            </div>
           </div>
-          <div style="font-weight:700; color:${r.poin > 0 ? 'var(--hijau-tua)' : 'var(--merah)'};">
-            ${r.poin > 0 ? '+' : ''}${r.poin} pt
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     muatReward();

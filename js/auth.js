@@ -1,21 +1,35 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // Ambil instance Supabase yang sudah dideklarasikan di supabase.js
-  const client = window.supabaseClient || window.supabase || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+import { sb, arahKeRole } from './supabase.js';
 
-  const tabWarga = document.getElementById('tabWarga');
-  const tabInternal = document.getElementById('tabInternal');
-  const sectionWarga = document.getElementById('sectionWarga');
-  const sectionInternal = document.getElementById('sectionInternal');
+document.addEventListener('DOMContentLoaded', async () => {
+  const inputEmail = document.getElementById('inputEmail');
+  const inputPassword = document.getElementById('inputPassword');
+  const btnLogin = document.getElementById('btnLogin');
+  const btnAutoRegisterWarga = document.getElementById('btnAutoRegisterWarga');
   const alertBox = document.getElementById('authAlert');
+  const toggleDemoInfo = document.getElementById('toggleDemoInfo');
+  const demoContent = document.getElementById('demoContent');
+  const demoChevron = document.getElementById('demoChevron');
 
-  const btnWargaLogin = document.getElementById('btnWargaLogin');
-  const btnWargaRegister = document.getElementById('btnWargaRegister');
-  const btnInternalLogin = document.getElementById('btnInternalLogin');
+  // Periksa apakah pengguna sudah memiliki sesi login aktif
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    const { data: profil } = await sb
+      .from('users')
+      .select('peran')
+      .eq('id', session.user.id)
+      .maybeSingle();
 
-  function showAlert(msg, isError = false) {
+    if (profil) {
+      arahKeRole(profil.peran);
+      return;
+    }
+  }
+
+  // Helper Alert
+  function showAlert(msg, tipe = 'info') {
     if (!alertBox) return;
     alertBox.textContent = msg;
-    alertBox.className = `alert-box ${isError ? 'alert-error' : 'alert-success'}`;
+    alertBox.className = `alert-box alert-${tipe}`;
     alertBox.classList.remove('hidden');
   }
 
@@ -23,181 +37,192 @@ document.addEventListener('DOMContentLoaded', () => {
     if (alertBox) alertBox.classList.add('hidden');
   }
 
-  function setLoading(btn, isLoading, text) {
+  function setLoading(btn, isLoading, defaultText, loadingText) {
     if (!btn) return;
     btn.disabled = isLoading;
-    btn.textContent = text;
+    btn.textContent = isLoading ? loadingText : defaultText;
   }
 
-  // Navigasi Tab
-  tabWarga?.addEventListener('click', () => {
-    tabWarga.classList.add('active');
-    tabInternal.classList.remove('active');
-    sectionWarga.classList.remove('hidden');
-    sectionInternal.classList.add('hidden');
-    hideAlert();
+  // Toggle Accordion Akun Demo & Kedinasan
+  toggleDemoInfo?.addEventListener('click', () => {
+    const isHidden = demoContent.classList.contains('hidden');
+    if (isHidden) {
+      demoContent.classList.remove('hidden');
+      demoChevron.textContent = '▲ Tutup';
+    } else {
+      demoContent.classList.add('hidden');
+      demoChevron.textContent = '▼ Buka';
+    }
   });
 
-  tabInternal?.addEventListener('click', () => {
-    tabInternal.classList.add('active');
-    tabWarga.classList.remove('active');
-    sectionInternal.classList.remove('hidden');
-    sectionWarga.classList.add('hidden');
-    hideAlert();
+  // Tombol Isi Otomatis Akun Demo
+  document.querySelectorAll('.demo-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const email = pill.getAttribute('data-email');
+      inputEmail.value = email;
+      inputPassword.value = 'password123';
+      hideAlert();
+      showAlert(`Akun ${pill.getAttribute('data-role')} dipilih. Klik "Masuk ke Sistem" untuk melanjutkan.`, 'info');
+    });
   });
 
-  // Alur Redirect Berdasarkan Role
-  async function handleRedirect(user) {
-    if (!client) {
-      window.location.href = 'warga/setoran.html';
-      return;
-    }
-
-    try {
-      const { data: profile } = await client
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      const role = profile?.role || user.user_metadata?.role || 'warga';
-
-      if (role === 'admin') {
-        window.location.href = 'admin/dashboard.html';
-      } else if (role === 'petugas') {
-        window.location.href = 'petugas/verifikasi.html';
-      } else if (role === 'asn') {
-        window.location.href = 'warga/setoran.html?kategori=asn';
-      } else {
-        window.location.href = 'warga/setoran.html';
-      }
-    } catch (e) {
-      window.location.href = 'warga/setoran.html';
-    }
-  }
-
-  // 1. Registrasi Warga
-  btnWargaRegister?.addEventListener('click', async () => {
+  // 1. Eksekusi Login Terpadu (Campur Login ASN, Petugas, Admin, Warga)
+  async function prosesLogin() {
     hideAlert();
-    const email = document.getElementById('wargaEmail')?.value.trim();
-    const password = document.getElementById('wargaPassword')?.value;
+    const email = inputEmail.value.trim();
+    const password = inputPassword.value;
 
     if (!email || !password) {
-      showAlert('Isi email dan kata sandi terlebih dahulu.', true);
-      return;
-    }
-    if (password.length < 6) {
-      showAlert('Kata sandi minimal 6 karakter.', true);
+      showAlert('Silakan masukkan email dan kata sandi terlebih dahulu.', 'error');
       return;
     }
 
-    setLoading(btnWargaRegister, true, 'Mendaftarkan...');
+    if (password.length < 6) {
+      showAlert('Kata sandi minimal 6 karakter.', 'error');
+      return;
+    }
+
+    setLoading(btnLogin, true, 'Masuk ke Sistem', 'Memverifikasi Akun...');
 
     try {
-      const { data, error } = await client.auth.signUp({
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        // Jika akun belum ditemukan dan bukan domain kedinasan resmi, lakukan auto-daftar Warga
+        const isKedinasan = email.endsWith('.go.id') || email.includes('admin') || email.includes('petugas') || email.includes('asn');
+
+        if (error.message.toLowerCase().includes('invalid login credentials') || error.message.toLowerCase().includes('user not found')) {
+          if (!isKedinasan) {
+            showAlert('Akun belum terdaftar. Melakukan auto-daftar otomatis sebagai Warga...', 'info');
+            await prosesAutoDaftarWarga(email, password);
+            return;
+          } else {
+            throw new Error('Akun kedinasan khusus tidak ditemukan atau kata sandi keliru. Harap gunakan email khusus resmi yang diberikan.');
+          }
+        }
+        throw error;
+      }
+
+      // Ambil profil dari tabel users
+      let { data: profil } = await sb
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      // Jika data profil belum ada di tabel users, sinkronkan
+      if (!profil) {
+        const metadataPeran = data.user.user_metadata?.peran || 'warga';
+        const namaDefault = data.user.user_metadata?.nama || email.split('@')[0];
+        const isAsn = metadataPeran === 'asn' || Boolean(data.user.user_metadata?.is_asn);
+
+        const { data: newProfil } = await sb
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email: data.user.email,
+            nama: namaDefault,
+            peran: metadataPeran,
+            is_asn: isAsn,
+            saldo_poin: 0,
+            total_kg: 0,
+            kelurahan: 'Kadia',
+            rt: 'RT 01'
+          })
+          .select()
+          .single();
+
+        profil = newProfil || { peran: metadataPeran, nama: namaDefault };
+      }
+
+      showAlert(`Berhasil masuk! Selamat datang, ${profil.nama || 'Pengguna'} (${(profil.peran || 'warga').toUpperCase()}). Mengalihkan...`, 'success');
+      setTimeout(() => arahKeRole(profil.peran), 700);
+
+    } catch (err) {
+      showAlert(err.message || 'Gagal masuk. Periksa kembali email dan kata sandi.', 'error');
+    } finally {
+      setLoading(btnLogin, false, 'Masuk ke Sistem', 'Memverifikasi Akun...');
+    }
+  }
+
+  // 2. Eksekusi Auto-Daftar Warga Baru
+  async function prosesAutoDaftarWarga(customEmail = null, customPass = null) {
+    hideAlert();
+    const email = customEmail || inputEmail.value.trim();
+    const password = customPass || inputPassword.value;
+
+    if (!email || !password) {
+      showAlert('Masukkan alamat email dan kata sandi untuk mendaftar otomatis.', 'error');
+      return;
+    }
+
+    if (password.length < 6) {
+      showAlert('Kata sandi minimal 6 karakter.', 'error');
+      return;
+    }
+
+    setLoading(btnAutoRegisterWarga, true, '✨ Auto-Daftar Warga Baru', 'Mendaftarkan Warga...');
+
+    try {
+      const namaWarga = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+      // SignUp dengan peran otomatis 'warga'
+      const { data, error } = await sb.auth.signUp({
         email,
         password,
         options: {
           data: {
-            role: 'warga',
-            lokasi_setor: 'bank_sampah'
+            peran: 'warga',
+            nama: namaWarga,
+            is_asn: false,
+            kelurahan: 'Kadia',
+            rt: 'RT 01'
           }
         }
       });
 
       if (error) throw error;
 
-      // Sinkronkan ke tabel profiles jika session terbentuk
+      // Jika user berhasil dibuat
       if (data?.user) {
-        try {
-          await client.from('profiles').upsert({
-            id: data.user.id,
-            email: data.user.email,
-            role: 'warga',
-            lokasi_setor: 'bank_sampah'
-          });
-        } catch (_) {}
-      }
+        // Pastikan row ada di tabel users
+        await sb.from('users').upsert({
+          id: data.user.id,
+          email: data.user.email,
+          nama: namaWarga,
+          peran: 'warga',
+          is_asn: false,
+          saldo_poin: 0,
+          total_kg: 0,
+          kelurahan: 'Kadia',
+          rt: 'RT 01'
+        }, { onConflict: 'id' });
 
-      // Bila session langsung ada (email confirmation off di Supabase)
-      if (data?.session) {
-        showAlert('Registrasi berhasil! Mengalihkan...');
-        setTimeout(() => handleRedirect(data.user), 1000);
+        showAlert('Pendaftaran Warga otomatis berhasil! Mengalihkan ke dashboard setor...', 'success');
+        setTimeout(() => arahKeRole('warga'), 800);
+      }
+    } catch (err) {
+      // Jika ternyata user sudah ada, sarankan masuk langsung
+      if (err.message.toLowerCase().includes('already registered')) {
+        showAlert('Email ini sudah terdaftar. Mencoba langsung masuk...', 'info');
+        await prosesLogin();
       } else {
-        showAlert('Akun berhasil dibuat! Silakan cek kotak masuk email jika verifikasi aktif, atau coba Masuk sekarang.');
+        showAlert(err.message || 'Gagal mendaftar otomatis. Silakan coba lagi.', 'error');
       }
-    } catch (err) {
-      showAlert(err.message || 'Gagal mendaftar. Silakan coba lagi.', true);
     } finally {
-      setLoading(btnWargaRegister, false, 'Daftar Mandiri');
+      setLoading(btnAutoRegisterWarga, false, '✨ Auto-Daftar Warga Baru', 'Mendaftarkan Warga...');
     }
+  }
+
+  // Event Listeners
+  btnLogin?.addEventListener('click', prosesLogin);
+  btnAutoRegisterWarga?.addEventListener('click', () => prosesAutoDaftarWarga());
+
+  // Submit via Enter Key di Input
+  inputPassword?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') prosesLogin();
   });
-
-  // 2. Login Warga
-  btnWargaLogin?.addEventListener('click', async () => {
-    hideAlert();
-    const email = document.getElementById('wargaEmail')?.value.trim();
-    const password = document.getElementById('wargaPassword')?.value;
-
-    if (!email || !password) {
-      showAlert('Masukkan email dan kata sandi.', true);
-      return;
-    }
-
-    setLoading(btnWargaLogin, true, 'Memeriksa...');
-
-    try {
-      const { data, error } = await client.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-
-      showAlert('Login berhasil! Mengalihkan...');
-      setTimeout(() => handleRedirect(data.user), 800);
-    } catch (err) {
-      showAlert(err.message || 'Email atau kata sandi tidak cocok.', true);
-    } finally {
-      setLoading(btnWargaLogin, false, 'Masuk');
-    }
-  });
-
-  // 3. Login Internal (ASN, Petugas, Admin)
-  btnInternalLogin?.addEventListener('click', async () => {
-    hideAlert();
-    const email = document.getElementById('internalEmail')?.value.trim();
-    const password = document.getElementById('internalPassword')?.value;
-
-    if (!email || !password) {
-      showAlert('Masukkan email kedinasan dan kata sandi.', true);
-      return;
-    }
-
-    setLoading(btnInternalLogin, true, 'Memverifikasi Akses...');
-
-    try {
-      const { data, error } = await client.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-
-      // Cek apakah akun terdaftar sebagai internal
-      const { data: profile } = await client
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .maybeSingle();
-
-      const userRole = profile?.role || data.user.user_metadata?.role;
-      const internalRoles = ['admin', 'petugas', 'asn'];
-
-      if (!userRole || !internalRoles.includes(userRole)) {
-        await client.auth.signOut();
-        showAlert('Akses ditolak: Akun ini tidak terdaftar sebagai ASN, Petugas, atau Admin.', true);
-        return;
-      }
-
-      showAlert('Berhasil masuk! Mengalihkan ke dashboard...');
-      setTimeout(() => handleRedirect(data.user), 800);
-    } catch (err) {
-      showAlert(err.message || 'Gagal masuk akun internal.', true);
-    } finally {
-      setLoading(btnInternalLogin, false, 'Masuk Sebagai Petugas / ASN');
-    }
+  inputEmail?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') inputPassword.focus();
   });
 });

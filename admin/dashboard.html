@@ -1,62 +1,100 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eLOLA - Dashboard Eksekutif</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+  <title>eLOLA - Dashboard Admin DLH</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="container container-wide">
+  <div class="container-wide">
+    
+    <!-- Top Header -->
     <header>
       <div>
-        <h3>Dashboard Admin & DLH</h3>
-        <p style="color:var(--abu); font-size:12px;">Pemantauan Kepatuhan ASN & Rekap Sampah Kota</p>
+        <div class="brand-badge" style="font-size: 0.75rem; padding: 0.25rem 0.65rem; margin-bottom: 0.35rem;">
+          🌱 DLH EXECUTIVE PORTAL
+        </div>
+        <h3 id="adminTitle">Dashboard Admin DLH</h3>
+        <p id="adminSubtitle">Pemantauan Kepatuhan Setoran ASN Balai Kota & Rekap Bank Sampah</p>
       </div>
-      <div>
-        <a href="/peringkat.html" style="font-weight:600; text-decoration:none; margin-right:12px; color:var(--hijau-tua);">🏆 Papan RT</a>
-        <button id="btnLogout" class="btn-secondary" style="width:auto; padding:6px 12px; font-size:12px;">Keluar</button>
+      <div class="header-actions">
+        <div class="header-user-badge" id="adminUserBadge">
+          <span>🛡️</span> <span id="adminName">Admin DLH</span>
+        </div>
+        <a href="/peringkat.html" class="btn btn-secondary" style="padding: 0.5rem 0.95rem; font-size: 0.8rem;">
+          🏆 Papan RT
+        </a>
+        <button id="btnLogout" class="btn btn-secondary" style="padding: 0.5rem 0.95rem; font-size: 0.8rem; color: var(--danger); border-color: #fca5a5;">
+          Keluar
+        </button>
       </div>
     </header>
 
+    <!-- KPI Metric Cards -->
     <div class="grid-stats">
       <div class="stat-box">
         <div class="stat-num" id="kpiTotalAsn">0</div>
         <div class="stat-label">Total ASN Terdaftar</div>
       </div>
-      <div class="stat-box">
-        <div class="stat-num" id="kpiKepatuhan">0%</div>
-        <div class="stat-label">% Kepatuhan (≥2kg)</div>
+      <div class="stat-box" style="border-left-color: #10b981;">
+        <div class="stat-num" id="kpiKepatuhan" style="color: #059669;">0%</div>
+        <div class="stat-label">% Kepatuhan (≥ 2 kg)</div>
       </div>
-      <div class="stat-box">
-        <div class="stat-num" id="kpiVolumeKg">0</div>
-        <div class="stat-label">Total Sampah (kg)</div>
+      <div class="stat-box" style="border-left-color: #0d9488;">
+        <div class="stat-num" id="kpiVolumeKg">0.0</div>
+        <div class="stat-label">Total Sampah Kota (kg)</div>
       </div>
-      <div class="stat-box">
-        <div class="stat-num" id="kpiPoin">0</div>
-        <div class="stat-label">Poin Beredar</div>
+      <div class="stat-box" style="border-left-color: #ca8a04;">
+        <div class="stat-num" id="kpiPoin" style="color: #ca8a04;">0</div>
+        <div class="stat-label">Total Poin Beredar</div>
       </div>
     </div>
 
+    <!-- Tabel Monitoring Kepatuhan ASN -->
     <div class="card">
-      <h3>Daftar Kepatuhan Setoran ASN (≥ 2 kg)</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Nama ASN</th>
-            <th>NIP / NIK</th>
-            <th>Kelurahan / RT</th>
-            <th>Total Setor</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="asnTableBody">
-          <tr><td colspan="5">Memuat data ASN...</td></tr>
-        </tbody>
-      </table>
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.15rem;">
+        <div>
+          <h3 style="margin: 0;">Monitoring Kepatuhan Setoran ASN (Kewajiban ≥ 2 kg)</h3>
+          <p style="margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--text-muted);">
+            Sesuai instruksi penyetoran sampah ASN wajib diserahkan di pos Balai Kota
+          </p>
+        </div>
+        <span class="badge badge-terverifikasi" style="font-size: 0.75rem;">
+          Target Kepatuhan Bulanan
+        </span>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama ASN</th>
+              <th>NIP / Identitas</th>
+              <th>Kelurahan / RT</th>
+              <th>Total Setoran</th>
+              <th class="text-center">Status Kepatuhan</th>
+            </tr>
+          </thead>
+          <tbody id="asnTableBody">
+            <tr>
+              <td colspan="5" class="text-center" style="padding: 2rem; color: var(--text-muted);">
+                Memuat data kepatuhan ASN...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+
+    <!-- Card Ringkasan Tambahan -->
+    <div class="card card-highlight">
+      <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem;">Kebijakan Bank Sampah Kota Kendari</h3>
+      <p style="font-size: 0.825rem; color: #166534; margin: 0; line-height: 1.5;">
+        Akun Administrator, Petugas Lapangan, dan ASN telah diatur khusus melalui email kedinasan. Warga umum dapat melakukan auto-daftar mandiri tanpa perlu persetujuan manual, dan seluruh setoran diverifikasi langsung oleh petugas melalui pos timbang terdekat.
+      </p>
+    </div>
+
   </div>
 
   <script type="module">
@@ -66,40 +104,55 @@
     const auth = await periksaSesi(['admin']);
     if (!auth) throw new Error("Akses admin diperlukan");
 
+    $('adminName').textContent = auth.profil.nama || 'Admin DLH';
     $('btnLogout').onclick = keluarSesi;
 
     async function muatStatistik() {
-      const { data: users } = await sb.from('users').select('*');
-      const asns = (users || []).filter(u => u.is_asn || u.peran === 'asn');
-      const patuhCount = asns.filter(u => (parseFloat(u.total_kg) || 0) >= 2.0).length;
+      try {
+        const { data: users, error } = await sb.from('users').select('*');
+        if (error) throw error;
 
-      const totalKg = (users || []).reduce((acc, u) => acc + (parseFloat(u.total_kg) || 0), 0);
-      const totalPoin = (users || []).reduce((acc, u) => acc + (u.saldo_poin || 0), 0);
+        const allUsers = users || [];
+        const asns = allUsers.filter(u => u.is_asn || u.peran === 'asn');
+        const patuhCount = asns.filter(u => (parseFloat(u.total_kg) || 0) >= 2.0).length;
 
-      $('kpiTotalAsn').textContent = asns.length;
-      $('kpiKepatuhan').textContent = asns.length ? `${Math.round((patuhCount / asns.length) * 100)}%` : '0%';
-      $('kpiVolumeKg').textContent = totalKg.toFixed(1);
-      $('kpiPoin').textContent = totalPoin.toLocaleString('id-ID');
+        const totalKg = allUsers.reduce((acc, u) => acc + (parseFloat(u.total_kg) || 0), 0);
+        const totalPoin = allUsers.reduce((acc, u) => acc + (Number(u.saldo_poin) || 0), 0);
 
-      const tbody = $('asnTableBody');
-      if (asns.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--abu);">Belum ada ASN terdaftar.</td></tr>';
-        return;
+        $('kpiTotalAsn').textContent = asns.length;
+        $('kpiKepatuhan').textContent = asns.length ? `${Math.round((patuhCount / asns.length) * 100)}%` : '0%';
+        $('kpiVolumeKg').textContent = totalKg.toFixed(1);
+        $('kpiPoin').textContent = totalPoin.toLocaleString('id-ID');
+
+        const tbody = $('asnTableBody');
+        if (asns.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="color:var(--text-muted); padding:1.75rem;">Belum ada ASN terdaftar dalam sistem.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = asns.map(a => {
+          const kg = parseFloat(a.total_kg) || 0;
+          const statusPatuh = kg >= 2.0;
+          return `
+            <tr>
+              <td>
+                <strong>${a.nama || 'ASN'}</strong>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${a.email || '-'}</div>
+              </td>
+              <td style="font-family:monospace; font-size:0.85rem;">${a.nik_nip || '-'}</td>
+              <td>${a.kelurahan || '-'} &bull; ${a.rt || '-'}</td>
+              <td><strong>${kg.toFixed(1)} kg</strong></td>
+              <td class="text-center">
+                <span class="badge ${statusPatuh ? 'badge-patuh' : 'badge-menunggu'}">
+                  ${statusPatuh ? '✓ Patuh (≥2kg)' : 'Belum Patuh'}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Error muat statistik admin:', err);
       }
-
-      tbody.innerHTML = asns.map(a => {
-        const kg = parseFloat(a.total_kg) || 0;
-        const statusPatuh = kg >= 2.0;
-        return `
-          <tr>
-            <td><strong>${a.nama}</strong></td>
-            <td>${a.nik_nip || '-'}</td>
-            <td>${a.kelurahan || '-'} • ${a.rt || '-'}</td>
-            <td>${kg.toFixed(1)} kg</td>
-            <td><span class="badge ${statusPatuh ? 'badge-terverifikasi' : 'badge-menunggu'}">${statusPatuh ? 'Patuh' : 'Belum'}</span></td>
-          </tr>
-        `;
-      }).join('');
     }
 
     muatStatistik();
