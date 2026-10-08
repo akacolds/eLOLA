@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eLOLA - Dompet Poin</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h3>Dompet Poin Warga</h3>
+      <button id="btnLogout" class="btn-secondary" style="width:auto; padding:6px 12px; font-size:12px;">Keluar</button>
+    </header>
+
+    <nav>
+      <a href="/warga/setoran.html">📝 Setor</a>
+      <a href="/warga/dompet.html" class="active">👛 Dompet Poin</a>
+      <a href="/peringkat.html">🏆 Peringkat</a>
+    </nav>
+
+    <div class="card" style="background:#eef7ec; border-color:var(--sage);">
+      <p style="color:var(--abu); font-size:12px;">Saldo Poin Anda</p>
+      <div style="font-size:2.2rem; font-weight:700; color:var(--hijau-tua); font-family:var(--font-judul);" id="saldoPoin">0</div>
+      <p style="font-weight:600; font-size:13px; color:var(--hijau);" id="nilaiRupiah">Rp0</p>
+    </div>
+
+    <h3 style="margin-top:20px;">Katalog Hadiah</h3>
+    <div id="rewardList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:24px;">Memuat...</div>
+
+    <h3 style="margin-top:20px;">Riwayat Mutasi Poin</h3>
+    <div id="riwayatList" style="margin-top:8px;">Memuat riwayat...</div>
+  </div>
+
+  <script type="module">
+    import { sb, periksaSesi, keluarSesi } from '/js/supabase.js';
+
+    const $ = (id) => document.getElementById(id);
+    const auth = await periksaSesi(['warga', 'asn']);
+    if (!auth) throw new Error("Tidak berhak");
+
+    $('btnLogout').onclick = keluarSesi;
+
+    function renderSaldo(poin) {
+      $('saldoPoin').textContent = Number(poin).toLocaleString('id-ID');
+      $('nilaiRupiah').textContent = `Setara Rp${(poin * 100).toLocaleString('id-ID')}`;
+    }
+    renderSaldo(auth.profil.saldo_poin || 0);
+
+    // Katalog Hadiah
+    async function muatReward() {
+      const { data: rewards } = await sb.from('poin_reward').select('*').order('poin_dibutuhkan');
+      const box = $('rewardList');
+      if (!rewards || rewards.length === 0) {
+        box.innerHTML = '<p style="color:var(--abu); grid-column:span 2;">Belum ada reward aktif.</p>';
+        return;
+      }
+      box.innerHTML = rewards.map(r => `
+        <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <b>${r.judul}</b>
+            <div style="color:var(--hijau-tua); font-weight:700; margin:4px 0;">${r.poin_dibutuhkan} poin</div>
+            <small style="color:var(--abu);">Stok: ${r.stok}</small>
+          </div>
+          <button class="btn-tukar" data-id="${r.id}" data-poin="${r.poin_dibutuhkan}" data-judul="${r.judul}" style="margin-top:10px; padding:6px 10px; font-size:12px;">Tukar</button>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.btn-tukar').forEach(b => {
+        b.onclick = () => tukarPoin(b.dataset.id, parseInt(b.dataset.poin), b.dataset.judul);
+      });
+    }
+
+    async function tukarPoin(rewardId, butuhPoin, judul) {
+      if ((auth.profil.saldo_poin || 0) < butuhPoin) {
+        return alert("Poin Anda tidak mencukupi untuk penukaran ini.");
+      }
+      if (!confirm(`Tukar ${butuhPoin} poin untuk ${judul}?`)) return;
+
+      const sisa = auth.profil.saldo_poin - butuhPoin;
+      const { error: errUpdate } = await sb.from('users').update({ saldo_poin: sisa }).eq('id', auth.session.user.id);
+      if (errUpdate) return alert("Gagal memproses penukaran.");
+
+      await sb.from('riwayat_poin').insert({
+        user_id: auth.session.user.id,
+        judul: `Penukaran: ${judul}`,
+        poin: -butuhPoin,
+        tipe: 'keluar'
+      });
+
+      await sb.from('penukaran_poin').insert({
+        user_id: auth.session.user.id,
+        reward_id: rewardId,
+        poin_dipakai: butuhPoin
+      });
+
+      auth.profil.saldo_poin = sisa;
+      renderSaldo(sisa);
+      muatRiwayat();
+      alert("Penukaran berhasil dicatat!");
+    }
+
+    // Riwayat Poin
+    async function muatRiwayat() {
+      const { data: riwayat } = await sb
+        .from('riwayat_poin')
+        .select('*')
+        .eq('user_id', auth.session.user.id)
+        .order('created_at', { ascending: false });
+
+      const box = $('riwayatList');
+      if (!riwayat || riwayat.length === 0) {
+        box.innerHTML = '<p style="color:var(--abu);">Belum ada riwayat mutasi poin.</p>';
+        return;
+      }
+      box.innerHTML = riwayat.map(r => `
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px;">
+          <div>
+            <b>${r.judul}</b>
+            <div style="font-size:11px; color:var(--abu);">${new Date(r.created_at).toLocaleDateString('id-ID')}</div>
+          </div>
+          <div style="font-weight:700; color:${r.poin > 0 ? 'var(--hijau-tua)' : 'var(--merah)'};">
+            ${r.poin > 0 ? '+' : ''}${r.poin} pt
+          </div>
+        </div>
+      `).join('');
+    }
+
+    muatReward();
+    muatRiwayat();
+  </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eLOLA - Verifikasi Petugas</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container container-wide">
+    <header>
+      <div>
+        <h3 id="petugasName">Petugas</h3>
+        <p style="color:var(--abu); font-size:12px;" id="petugasUnit">-</p>
+      </div>
+      <div>
+        <a href="/peringkat.html" style="margin-right:12px; text-decoration:none; font-weight:600; color:var(--hijau-tua);">🏆 Peringkat</a>
+        <button id="btnLogout" class="btn-secondary" style="width:auto; padding:6px 12px; font-size:12px;">Keluar</button>
+      </div>
+    </header>
+
+    <h2>Antrean Verifikasi Setoran</h2>
+    <div id="antreanList" style="margin-top:12px;">Memuat antrean...</div>
+  </div>
+
+  <script type="module">
+    import { sb, periksaSesi, keluarSesi } from '/js/supabase.js';
+
+    const $ = (id) => document.getElementById(id);
+    const auth = await periksaSesi(['petugas', 'admin']);
+    if (!auth) throw new Error("Akses ditolak");
+
+    $('petugasName').textContent = auth.profil.nama;
+    $('petugasUnit').textContent = `Peran: ${auth.profil.peran.toUpperCase()} • ${auth.profil.kelurahan || 'DLH Kota'}`;
+    $('btnLogout').onclick = keluarSesi;
+
+    async function muatAntrean() {
+      const { data: list, error } = await sb
+        .from('transaksi_setoran')
+        .select('*, users(nama, kelurahan, rt, saldo_poin, total_kg)')
+        .eq('status', 'menunggu')
+        .order('created_at', { ascending: true });
+
+      const box = $('antreanList');
+      if (!list || list.length === 0) {
+        box.innerHTML = '<div class="card"><p style="color:var(--abu);">Tidak ada setoran yang menunggu verifikasi.</p></div>';
+        return;
+      }
+
+      box.innerHTML = list.map(item => `
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <b>${item.users?.nama || 'Warga'}</b> <span style="color:var(--abu); font-size:12px;">(${item.users?.kelurahan} - ${item.users?.rt})</span>
+            <div style="font-size:13px; margin-top:3px;">
+              Kategori: <strong>${item.kategori}</strong> • Estimasi: <strong>${item.berat_kg} kg</strong> (~${item.estimasi_poin} pt)
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="number" step="0.1" value="${item.berat_kg}" id="berat_${item.id}" style="width:90px; padding:6px;" title="Timbang ulang kg">
+            <button class="btn-acc" data-id="${item.id}" data-uid="${item.user_id}" data-est="${item.estimasi_poin}" style="width:auto; padding:8px 14px; font-size:12px;">Setujui</button>
+            <button class="btn-tolak btn-danger" data-id="${item.id}" style="width:auto; padding:8px 12px; font-size:12px;">Tolak</button>
+          </div>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.btn-acc').forEach(btn => {
+        btn.onclick = () => verifikasi(btn.dataset.id, btn.dataset.uid, true);
+      });
+      document.querySelectorAll('.btn-tolak').forEach(btn => {
+        btn.onclick = () => verifikasi(btn.dataset.id, null, false);
+      });
+    }
+
+    async function verifikasi(setoranId, userId, terima) {
+      if (terima) {
+        const beratRiil = parseFloat($(`berat_${setoranId}`).value) || 1;
+        const poinFinal = Math.round(beratRiil * 100); // Rata-rata 100 poin/kg
+
+        const { data: u } = await sb.from('users').select('saldo_poin, total_kg').eq('id', userId).single();
+        const saldoBaru = (u?.saldo_poin || 0) + poinFinal;
+        const totalKgBaru = (parseFloat(u?.total_kg) || 0) + beratRiil;
+
+        await sb.from('users').update({ saldo_poin: saldoBaru, total_kg: totalKgBaru }).eq('id', userId);
+        await sb.from('transaksi_setoran').update({
+          status: 'terverifikasi',
+          berat_kg: beratRiil,
+          poin_diterima: poinFinal
+        }).eq('id', setoranId);
+
+        await sb.from('riwayat_poin').insert({
+          user_id: userId,
+          judul: `Setoran Sampah (${beratRiil} kg)`,
+          poin: poinFinal,
+          tipe: 'masuk'
+        });
+      } else {
+        await sb.from('transaksi_setoran').update({ status: 'ditolak' }).eq('id', setoranId);
+      }
+      muatAntrean();
+    }
+
+    muatAntrean();
+  </script>
+</body>
+</html>
