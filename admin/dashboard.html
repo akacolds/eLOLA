@@ -3,159 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eLOLA - Dashboard Admin DLH</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <title>Dashboard Admin DLH - eLOLA Kendari</title>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-  <div class="container-wide">
-    
-    <!-- Top Header -->
-    <header>
-      <div>
-        <div class="brand-badge" style="font-size: 0.75rem; padding: 0.25rem 0.65rem; margin-bottom: 0.35rem;">
-          🌱 DLH EXECUTIVE PORTAL
-        </div>
-        <h3 id="adminTitle">Dashboard Admin DLH</h3>
-        <p id="adminSubtitle">Pemantauan Kepatuhan Setoran ASN Balai Kota & Rekap Bank Sampah</p>
-      </div>
-      <div class="header-actions">
-        <div class="header-user-badge" id="adminUserBadge">
-          <span>🛡️</span> <span id="adminName">Admin DLH</span>
-        </div>
-        <a href="/peringkat.html" class="btn btn-secondary" style="padding: 0.5rem 0.95rem; font-size: 0.8rem;">
-          🏆 Papan RT
-        </a>
-        <button id="btnLogout" class="btn btn-secondary" style="padding: 0.5rem 0.95rem; font-size: 0.8rem; color: var(--danger); border-color: #fca5a5;">
-          Keluar
-        </button>
-      </div>
-    </header>
 
-    <!-- KPI Metric Cards -->
-    <div class="grid-stats">
+  <div class="main-wrapper" style="max-width: 960px;">
+    <!-- Navbar Admin -->
+    <nav class="navbar-inner" style="max-width: 960px;">
+      <a href="dashboard.html" class="nav-brand">🏢 DLH KOTA KENDARI</a>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard.html" class="active">Dashboard Kota</a></li>
+        <li class="nav-item"><a href="../peringkat.html">Peringkat RT</a></li>
+        <li class="nav-item"><button id="btnLogout" class="btn-logout">Keluar</button></li>
+      </ul>
+    </nav>
+
+    <!-- Header Selamat Datang -->
+    <div style="margin-bottom: 20px;">
+      <h1 class="login-title" style="font-size: 1.6rem; margin-bottom: 4px;">Pusat Kendali Pengelolaan Sampah</h1>
+      <p class="login-desc" style="margin-bottom: 0;">Monitoring data setoran warga dan kedisiplinan kuota ASN se-Kota Kendari.</p>
+    </div>
+
+    <!-- Ringkasan Statistik Utama -->
+    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
       <div class="stat-box">
-        <div class="stat-num" id="kpiTotalAsn">0</div>
-        <div class="stat-label">Total ASN Terdaftar</div>
+        <div class="stat-box-label">Total Sampah Terkumpul</div>
+        <div class="stat-box-val" id="adminTotalKg">0.0 kg</div>
+        <div class="stat-box-sub">Di seluruh bank sampah unit</div>
       </div>
-      <div class="stat-box" style="border-left-color: #10b981;">
-        <div class="stat-num" id="kpiKepatuhan" style="color: #059669;">0%</div>
-        <div class="stat-label">% Kepatuhan (≥ 2 kg)</div>
+      <div class="stat-box">
+        <div class="stat-box-label">Kepatuhan Setoran ASN</div>
+        <div class="stat-box-val" id="adminKepatuhanAsn" style="color: #0284c7;">0%</div>
+        <div class="stat-box-sub">Target wajib 2 kg/bulan</div>
       </div>
-      <div class="stat-box" style="border-left-color: #0d9488;">
-        <div class="stat-num" id="kpiVolumeKg">0.0</div>
-        <div class="stat-label">Total Sampah Kota (kg)</div>
+      <div class="stat-box">
+        <div class="stat-box-label">Total Poin Beredar</div>
+        <div class="stat-box-val" id="adminTotalPoin" style="color: #d97706;">0</div>
+        <div class="stat-box-sub">Tercatat di dompet warga</div>
       </div>
-      <div class="stat-box" style="border-left-color: #ca8a04;">
-        <div class="stat-num" id="kpiPoin" style="color: #ca8a04;">0</div>
-        <div class="stat-label">Total Poin Beredar</div>
+      <div class="stat-box">
+        <div class="stat-box-label">Total Pengguna Terdaftar</div>
+        <div class="stat-box-val" id="adminTotalUsers" style="color: #334155;">0</div>
+        <div class="stat-box-sub">Warga, ASN, & Petugas</div>
       </div>
     </div>
 
-    <!-- Tabel Monitoring Kepatuhan ASN -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.15rem;">
-        <div>
-          <h3 style="margin: 0;">Monitoring Kepatuhan Setoran ASN (Kewajiban ≥ 2 kg)</h3>
-          <p style="margin: 0.25rem 0 0; font-size: 0.8rem; color: var(--text-muted);">
-            Sesuai instruksi penyetoran sampah ASN wajib diserahkan di pos Balai Kota
-          </p>
-        </div>
-        <span class="badge badge-terverifikasi" style="font-size: 0.75rem;">
-          Target Kepatuhan Bulanan
-        </span>
+    <!-- Tabel Rekap Transaksi Kota -->
+    <div class="login-card" style="max-width: 100%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a;">Aktivitas Setoran Terkini</h3>
+        <span style="font-size: 0.8rem; color: #64748b;">Monitoring Langsung</span>
       </div>
 
-      <div class="table-responsive">
-        <table>
+      <div class="table-container">
+        <table class="data-table">
           <thead>
             <tr>
-              <th>Nama ASN</th>
-              <th>NIP / Identitas</th>
-              <th>Kelurahan / RT</th>
-              <th>Total Setoran</th>
-              <th class="text-center">Status Kepatuhan</th>
+              <th>Waktu</th>
+              <th>Nama Pengguna</th>
+              <th>Peran</th>
+              <th>Kategori</th>
+              <th>Berat (kg)</th>
+              <th>Poin Diberikan</th>
+              <th>Status</th>
             </tr>
           </thead>
-          <tbody id="asnTableBody">
+          <tbody id="tableAdminBody">
             <tr>
-              <td colspan="5" class="text-center" style="padding: 2rem; color: var(--text-muted);">
-                Memuat data kepatuhan ASN...
-              </td>
+              <td colspan="7" style="text-align: center; color: #94a3b8; padding: 24px;">Memuat rekapan data kota...</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
-
-    <!-- Card Ringkasan Tambahan -->
-    <div class="card card-highlight">
-      <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem;">Kebijakan Bank Sampah Kota Kendari</h3>
-      <p style="font-size: 0.825rem; color: #166534; margin: 0; line-height: 1.5;">
-        Akun Administrator, Petugas Lapangan, dan ASN telah diatur khusus melalui email kedinasan. Warga umum dapat melakukan auto-daftar mandiri tanpa perlu persetujuan manual, dan seluruh setoran diverifikasi langsung oleh petugas melalui pos timbang terdekat.
-      </p>
-    </div>
-
   </div>
 
-  <script type="module">
-    import { sb, periksaSesi, keluarSesi } from '/js/supabase.js';
-
-    const $ = (id) => document.getElementById(id);
-    const auth = await periksaSesi(['admin']);
-    if (!auth) throw new Error("Akses admin diperlukan");
-
-    $('adminName').textContent = auth.profil.nama || 'Admin DLH';
-    $('btnLogout').onclick = keluarSesi;
-
-    async function muatStatistik() {
-      try {
-        const { data: users, error } = await sb.from('users').select('*');
-        if (error) throw error;
-
-        const allUsers = users || [];
-        const asns = allUsers.filter(u => u.is_asn || u.peran === 'asn');
-        const patuhCount = asns.filter(u => (parseFloat(u.total_kg) || 0) >= 2.0).length;
-
-        const totalKg = allUsers.reduce((acc, u) => acc + (parseFloat(u.total_kg) || 0), 0);
-        const totalPoin = allUsers.reduce((acc, u) => acc + (Number(u.saldo_poin) || 0), 0);
-
-        $('kpiTotalAsn').textContent = asns.length;
-        $('kpiKepatuhan').textContent = asns.length ? `${Math.round((patuhCount / asns.length) * 100)}%` : '0%';
-        $('kpiVolumeKg').textContent = totalKg.toFixed(1);
-        $('kpiPoin').textContent = totalPoin.toLocaleString('id-ID');
-
-        const tbody = $('asnTableBody');
-        if (asns.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="color:var(--text-muted); padding:1.75rem;">Belum ada ASN terdaftar dalam sistem.</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = asns.map(a => {
-          const kg = parseFloat(a.total_kg) || 0;
-          const statusPatuh = kg >= 2.0;
-          return `
-            <tr>
-              <td>
-                <strong>${a.nama || 'ASN'}</strong>
-                <div style="font-size:0.75rem; color:var(--text-muted);">${a.email || '-'}</div>
-              </td>
-              <td style="font-family:monospace; font-size:0.85rem;">${a.nik_nip || '-'}</td>
-              <td>${a.kelurahan || '-'} &bull; ${a.rt || '-'}</td>
-              <td><strong>${kg.toFixed(1)} kg</strong></td>
-              <td class="text-center">
-                <span class="badge ${statusPatuh ? 'badge-patuh' : 'badge-menunggu'}">
-                  ${statusPatuh ? '✓ Patuh (≥2kg)' : 'Belum Patuh'}
-                </span>
-              </td>
-            </tr>
-          `;
-        }).join('');
-      } catch (err) {
-        console.error('Error muat statistik admin:', err);
-      }
-    }
-
-    muatStatistik();
-  </script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/supabase.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script type="module" src="../js/dashboard.js"></script>
 </body>
 </html>
