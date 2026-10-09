@@ -3,236 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eLOLA - Setor Sampah</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <title>Setor Sampah - eLOLA</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+
+  <!-- Navigasi -->
+  <nav class="navbar">
+    <a href="../index.html" class="brand">
+      <i class="fa-solid fa-leaf"></i> eLOLA
+    </a>
+    <ul class="nav-links">
+      <li><a href="setoran.html" class="nav-link active">Setor</a></li>
+      <li><a href="dompet.html" class="nav-link">Dompet Poin</a></li>
+      <li><a href="../peringkat.html" class="nav-link">Peringkat</a></li>
+      <li><a href="#" id="btnLogout" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar</a></li>
+    </ul>
+  </nav>
+
   <div class="container">
     
-    <!-- Top Header -->
-    <header>
-      <div>
-        <div class="brand-badge" style="font-size: 0.725rem; padding: 0.2rem 0.6rem; margin-bottom: 0.35rem;">
-          🌱 PORTAL NASABAH
+    <!-- Target Kepatuhan Kuota Bulanan -->
+    <div class="target-box">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main);">
+            <i class="fa-solid fa-bullseye" style="color: var(--primary);"></i> Target Setor Bulanan
+          </h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Sesuai himbauan pemilahan sampah berkala (Minimal 2.0 kg/bulan)</p>
         </div>
-        <h3 id="userName">Memuat data...</h3>
-        <p id="userUnit">-</p>
+        <span id="targetStatusText" style="font-size: 0.85rem; font-weight: 700; color: var(--primary);">0.0 / 2.0 kg</span>
       </div>
-      <div class="header-actions">
-        <button id="btnLogout" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.8rem; color: var(--danger); border-color: #fca5a5;">
-          Keluar
-        </button>
-      </div>
-    </header>
-
-    <!-- Navigasi Utama -->
-    <nav>
-      <a href="/warga/setoran.html" class="active">📝 Setor Sampah</a>
-      <a href="/warga/dompet.html">👛 Dompet Poin</a>
-      <a href="/peringkat.html">🏆 Peringkat RT</a>
-    </nav>
-
-    <!-- Aturan / Banner Khusus ASN atau Warga -->
-    <div id="asnNotice" class="rule-card hidden">
-      <div class="rule-header">
-        <span style="font-size: 1.1rem;">🏛️</span>
-        <span>Ketentuan Khusus ASN Balai Kota</span>
-      </div>
-      <div>
-        Anda terdaftar sebagai <strong>Aparatur Sipil Negara (ASN)</strong>. Setoran wajib diserahkan di <strong>Pos Balai Kota</strong> dengan target kepatuhan minimal <strong>2.0 kg per bulan</strong>.
+      <div class="progress-bar-container">
+        <div id="targetProgressBar" class="progress-bar-fill" style="width: 0%;"></div>
       </div>
     </div>
 
-    <!-- Card Form Setoran -->
+    <!-- Form Setor Sampah Card -->
     <div class="card">
-      <h3 style="margin-top: 0; font-size: 1.25rem;">Kirim Antrean Setoran Sampah</h3>
-      
-      <form id="formSetor">
-        <!-- 1. Kategori Sampah -->
-        <div class="form-group">
-          <label>1. Pilih Kategori Sampah</label>
-          <div class="category-chips" id="categoryChips">Memuat kategori sampah...</div>
-          <input type="hidden" id="selectedCategory" required>
-          <input type="hidden" id="categoryRate" value="0">
-        </div>
+      <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.4rem; color: var(--text-main);">
+        Formulir Setor Sampah
+      </h2>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+        Pilih jenis sampah, masukkan perkiraan berat, dan bawa sampahmu ke titik bank sampah terdekat.
+      </p>
 
-        <!-- 2. Estimasi Berat -->
-        <div class="form-group">
-          <label for="estimasiKg">2. Estimasi Berat Sampah (kg)</label>
-          <input 
-            type="number" 
-            step="0.1" 
-            id="estimasiKg" 
-            min="0.1" 
-            placeholder="Contoh: 2.5" 
-            required 
-          />
-          <div style="margin-top: 0.5rem; background: var(--bg-card-subtle); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--primary-soft); display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.825rem; color: var(--text-muted);">Estimasi Perolehan Poin:</span>
-            <span style="font-size: 1.05rem; font-weight: 800; color: var(--primary);">
-              <span id="estPoin">0</span> Poin
-            </span>
+      <form id="formSetoran">
+        <!-- 1. Kategori Sampah Card Selector -->
+        <label>Pilih Kategori Sampah:</label>
+        <div class="waste-grid">
+          <div class="waste-item selected" data-kategori="anorganik-plastik" data-bobot="20">
+            <span class="waste-icon">🧴</span>
+            <div class="waste-name">Plastik</div>
+            <div class="waste-rate">20 poin / kg</div>
+          </div>
+          <div class="waste-item" data-kategori="anorganik-kertas" data-bobot="15">
+            <span class="waste-icon">📦</span>
+            <div class="waste-name">Kertas / Dus</div>
+            <div class="waste-rate">15 poin / kg</div>
+          </div>
+          <div class="waste-item" data-kategori="anorganik-logam" data-bobot="35">
+            <span class="waste-icon">🥫</span>
+            <div class="waste-name">Logam / Kaleng</div>
+            <div class="waste-rate">35 poin / kg</div>
+          </div>
+          <div class="waste-item" data-kategori="organik" data-bobot="10">
+            <span class="waste-icon">🥬</span>
+            <div class="waste-name">Organik</div>
+            <div class="waste-rate">10 poin / kg</div>
+          </div>
+        </div>
+        <input type="hidden" id="selectedKategori" value="anorganik-plastik">
+        <input type="hidden" id="selectedBobot" value="20">
+
+        <!-- 2. Berat & Titik Setor -->
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="beratSampah">Perkiraan Berat (kg):</label>
+            <input type="number" id="beratSampah" step="0.1" min="0.1" placeholder="Contoh: 2.5" required>
+          </div>
+
+          <div class="form-group">
+            <label for="lokasiSetor">Lokasi Bank Sampah:</label>
+            <select id="lokasiSetor" required>
+              <option value="Unit Kelurahan Rahandouna">Bank Sampah Unit Kel. Rahandouna</option>
+              <option value="Unit Balai Kota Kendari">Bank Sampah Balai Kota Kendari</option>
+              <option value="Unit Lalolara">Bank Sampah Unit Lalolara</option>
+            </select>
           </div>
         </div>
 
-        <!-- 3. Foto Bukti (Opsional) -->
-        <div class="form-group">
-          <label for="fotoInput">3. Foto Sampah (Opsional)</label>
-          <input type="file" id="fotoInput" accept="image/*">
+        <!-- 3. Kotak Estimasi Live Poin -->
+        <div class="calc-box">
+          <div>
+            <div class="calc-title">Perkiraan Poin Didapat</div>
+            <small style="color: var(--text-muted); font-size: 0.8rem;">1 Poin bernilai setara Rp10</small>
+          </div>
+          <div style="text-align: right;">
+            <div class="calc-result" id="estimasiPoin">0 Poin</div>
+            <small style="color: #166534; font-weight: 700;" id="estimasiRupiah">~ Rp0</small>
+          </div>
         </div>
 
-        <!-- Tombol Kirim -->
-        <button type="submit" id="btnKirim" class="btn btn-primary" style="margin-top: 0.5rem;">
-          🚀 Kirim Antrean Setoran
+        <!-- 4. Upload Bukti Foto dengan Preview -->
+        <div class="form-group">
+          <label>Unggah Foto Sampah (Opsional):</label>
+          <div class="upload-area" id="uploadZone">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+            <p style="font-size: 0.9rem; font-weight: 600;">Klik atau seret foto sampah ke sini</p>
+            <small style="color: var(--text-muted);">Format JPG, PNG maksimal 5MB</small>
+            <input type="file" id="fotoSampah" accept="image/*" style="display: none;">
+            <img id="imagePreview" class="preview-img" alt="Pratinjau Foto">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+          <i class="fa-solid fa-paper-plane"></i> Kirim Setoran Sampah
         </button>
       </form>
     </div>
-
-    <!-- Riwayat 5 Setoran Terakhir -->
-    <div style="margin-top: 1.75rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-        <h3 style="margin: 0; font-size: 1.15rem; color: var(--forest-900);">Riwayat 5 Setoran Terakhir</h3>
-        <span style="font-size: 0.75rem; color: var(--text-muted);">Status Verifikasi Riil</span>
-      </div>
-      <div id="listSetoran">Memuat riwayat...</div>
-    </div>
-
   </div>
 
-  <script type="module">
-    import { sb, periksaSesi, keluarSesi } from '/js/supabase.js';
-
-    const $ = (id) => document.getElementById(id);
-    const auth = await periksaSesi(['warga', 'asn']);
-    if (!auth) throw new Error("Tidak berhak mengakses");
-
-    const isAsn = auth.profil.is_asn || auth.profil.peran === 'asn';
-    $('userName').textContent = auth.profil.nama + (isAsn ? ' (ASN)' : '');
-    $('userUnit').textContent = `Wilayah: ${auth.profil.kelurahan || 'Kadia'} • ${auth.profil.rt || 'RT 01'}`;
-    $('btnLogout').onclick = keluarSesi;
-
-    // Tampilkan notifikasi khusus jika ASN
-    if (isAsn) {
-      $('asnNotice').classList.remove('hidden');
-    }
-
-    // Muat Kategori Sampah dari Supabase
-    const { data: kategoriList } = await sb.from('kategori_sampah').select('*').order('id');
-    const chipContainer = $('categoryChips');
-    chipContainer.innerHTML = '';
-    
-    // Dedup kategori berdasarkan nama jika ada duplikasi di DB
-    const uniqueKategori = [];
-    const seenNames = new Set();
-    (kategoriList || []).forEach(k => {
-      if (!seenNames.has(k.nama)) {
-        seenNames.add(k.nama);
-        uniqueKategori.push(k);
-      }
-    });
-
-    uniqueKategori.forEach(kat => {
-      const chip = document.createElement('div');
-      chip.className = 'chip';
-      chip.textContent = `${kat.nama} (${kat.poin_per_kg} pt/kg)`;
-      chip.onclick = () => {
-        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        $('selectedCategory').value = kat.nama;
-        $('categoryRate').value = kat.poin_per_kg;
-        hitungPoin();
-      };
-      chipContainer.appendChild(chip);
-    });
-
-    function hitungPoin() {
-      const kg = parseFloat($('estimasiKg').value) || 0;
-      const rate = parseInt($('categoryRate').value) || 0;
-      $('estPoin').textContent = Math.round(kg * rate);
-    }
-    $('estimasiKg').addEventListener('input', hitungPoin);
-
-    // Kirim Setoran
-    $('formSetor').onsubmit = async (e) => {
-      e.preventDefault();
-      const kat = $('selectedCategory').value;
-      const kg = parseFloat($('estimasiKg').value);
-      if (!kat || !kg) return alert("Silakan pilih kategori dan isi estimasi berat sampah.");
-
-      const btn = $('btnKirim');
-      btn.disabled = true;
-      btn.textContent = "Mengirim Setoran...";
-
-      const estPoin = parseInt($('estPoin').textContent) || 0;
-      const { error } = await sb.from('transaksi_setoran').insert({
-        user_id: auth.session.user.id,
-        kategori: kat,
-        berat_kg: kg,
-        estimasi_poin: estPoin,
-        status: 'menunggu'
-      });
-
-      btn.disabled = false;
-      btn.textContent = "🚀 Kirim Antrean Setoran";
-
-      if (error) {
-        alert("Gagal mengirim setoran: " + error.message);
-      } else {
-        $('formSetor').reset();
-        $('estPoin').textContent = "0";
-        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        alert("Setoran berhasil dikirim ke antrean verifikasi petugas!");
-        muatRiwayat();
-      }
-    };
-
-    // Muat 5 Riwayat Terakhir
-    async function muatRiwayat() {
-      const { data: setoran } = await sb
-        .from('transaksi_setoran')
-        .select('*')
-        .eq('user_id', auth.session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      const list = $('listSetoran');
-      if (!setoran || setoran.length === 0) {
-        list.innerHTML = `
-          <div class="card text-center" style="padding: 2rem; color: var(--text-muted);">
-            Belum ada catatan setoran sampah. Mulai setor sekarang!
-          </div>
-        `;
-        return;
-      }
-
-      list.innerHTML = setoran.map(s => {
-        const tgl = new Date(s.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-        const poinText = s.status === 'terverifikasi' ? `+${s.poin_diterima || s.estimasi_poin} pt` : `~${s.estimasi_poin} pt`;
-
-        return `
-          <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:1.1rem 1.25rem;">
-            <div>
-              <div style="font-weight:700; color:var(--forest-900); font-size:0.95rem;">
-                ${s.kategori} &bull; ${s.berat_kg} kg
-              </div>
-              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-                Tanggal Pengajuan: ${tgl}
-              </div>
-            </div>
-            <div style="text-align:right;">
-              <span class="badge badge-${s.status}">
-                ${s.status === 'terverifikasi' ? '✓ Terverifikasi' : (s.status === 'ditolak' ? '✕ Ditolak' : '⏳ Menunggu')}
-              </span>
-              <div style="font-size:0.95rem; font-weight:800; color:var(--primary); margin-top:4px;">
-                ${poinText}
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    muatRiwayat();
-  </script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/supabase.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/setoran.js"></script>
 </body>
 </html>
