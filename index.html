@@ -5,78 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>eLOLA Kendari - Bank Sampah Digital</title>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="auth-body">
+<body>
 
-  <div class="auth-wrapper">
-    <div class="auth-card">
-      
-      <!-- Brand & Heading -->
-      <div class="brand-header">
-        <i class="fa-solid fa-leaf"></i> eLOLA KENDARI
-      </div>
-      <h1 class="auth-title">Bank Sampah Digital</h1>
-      <p class="auth-subtitle">Satu Portal Masuk Terpadu untuk Warga, ASN, Petugas, dan Admin DLH</p>
+  <div class="login-card">
+    <div class="brand-text">🌱 eLOLA KENDARI</div>
+    <h1 class="login-title">Bank Sampah Digital</h1>
+    <p class="login-desc">Satu Portal Masuk Terpadu untuk Warga, ASN, Petugas, dan Admin DLH</p>
 
-      <!-- Kotak Ketentuan Lokasi -->
-      <div class="info-rule-box">
-        <div style="font-weight: 700; margin-bottom: 0.25rem;">
-          <i class="fa-solid fa-circle-info"></i> Ketentuan Lokasi Setoran Sampah:
-        </div>
-        <div>• <b>Warga Umum:</b> Penyetoran sampah bebas di <b>Bank Sampah</b> terdekat.</div>
-        <div>• <b>ASN:</b> Wajib menyetorkan sampah di <b>Balai Kota</b> (minimal 2 kg/bulan).</div>
+    <div class="info-box">
+      <div class="info-box-title">ⓘ Ketentuan Lokasi Setoran Sampah</div>
+      <div><b>Warga Umum:</b> Penyetoran sampah bebas di <b>Bank Sampah</b> terdekat.</div>
+      <div><b>ASN:</b> Wajib menyetorkan sampah di <b>Balai Kota</b> (minimal 2 kg/bulan).</div>
+    </div>
+
+    <form id="formLogin">
+      <div class="form-group">
+        <label for="emailInput">Alamat Email / Akun Kedinasan</label>
+        <input type="email" id="emailInput" placeholder="contoh: nama@email.com atau akun@elola.go.id" required>
       </div>
 
-      <!-- Formulir Login -->
-      <form id="formLogin">
-        <div class="form-group">
-          <label for="emailInput">Alamat Email / Akun Kedinasan</label>
-          <input type="email" id="emailInput" placeholder="contoh: nama@email.com atau akun@elola.go.id" required>
-        </div>
+      <div class="form-group">
+        <label for="passwordInput">Kata Sandi</label>
+        <input type="password" id="passwordInput" placeholder="Minimal 6 karakter" required>
+      </div>
 
-        <div class="form-group">
-          <label for="passwordInput">Kata Sandi</label>
-          <input type="password" id="passwordInput" placeholder="Minimal 6 karakter" required>
-        </div>
+      <button type="submit" class="btn-submit" id="btnMasuk">Masuk ke Sistem</button>
+    </form>
 
-        <button type="submit" class="btn-submit" id="btnMasuk">
-          <i class="fa-solid fa-right-to-bracket"></i> Masuk ke Sistem
-        </button>
-      </form>
+    <button type="button" class="btn-auto-daftar" id="btnAutoDaftar">✨ Auto-Daftar Warga Baru</button>
 
-      <!-- Auto Daftar Warga -->
-      <button type="button" class="btn-register" id="btnAutoDaftar">
-        ✨ Auto-Daftar Warga Baru
-      </button>
-
-      <!-- Akun Demo & Cepat Isi -->
-      <div class="demo-section">
-        <details>
-          <summary class="demo-toggle">
-            <span><i class="fa-solid fa-shield-halved"></i> Informasi Akun Khusus & Demo</span>
-            <span style="font-size: 0.75rem; color: #059669;">Buka / Tutup</span>
-          </summary>
-          <div class="demo-content">
-            <p>Akun <b>Admin, Petugas, & ASN</b> menggunakan email kedinasan khusus yang didaftarkan oleh instansi. Warga umum bebas auto-daftar kapan saja.</p>
-            <div style="margin-top: 0.5rem; font-weight: 600; font-size: 0.75rem;">
-              Klik untuk isi otomatis (Password: <code>password123</code>):
-            </div>
-            <div class="demo-chips">
-              <button type="button" class="chip-btn" onclick="isiAkun('admin@dlh.kendari.go.id')">🔵 Admin DLH</button>
-              <button type="button" class="chip-btn" onclick="isiAkun('petugas@elola.kendari.go.id')">📋 Petugas</button>
-              <button type="button" class="chip-btn" onclick="isiAkun('asn@kendari.go.id')">🏛️ ASN Balai Kota</button>
-              <button type="button" class="chip-btn" onclick="isiAkun('warga.demo@gmail.com')">🏡 Warga Demo</button>
-            </div>
+    <div class="demo-wrapper">
+      <details>
+        <summary>🔒 Informasi Akun Khusus & Demo <span style="color: #16a34a;">▼ Buka</span></summary>
+        <div class="demo-content">
+          <p>Akun <b>Admin, Petugas, & ASN</b> menggunakan email kedinasan khusus yang didaftarkan oleh instansi. Warga umum bebas auto-daftar kapan saja.</p>
+          <p style="margin-top: 6px; font-weight: 600;">Klik untuk isi otomatis (Password: <code>password123</code>):</p>
+          <div class="demo-chips">
+            <button type="button" class="chip-btn" onclick="isiAkun('admin@dlh.kendari.go.id')">🔵 Admin DLH</button>
+            <button type="button" class="chip-btn" onclick="isiAkun('petugas@elola.kendari.go.id')">📋 Petugas</button>
+            <button type="button" class="chip-btn" onclick="isiAkun('asn@kendari.go.id')">🏛️ ASN Balai Kota</button>
+            <button type="button" class="chip-btn" onclick="isiAkun('warga.demo@gmail.com')">🏡 Warga Demo</button>
           </div>
-        </details>
-      </div>
+        </div>
+      </details>
+    </div>
 
-      <!-- Link Peringkat -->
-      <a href="peringkat.html" class="leaderboard-link">
-        🏆 Lihat Papan Peringkat RT se-Kota &rarr;
-      </a>
-
+    <div class="leaderboard-container">
+      <a href="peringkat.html" class="leaderboard-link">🏆 Lihat Papan Peringkat RT se-Kota &rarr;</a>
     </div>
   </div>
 
