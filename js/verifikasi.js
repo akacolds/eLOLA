@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const elTotalKg = document.getElementById('valTotalKgPetugas');
   const btnRefresh = document.getElementById('btnRefreshAntrean');
 
-  // Tarif poin per kategori sampah
   const TARIF_POIN = {
     'plastik': 100,
     'kertas-karton': 80,
@@ -15,17 +14,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     'kaca': 50
   };
 
-  // 1. Cek sesi login
   const { data: { session } } = await sb.auth.getSession();
   if (!session?.user) {
     window.location.href = '../index.html';
     return;
   }
 
-  // 2. Fungsi Utama Ambil & Render Data Antrean
   async function muatAntrean() {
     try {
-      // Ambil transaksi setoran beserta relasi nama & status pengguna
       const { data: listSetoran, error } = await sb
         .from('transaksi_setoran')
         .select(`
@@ -36,7 +32,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (error) throw error;
 
-      // Hitung ringkasan statistik
       const antreanPending = listSetoran.filter(s => (s.status || '').toLowerCase() === 'menunggu');
       const disetujuiHariIni = listSetoran.filter(s => {
         const isApproved = ['disetujui', 'approved', 'selesai'].includes((s.status || '').toLowerCase());
@@ -64,7 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // Render daftar antrean setoran
       tableBody.innerHTML = antreanPending.map((item) => {
         const tgl = item.created_at
           ? new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
@@ -76,7 +70,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const kategori = (item.kategori || 'plastik').replace(/-/g, ' ').toUpperCase();
         const estBerat = Number(item.berat_kg || 0).toFixed(1);
 
-        // Link bukti foto jika ada
         const fotoBtn = item.foto_url 
           ? `<a href="${item.foto_url}" target="_blank" style="font-size: 0.75rem; color: #0284c7; text-decoration: underline; display: block; margin-top: 2px;">Lihat Foto</a>`
           : `<span style="font-size: 0.72rem; color: #94a3b8; display: block; margin-top: 2px;">Tanpa Foto</span>`;
@@ -111,13 +104,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       pasangAksiTombol(antreanPending);
 
     } catch (err) {
-      console.error('Gagal memuat antrean petugas:', err);
+      console.error('Gagal memuat antrean:', err);
     }
   }
 
-  // 3. Listener Tombol Setujui dan Tolak
   function pasangAksiTombol(dataList) {
-    // Tombol Setujui
     document.querySelectorAll('.btn-approve').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
@@ -151,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           if (trxErr) throw trxErr;
 
-          // 2. Tambahkan saldo poin & akumulasi kg ke akun warga
+          // 2. Tambah saldo poin & akumulasi kg ke akun warga
           if (item.user_id && item.users) {
             const saldoBaru = (Number(item.users.saldo_poin) || 0) + poinFinal;
             const totalKgBaru = (Number(item.users.total_kg) || 0) + beratRiil;
@@ -165,7 +156,36 @@ document.addEventListener('DOMContentLoaded', async () => {
               .eq('id', item.user_id);
           }
 
-          // Antrean otomatis hilang dan grafik realtime langsung diperbarui
+          // 3. UPDATE OTOMATIS KE TABEL PERINGKAT_RT
+          const rtUser = item.users?.rt || 'RT 01';
+          const kelUser = item.users?.kelurahan || 'Kadia';
+
+          const { data: rtRow } = await sb
+            .from('peringkat_rt')
+            .select('*')
+            .eq('rt', rtUser)
+            .eq('kelurahan', kelUser)
+            .maybeSingle();
+
+          if (rtRow) {
+            await sb
+              .from('peringkat_rt')
+              .update({
+                total_kg: (Number(rtRow.total_kg) || 0) + beratRiil,
+                updated_at: new Date()
+              })
+              .eq('id', rtRow.id);
+          } else {
+            await sb
+              .from('peringkat_rt')
+              .insert({
+                rt: rtUser,
+                kelurahan: kelUser,
+                total_kg: beratRiil,
+                partisipan: 1
+              });
+          }
+
         } catch (err) {
           alert(`Gagal menyetujui setoran: ${err.message}`);
           btn.disabled = false;
@@ -174,11 +194,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // Tombol Tolak
     document.querySelectorAll('.btn-reject').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
-        if (!confirm('Apakah Anda yakin ingin menolak setoran ini?')) return;
+        if (!confirm('Yakin ingin menolak setoran ini?')) return;
 
         btn.disabled = true;
         btn.textContent = 'Menolak...';
@@ -199,19 +218,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 4. Supabase Realtime Listener (Antrean Otomatis Muncul Tanpa Refresh)
   sb.channel('realtime-antrean-petugas')
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'transaksi_setoran' },
-      () => {
-        muatAntrean();
-      }
+      () => muatAntrean()
     )
     .subscribe();
 
   btnRefresh?.addEventListener('click', muatAntrean);
 
-  // Muat data awal saat pertama kali buka
   muatAntrean();
 });
