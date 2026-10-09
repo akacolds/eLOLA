@@ -9,10 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const podium3Nama = document.getElementById('podium3Nama');
   const podium3Kg = document.getElementById('podium3Kg');
 
-  // 1. Fungsi Utama Mengambil dan Mengagregasi Data Peringkat RT
+  // Ambil dan akumulasikan data peringkat per RT
   async function muatPeringkat() {
     try {
-      // Ambil data seluruh warga yang memiliki kontribusi setoran sampah
       const { data: users, error } = await sb
         .from('users')
         .select('rt, kelurahan, total_kg');
@@ -31,10 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Agregasi / Rekapitulasi per Wilayah RT
+      // Rekapitulasi bobot per RT
       const rekap = {};
       users.forEach((item) => {
-        const rt = item.rt || 'RT Belum Diatur';
+        const rt = item.rt || 'RT 01';
         const kel = item.kelurahan || 'Kadia';
         const key = `${rt} - ${kel}`;
 
@@ -51,65 +50,32 @@ document.addEventListener('DOMContentLoaded', () => {
         rekap[key].partisipan += 1;
       });
 
-      // Urutkan peringkat berdasarkan akumulasi kilogram sampah terbanyak
+      // Urutkan dari total sampah tertinggi
       const peringkatList = Object.values(rekap).sort((a, b) => b.totalKg - a.totalKg);
 
-      // 2. Render Tampilan Podium 3 Besar
       renderPodium(peringkatList);
-
-      // 3. Render Tabel Lengkap
       renderTabel(peringkatList);
 
     } catch (err) {
-      console.error('Gagal memuat klasemen peringkat:', err);
-      if (tableBody) {
-        tableBody.innerHTML = `
-          <tr>
-            <td colspan="5" style="text-align: center; color: #dc2626; padding: 24px;">
-              Gagal memuat peringkat: ${err.message}
-            </td>
-          </tr>`;
-      }
+      console.error('Gagal mengambil peringkat:', err);
     }
   }
 
-  // Helper Render Podium
   function renderPodium(list) {
-    // Juara 1
     if (podium1Nama && podium1Kg) {
-      if (list[0]) {
-        podium1Nama.textContent = `${list[0].rt} ${list[0].kelurahan}`;
-        podium1Kg.textContent = `${list[0].totalKg.toFixed(1)} kg`;
-      } else {
-        podium1Nama.textContent = '-';
-        podium1Kg.textContent = '0.0 kg';
-      }
+      podium1Nama.textContent = list[0] ? `${list[0].rt} ${list[0].kelurahan}` : '-';
+      podium1Kg.textContent = list[0] ? `${list[0].totalKg.toFixed(1)} kg` : '0.0 kg';
     }
-
-    // Juara 2
     if (podium2Nama && podium2Kg) {
-      if (list[1]) {
-        podium2Nama.textContent = `${list[1].rt} ${list[1].kelurahan}`;
-        podium2Kg.textContent = `${list[1].totalKg.toFixed(1)} kg`;
-      } else {
-        podium2Nama.textContent = '-';
-        podium2Kg.textContent = '0.0 kg';
-      }
+      podium2Nama.textContent = list[1] ? `${list[1].rt} ${list[1].kelurahan}` : '-';
+      podium2Kg.textContent = list[1] ? `${list[1].totalKg.toFixed(1)} kg` : '0.0 kg';
     }
-
-    // Juara 3
     if (podium3Nama && podium3Kg) {
-      if (list[2]) {
-        podium3Nama.textContent = `${list[2].rt} ${list[2].kelurahan}`;
-        podium3Kg.textContent = `${list[2].totalKg.toFixed(1)} kg`;
-      } else {
-        podium3Nama.textContent = '-';
-        podium3Kg.textContent = '0.0 kg';
-      }
+      podium3Nama.textContent = list[2] ? `${list[2].rt} ${list[2].kelurahan}` : '-';
+      podium3Kg.textContent = list[2] ? `${list[2].totalKg.toFixed(1)} kg` : '0.0 kg';
     }
   }
 
-  // Helper Render Baris Tabel
   function renderTabel(list) {
     if (!tableBody) return;
 
@@ -127,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
           <td style="font-weight: 700;">${item.rt}</td>
           <td>${item.kelurahan}</td>
-          <td>${item.partisipan} Pengguna</td>
+          <td>${item.partisipan} Partisipan</td>
           <td style="text-align: right; font-weight: 800; color: #15803d;">
             ${item.totalKg.toFixed(1)} kg
           </td>
@@ -136,23 +102,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  // 4. Langganan Realtime Supabase (Listener Aktif)
-  const channelPeringkat = sb
-    .channel('realtime-peringkat')
+  // Listener Realtime Supabase untuk tabel users dan transaksi_setoran
+  sb.channel('realtime-klasemen')
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'users' },
-      () => {
-        // Otomatis kalkulasi dan render ulang ketika data users berubah
-        muatPeringkat();
-      }
+      () => muatPeringkat()
     )
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log('Realtime listener peringkat aktif.');
-      }
-    });
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'transaksi_setoran' },
+      () => muatPeringkat()
+    )
+    .subscribe();
 
-  // Muat data awal saat halaman terbuka
   muatPeringkat();
 });
