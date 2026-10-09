@@ -1,30 +1,22 @@
 import { sb } from './supabase.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initDashboard() {
   const elTotalKg = document.getElementById('adminTotalKg');
   const elKepatuhanAsn = document.getElementById('adminKepatuhanAsn');
   const elTotalPoin = document.getElementById('adminTotalPoin');
   const elTotalUsers = document.getElementById('adminTotalUsers');
   const tableBody = document.getElementById('tableAdminBody');
 
-  // 1. Cek sesi login
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session?.user) {
-    window.location.href = '../index.html';
-    return;
-  }
-
-  // 2. Ambil dan render data dashboard kota
   async function muatDashboardAdmin() {
     try {
-      // Ambil seluruh data pengguna
+      // 1. Ambil data seluruh pengguna
       const { data: users, error: errUsers } = await sb
         .from('users')
         .select('*');
 
       if (errUsers) throw errUsers;
 
-      // Ambil seluruh riwayat setoran
+      // 2. Ambil data seluruh transaksi setoran
       const { data: setoranList, error: errSetoran } = await sb
         .from('transaksi_setoran')
         .select('*')
@@ -32,45 +24,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (errSetoran) throw errSetoran;
 
-      // Pemetaan user berdasarkan ID agar tidak bergantung join database
       const userMap = {};
       (users || []).forEach(u => {
         userMap[u.id] = u;
       });
 
       // --- HITUNG STATISTIK KOTA ---
-      // Total sampah dari seluruh setoran yang disetujui
-      const totalKgKota = (setoranList || [])
+      const totalKgDariUsers = (users || []).reduce((sum, u) => sum + (Number(u.total_kg) || 0), 0);
+      const totalKgDariSetoran = (setoranList || [])
         .filter(s => ['disetujui', 'approved', 'selesai'].includes((s.status || '').toLowerCase()))
         .reduce((sum, s) => sum + (Number(s.berat_kg) || 0), 0);
+      
+      // Ambil nilai akumulasi terbesar antara tabel users atau transaksi
+      const totalKgKota = Math.max(totalKgDariUsers, totalKgDariSetoran);
 
-      // Kepatuhan ASN (Target wajib 2.0 kg/bulan)
-      const listAsn = (users || []).filter(u => u.is_asn || u.peran === 'asn');
+      // Hitung kepatuhan ASN (minimal 2.0 kg)
+      const listAsn = (users || []).filter(u => u.is_asn === true || u.peran === 'asn');
       const asnPatuh = listAsn.filter(u => Number(u.total_kg || 0) >= 2.0);
       const persentaseAsn = listAsn.length > 0 
         ? Math.round((asnPatuh.length / listAsn.length) * 100) 
         : 0;
 
-      // Total saldo poin yang beredar di masyarakat
+      // Total poin beredar & jumlah pengguna
       const totalPoinBeredar = (users || []).reduce((sum, u) => sum + (Number(u.saldo_poin) || 0), 0);
-
-      // Total seluruh akun terdaftar
       const totalPengguna = (users || []).length;
 
-      // Tampilkan ke ringkasan widget
+      // Perbarui widget angka
       if (elTotalKg) elTotalKg.textContent = `${totalKgKota.toFixed(1)} kg`;
       if (elKepatuhanAsn) elKepatuhanAsn.textContent = `${persentaseAsn}%`;
       if (elTotalPoin) elTotalPoin.textContent = totalPoinBeredar.toLocaleString('id-ID');
       if (elTotalUsers) elTotalUsers.textContent = totalPengguna.toLocaleString('id-ID');
 
-      // --- RENDER TABEL TRANSAKSI KOTA ---
+      // --- RENDER TABEL AKTIVITAS ---
       if (!tableBody) return;
 
       if (!setoranList || setoranList.length === 0) {
         tableBody.innerHTML = `
           <tr>
             <td colspan="7" style="text-align: center; color: #94a3b8; padding: 28px 14px;">
-              Belum ada aktivitas setoran sampah yang tercatat.
+              Belum ada riwayat setoran di sistem.
             </td>
           </tr>
         `;
@@ -126,12 +118,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       }).join('');
 
     } catch (err) {
-      console.error('Gagal memuat dashboard admin:', err);
+      console.error('Gagal memuat dashboard:', err);
       if (tableBody) {
         tableBody.innerHTML = `
           <tr>
             <td colspan="7" style="text-align: center; color: #dc2626; padding: 24px;">
-              Gagal memuat rekapan: ${err.message}
+              Gagal memuat data: ${err.message}
             </td>
           </tr>
         `;
@@ -139,20 +131,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 3. Supabase Realtime Listener
-  sb.channel('realtime-dashboard-admin')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'transaksi_setoran' },
-      () => muatDashboardAdmin()
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'users' },
-      () => muatDashboardAdmin()
-    )
+  // Realtime Supabase Listener
+  sb.channel('realtime-dashboard-admin-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'transaksi_setoran' }, () => muatDashboardAdmin())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => muatDashboardAdmin())
     .subscribe();
 
-  // Muat data awal
   muatDashboardAdmin();
-});
+}
+
+// Jalankan langsung jika DOM sudah siap
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDashboard);
+} else {
+  initDashboard();
+}
