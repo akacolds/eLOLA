@@ -13,7 +13,7 @@
     <h1 class="login-title">Bank Sampah Digital</h1>
     <p class="login-desc">Satu Portal Masuk Terpadu untuk Warga, ASN, Petugas, dan Admin DLH</p>
 
-    <!-- Wadah pesan status dan notifikasi dari auth.js -->
+    <!-- Tempat pesan status & notifikasi error -->
     <div id="authAlert" class="alert-box hidden"></div>
 
     <div class="info-box">
@@ -29,14 +29,14 @@
 
     <div class="form-group">
       <label for="inputPassword">Kata Sandi</label>
-      <input type="password" id="inputPassword" placeholder="Minimal 6 karakter" required>
+      <input type="password" id="inputPassword" placeholder="Masukkan kata sandi" required>
     </div>
 
     <button type="button" class="btn-submit" id="btnLogin">Masuk ke Sistem</button>
 
     <button type="button" class="btn-auto-daftar" id="btnAutoRegisterWarga">✨ Auto-Daftar Warga Baru</button>
 
-    <!-- Accordion Informasi Akun Demo -->
+    <!-- Bagian Akun Demo & Cepat Isi -->
     <div class="demo-wrapper">
       <div id="toggleDemoInfo" class="demo-header-toggle">
         <span>🔒 Informasi Akun Khusus & Demo</span>
@@ -44,12 +44,27 @@
       </div>
       <div id="demoContent" class="demo-content hidden">
         <p>Akun <b>Admin, Petugas, & ASN</b> menggunakan email kedinasan khusus yang didaftarkan oleh instansi. Warga umum bebas auto-daftar kapan saja.</p>
-        <p style="margin-top: 6px; font-weight: 600;">Klik untuk isi otomatis (Password: <code>password123</code>):</p>
+        <p style="margin-top: 6px; font-weight: 600;">Klik untuk isi otomatis:</p>
         <div class="demo-chips">
-          <button type="button" class="chip-btn demo-pill" data-email="admin@dlh.kendari.go.id" data-role="Admin DLH">🔵 Admin DLH</button>
-          <button type="button" class="chip-btn demo-pill" data-email="petugas@elola.kendari.go.id" data-role="Petugas">📋 Petugas</button>
-          <button type="button" class="chip-btn demo-pill" data-email="asn@kendari.go.id" data-role="ASN Balai Kota">🏛️ ASN Balai Kota</button>
-          <button type="button" class="chip-btn demo-pill" data-email="warga.demo@gmail.com" data-role="Warga Demo">🏡 Warga Demo</button>
+          <button type="button" class="chip-btn demo-pill" 
+                  data-email="admin@elola.go.id" 
+                  data-password="ADMIN" 
+                  data-role="Admin DLH">🔵 Admin DLH</button>
+
+          <button type="button" class="chip-btn demo-pill" 
+                  data-email="petugas@elola.go.id" 
+                  data-password="PETUGAS" 
+                  data-role="Petugas">📋 Petugas</button>
+
+          <button type="button" class="chip-btn demo-pill" 
+                  data-email="asn@elola.go.id" 
+                  data-password="ASN" 
+                  data-role="ASN Balai Kota">🏛️ ASN Balai Kota</button>
+
+          <button type="button" class="chip-btn demo-pill" 
+                  data-email="warga.demo@gmail.com" 
+                  data-password="WARGA.DEMO" 
+                  data-role="Warga Demo">🏡 Warga Demo</button>
         </div>
       </div>
     </div>
