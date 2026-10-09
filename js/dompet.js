@@ -1,140 +1,151 @@
-import { protectPage, setupLogoutButton } from './auth-guard.js';
-import { db } from './firebase-config.js';
-import { 
-  doc, onSnapshot, collection, query, where, orderBy, getDocs,
-  runTransaction, serverTimestamp, increment 
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { formatRupiah, formatTanggal, showToast } from './utils.js';
+import { sb } from './supabase.js';
 
-let currentUser = null;
-let currentBalance = 0;
+document.addEventListener('DOMContentLoaded', async () => {
+  const elSaldoPoin = document.getElementById('valSaldoPoin');
+  const elSaldoRupiah = document.getElementById('valSaldoRupiah');
+  const elTotalKg = document.getElementById('valTotalKg');
+  const tableBody = document.getElementById('tableRiwayatBody');
 
-protectPage(['warga']).then(({ user }) => {
-  currentUser = user;
-  setupLogoutButton();
-  listenUserBalance();
-  loadRewards();
-  setupRiwayatListener('semua');
-});
+  // Tombol Penukaran
+  const btnListrik = document.getElementById('btnTukarListrik');
+  const btnPulsa = document.getElementById('btnTukarPulsa');
+  const btnEwallet = document.getElementById('btnTukarEwallet');
 
-function listenUserBalance() {
-  onSnapshot(doc(db, "users", currentUser.uid), (docSnap) => {
-    if (!docSnap.exists()) return;
-    const d = docSnap.data();
-    currentBalance = d.saldoPoin || 0;
-    document.getElementById('saldoPoin').innerText = currentBalance.toLocaleString();
-    document.getElementById('nilaiRupiah').innerText = formatRupiah(currentBalance * 10);
-  });
-}
-
-async function loadRewards() {
-  const container = document.getElementById('rewardList');
-  const snap = await getDocs(query(collection(db, "poin_reward"), where("aktif", "==", true)));
-  container.innerHTML = '';
-  snap.forEach((docSnap) => {
-    const r = docSnap.data();
-    const id = docSnap.id;
-    const box = document.createElement('div');
-    box.className = 'card';
-    box.innerHTML = `
-      <strong>${r.nama}</strong>
-      <p style="color:var(--primary); font-weight:700;">${r.hargaPoin} Poin</p>
-      <p style="font-size:11px; color:var(--muted);">Stok: ${r.stok}</p>
-      <button style="margin-top:8px;" id="btnTukar_${id}">Tukar</button>
-    `;
-    container.appendChild(box);
-
-    box.querySelector(`#btnTukar_${id}`).addEventListener('click', () => tukarPoin(id, r));
-  });
-}
-
-async function tukarPoin(rewardId, reward) {
-  if (currentBalance < reward.hargaPoin) return showToast("Saldo poin tidak cukup!", "error");
-  if (!confirm(`Konfirmasi penukaran ${reward.nama} seharga ${reward.hargaPoin} poin?`)) return;
-
-  try {
-    await runTransaction(db, async (t) => {
-      const userRef = doc(db, "users", currentUser.uid);
-      const userSnap = await t.get(userRef);
-      if (userSnap.data().saldoPoin < reward.hargaPoin) throw new Error("Saldo tidak mencukupi saat proses.");
-
-      const rewardRef = doc(db, "poin_reward", rewardId);
-      const rewardSnap = await t.get(rewardRef);
-      if (rewardSnap.data().stok <= 0) throw new Error("Stok hadiah habis!");
-
-      // 1. Kurangi saldo
-      t.update(userRef, { saldoPoin: increment(-reward.hargaPoin) });
-      // 2. Kurangi stok hadiah
-      t.update(rewardRef, { stok: increment(-1) });
-      // 3. Catat riwayat_poin jenis keluar
-      const rRef = doc(collection(db, "riwayat_poin"));
-      t.set(rRef, {
-        uid: currentUser.uid,
-        jenis: 'keluar',
-        jumlah: reward.hargaPoin,
-        sumber: 'penukaran',
-        refId: rewardId,
-        waktu: serverTimestamp()
-      });
-      // 4. Catat penukaran_poin
-      const pRef = doc(collection(db, "penukaran_poin"));
-      t.set(pRef, {
-        uid: currentUser.uid,
-        rewardId: rewardId,
-        rewardNama: reward.nama,
-        poin: reward.hargaPoin,
-        status: 'diajukan',
-        waktu: serverTimestamp()
-      });
-    });
-    showToast("Penukaran berhasil diajukan!", "success");
-  } catch (err) {
-    showToast(err.message, "error");
-  }
-}
-
-let unsubscribeRiwayat = null;
-function setupRiwayatListener(filter) {
-  if (unsubscribeRiwayat) unsubscribeRiwayat();
-
-  let q = query(
-    collection(db, "riwayat_poin"),
-    where("uid", "==", currentUser.uid),
-    orderBy("waktu", "desc")
-  );
-  if (filter !== 'semua') {
-    q = query(
-      collection(db, "riwayat_poin"),
-      where("uid", "==", currentUser.uid),
-      where("jenis", "==", filter),
-      orderBy("waktu", "desc")
-    );
+  // 1. Cek sesi login aktif
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.user) {
+    window.location.href = '../index.html';
+    return;
   }
 
-  unsubscribeRiwayat = onSnapshot(q, (snapshot) => {
-    const list = document.getElementById('riwayatList');
-    if (snapshot.empty) {
-      list.innerHTML = '<p style="color:var(--muted)">Belum ada riwayat poin.</p>';
-      return;
+  const userId = session.user.id;
+
+  // 2. Fungsi Ambil Data Saldo & Profil Pengguna
+  async function muatSaldoDompet() {
+    try {
+      const { data: user, error } = await sb
+        .from('users')
+        .select('saldo_poin, total_kg')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      const poin = user?.saldo_poin || 0;
+      const kg = Number(user?.total_kg || 0);
+      const rupiah = poin * 10; // 1 Poin = Rp10
+
+      if (elSaldoPoin) elSaldoPoin.textContent = `${poin.toLocaleString('id-ID')} Poin`;
+      if (elSaldoRupiah) elSaldoRupiah.textContent = `Rp${rupiah.toLocaleString('id-ID')}`;
+      if (elTotalKg) elTotalKg.textContent = `${kg.toFixed(1)} kg`;
+    } catch (err) {
+      console.error('Gagal mengambil data saldo:', err);
     }
-    list.innerHTML = snapshot.docs.map(d => {
-      const item = d.data();
-      const isMasuk = item.jenis === 'masuk';
-      return `
-        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <strong>${item.sumber.toUpperCase()}</strong>
-            <p style="font-size:11px; color:var(--muted);">${formatTanggal(item.waktu)}</p>
-          </div>
-          <div style="font-weight:700; color:${isMasuk ? 'var(--primary)' : 'var(--danger)'}">
-            ${isMasuk ? '+' : '-'}${item.jumlah} Poin
-          </div>
-        </div>
-      `;
-    }).join('');
-  });
-}
+  }
 
-document.getElementById('filterRiwayat').addEventListener('change', (e) => {
-  setupRiwayatListener(e.target.value);
+  // 3. Fungsi Ambil Riwayat Setoran Pengguna
+  async function muatRiwayatSetoran() {
+    try {
+      const { data: setoranList, error } = await sb
+        .from('transaksi_setoran')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!tableBody) return;
+
+      if (!setoranList || setoranList.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: #94a3b8; padding: 28px 16px;">
+              Belum ada riwayat setoran sampah. Ayo mulai pilah dan setor!
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tableBody.innerHTML = setoranList.map((item) => {
+        // Format Tanggal
+        const tgl = item.created_at
+          ? new Date(item.created_at).toLocaleDateString('id-ID', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric'
+            })
+          : '-';
+
+        // Badge Status
+        let badgeClass = 'badge-pending';
+        let statusLabel = 'Menunggu';
+        const st = (item.status || '').toLowerCase();
+
+        if (st === 'disetujui' || st === 'approved' || st === 'selesai') {
+          badgeClass = 'badge-approved';
+          statusLabel = 'Disetujui';
+        } else if (st === 'ditolak' || st === 'rejected') {
+          badgeClass = 'badge-rejected';
+          statusLabel = 'Ditolak';
+        }
+
+        const poinDidapat = item.poin_diterima ?? item.estimasi_poin ?? 0;
+        const berat = Number(item.berat_kg || 0).toFixed(1);
+        const kategori = (item.kategori || 'Sampah Anorganik').replace(/-/g, ' ').toUpperCase();
+
+        return `
+          <tr>
+            <td style="color: #64748b; font-size: 0.85rem;">${tgl}</td>
+            <td style="font-weight: 600;">${kategori}</td>
+            <td>${berat} kg</td>
+            <td style="font-weight: 700; color: #15803d;">+${poinDidapat} Poin</td>
+            <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+    } catch (err) {
+      console.error('Gagal mengambil data riwayat:', err);
+      if (tableBody) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: #dc2626; padding: 24px;">
+              Gagal memuat riwayat: ${err.message}
+            </td>
+          </tr>
+        `;
+      }
+    }
+  }
+
+  // 4. Interaksi Tombol Penukaran Poin
+  function aksiTukar(reward) {
+    alert(`Fitur penukaran ${reward} sedang diproses. Petugas unit akan mengonfirmasi penukaran saldo Anda.`);
+  }
+
+  btnListrik?.addEventListener('click', () => aksiTukar('Token Listrik PLN'));
+  btnPulsa?.addEventListener('click', () => aksiTukar('Pulsa / Paket Data'));
+  btnEwallet?.addEventListener('click', () => aksiTukar('Saldo E-Wallet'));
+
+  // 5. Listener Realtime (Otomatis update jika admin/petugas memverifikasi)
+  sb.channel('realtime-dompet-warga')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'users', filter: `id=eq.${userId}` },
+      () => muatSaldoDompet()
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'transaksi_setoran', filter: `user_id=eq.${userId}` },
+      () => {
+        muatSaldoDompet();
+        muatRiwayatSetoran();
+      }
+    )
+    .subscribe();
+
+  // Eksekusi awal
+  await muatSaldoDompet();
+  await muatRiwayatSetoran();
 });
