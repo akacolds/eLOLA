@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const podium3Nama = document.getElementById('podium3Nama');
   const podium3Kg = document.getElementById('podium3Kg');
 
-  // Ambil data langsung dari tabel peringkat_rt
   async function muatPeringkat() {
     try {
       const { data, error } = await sb
@@ -24,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
           tableBody.innerHTML = `
             <tr>
               <td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">
-                Belum ada data peringkat.
+                Belum ada data peringkat wilayah.
               </td>
             </tr>`;
         }
@@ -41,15 +40,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderPodium(list) {
     if (podium1Nama && podium1Kg) {
-      podium1Nama.textContent = list[0] ? `${list[0].rt} ${list[0].kelurahan}` : '-';
+      podium1Nama.innerHTML = list[0] ? `<b>${list[0].rt}</b><br><small style="color: #64748b;">${list[0].kelurahan}</small>` : '-';
       podium1Kg.textContent = list[0] ? `${Number(list[0].total_kg).toFixed(1)} kg` : '0.0 kg';
     }
     if (podium2Nama && podium2Kg) {
-      podium2Nama.textContent = list[1] ? `${list[1].rt} ${list[1].kelurahan}` : '-';
+      podium2Nama.innerHTML = list[1] ? `<b>${list[1].rt}</b><br><small style="color: #64748b;">${list[1].kelurahan}</small>` : '-';
       podium2Kg.textContent = list[1] ? `${Number(list[1].total_kg).toFixed(1)} kg` : '0.0 kg';
     }
     if (podium3Nama && podium3Kg) {
-      podium3Nama.textContent = list[2] ? `${list[2].rt} ${list[2].kelurahan}` : '-';
+      podium3Nama.innerHTML = list[2] ? `<b>${list[2].rt}</b><br><small style="color: #64748b;">${list[2].kelurahan}</small>` : '-';
       podium3Kg.textContent = list[2] ? `${Number(list[2].total_kg).toFixed(1)} kg` : '0.0 kg';
     }
   }
@@ -69,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td style="text-align: center;">
             <span class="rank-badge ${badgeClass}">${rank}</span>
           </td>
-          <td style="font-weight: 700;">${item.rt}</td>
+          <td style="font-weight: 700; color: #0f172a;">${item.rt}</td>
           <td>${item.kelurahan}</td>
           <td>${item.partisipan} Partisipan</td>
           <td style="text-align: right; font-weight: 800; color: #15803d;">
@@ -81,13 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Listener Realtime khusus tabel peringkat_rt
-  sb.channel('realtime-peringkat-channel')
+  sb.channel('realtime-peringkat-lalolara')
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'peringkat_rt' },
-      () => {
-        muatPeringkat();
-      }
+      () => muatPeringkat()
     )
     .subscribe();
 
