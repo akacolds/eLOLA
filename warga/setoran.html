@@ -9,98 +9,81 @@
 <body>
 
   <div class="main-wrapper">
-    <!-- Navbar Atas -->
+    <!-- Navbar Warga -->
     <nav class="navbar-inner">
       <a href="setoran.html" class="nav-brand">🌱 eLOLA KENDARI</a>
       <ul class="nav-menu">
         <li class="nav-item"><a href="setoran.html" class="active">Setor</a></li>
         <li class="nav-item"><a href="dompet.html">Dompet Poin</a></li>
         <li class="nav-item"><a href="../peringkat.html">Peringkat</a></li>
-        <li class="nav-item"><button id="btnLogout" class="btn-logout">Keluar</button></li>
+        <li class="nav-item"><button type="button" id="btnLogout" class="btn-logout">Keluar</button></li>
       </ul>
     </nav>
 
-    <!-- Target Setoran Bulanan -->
-    <div class="target-summary-card">
+    <!-- Target Kuota ASN (Otomatis Tampil Khusus ASN) -->
+    <div id="targetAsnCard" class="target-summary-card hidden">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <div style="font-weight: 700; font-size: 0.95rem; color: #0f172a;">Target Setor Bulan Ini</div>
-          <div style="font-size: 0.8rem; color: #64748b;">Himbauan pemilahan berkala (Minimal 2.0 kg/bulan)</div>
-        </div>
-        <div id="targetText" style="font-weight: 800; color: #15803d; font-size: 0.9rem;">0.0 / 2.0 kg</div>
+        <span style="font-weight: 700; font-size: 0.9rem; color: #166534;">Target Wajib Setor ASN (Bulan Ini)</span>
+        <span id="targetAsnStatus" style="font-size: 0.8rem; font-weight: 800; color: #15803d;">0 / 2 kg</span>
       </div>
       <div class="progress-track">
-        <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
+        <div id="targetProgressBar" class="progress-bar"></div>
       </div>
     </div>
 
-    <!-- Formulir Setoran -->
+    <!-- Form Setor Sampah -->
     <div class="login-card" style="max-width: 100%;">
-      <div class="brand-text">FORMULIR PENYETORAN</div>
-      <h1 class="login-title" style="font-size: 1.5rem;">Input Data Sampah</h1>
-      <p class="login-desc">Pilih jenis sampah, masukkan timbangan, dan tentukan unit tujuan.</p>
+      <div class="brand-text">FORM PENYETORAN SAMPAH</div>
+      <h1 class="login-title" style="font-size: 1.4rem;">Pilah & Setor Sampah</h1>
+      <p class="login-desc">Tukarkan sampah terpilah Anda menjadi saldo poin digital.</p>
 
-      <form id="formSetoran">
-        <!-- 1. Kategori Sampah -->
-        <div class="form-group">
-          <label>Pilih Kategori Sampah</label>
-          <div class="waste-options">
-            <div class="waste-card-option active" data-kategori="anorganik-plastik" data-bobot="20">
-              <div class="waste-option-name">🧴 Plastik</div>
-              <div class="waste-option-rate">20 Poin/kg</div>
-            </div>
-            <div class="waste-card-option" data-kategori="anorganik-kertas" data-bobot="15">
-              <div class="waste-option-name">📦 Kertas / Dus</div>
-              <div class="waste-option-rate">15 Poin/kg</div>
-            </div>
-            <div class="waste-card-option" data-kategori="anorganik-logam" data-bobot="35">
-              <div class="waste-option-name">🥫 Logam / Kaleng</div>
-              <div class="waste-option-rate">35 Poin/kg</div>
-            </div>
-            <div class="waste-card-option" data-kategori="organik" data-bobot="10">
-              <div class="waste-option-name">🥬 Organik</div>
-              <div class="waste-option-rate">10 Poin/kg</div>
-            </div>
+      <div id="setorAlert" class="alert-box hidden"></div>
+
+      <div class="form-group">
+        <label>Pilih Kategori Sampah</label>
+        <div class="waste-options">
+          <div class="waste-card-option active" data-kategori="plastik" data-poin="100">
+            <div class="waste-option-name">🧴 Plastik</div>
+            <div class="waste-option-rate">100 Poin / kg</div>
           </div>
-          <input type="hidden" id="selectedKategori" value="anorganik-plastik">
-          <input type="hidden" id="selectedBobot" value="20">
-        </div>
-
-        <!-- 2. Berat & Lokasi -->
-        <div class="form-group">
-          <label for="beratSampah">Perkiraan Berat (kg)</label>
-          <input type="number" id="beratSampah" step="0.1" min="0.1" placeholder="Contoh: 2.5" required>
-        </div>
-
-        <div class="form-group">
-          <label for="lokasiSetor">Lokasi Penyetoran</label>
-          <select id="lokasiSetor" class="form-group" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; font-size: 0.95rem;" required>
-            <option value="Unit Kelurahan Rahandouna">Bank Sampah Unit Kel. Rahandouna</option>
-            <option value="Unit Balai Kota Kendari">Bank Sampah Balai Kota Kendari</option>
-            <option value="Unit Lalolara">Bank Sampah Unit Lalolara</option>
-          </select>
-        </div>
-
-        <!-- 3. Estimasi Perolehan Poin -->
-        <div class="calc-summary-box">
-          <div>
-            <div class="calc-summary-label">Estimasi Poin Didapat</div>
-            <small style="color: #94a3b8; font-size: 0.75rem;">1 Poin setara Rp10</small>
+          <div class="waste-card-option" data-kategori="kertas-karton" data-poin="80">
+            <div class="waste-option-name">📦 Kertas & Kardus</div>
+            <div class="waste-option-rate">80 Poin / kg</div>
           </div>
-          <div style="text-align: right;">
-            <div id="estimasiPoin" class="calc-summary-value">0 Poin</div>
-            <small id="estimasiRupiah" style="font-weight: 700; color: #166534;">~ Rp0</small>
+          <div class="waste-card-option" data-kategori="logam" data-poin="250">
+            <div class="waste-option-name">🥫 Logam & Kaleng</div>
+            <div class="waste-option-rate">250 Poin / kg</div>
+          </div>
+          <div class="waste-card-option" data-kategori="kaca" data-poin="50">
+            <div class="waste-option-name">🍾 Kaca / Botol</div>
+            <div class="waste-option-rate">50 Poin / kg</div>
           </div>
         </div>
+      </div>
 
-        <button type="submit" class="btn-submit" id="btnKirim">Kirim Data Setoran</button>
-      </form>
+      <div class="form-group" style="margin-top: 18px;">
+        <label for="inputBerat">Estimasi Berat Sampah (kg)</label>
+        <input type="number" id="inputBerat" step="0.1" min="0.1" placeholder="Contoh: 1.5" required>
+      </div>
+
+      <div class="calc-summary-box">
+        <div>
+          <div class="calc-summary-label">Estimasi Perolehan Saldo Poin</div>
+          <div style="font-size: 0.75rem; color: #94a3b8;">Dihitung otomatis per kilogram</div>
+        </div>
+        <div class="calc-summary-value" id="valEstimasiPoin">0 Poin</div>
+      </div>
+
+      <div class="form-group">
+        <label for="inputCatatan">Catatan Tambahan (Opsional)</label>
+        <input type="text" id="inputCatatan" placeholder="Contoh: Botol air mineral sudah dipres ringkas">
+      </div>
+
+      <button type="button" class="btn-submit" id="btnKirimSetoran">Kirim Pengajuan Setoran</button>
     </div>
   </div>
 
-  <script src="../js/utils.js"></script>
-  <script src="../js/supabase.js"></script>
-<script type="module" src="../js/auth-guard.js"></script>
-  <script src="../js/setoran.js"></script>
+  <script type="module" src="../js/auth-guard.js"></script>
+  <script type="module" src="../js/setoran.js"></script>
 </body>
 </html>
