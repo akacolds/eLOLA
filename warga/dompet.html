@@ -3,199 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eLOLA - Dompet Poin & Hadiah</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <title>Dompet Poin - eLOLA Kendari</title>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-  <div class="container">
-    
-    <!-- Top Header -->
-    <header>
-      <div>
-        <div class="brand-badge" style="font-size: 0.725rem; padding: 0.2rem 0.6rem; margin-bottom: 0.35rem;">
-          🌱 DOMPET NASABAH
-        </div>
-        <h3 id="userName">Dompet Poin Sampah</h3>
-        <p id="userUnit">-</p>
-      </div>
-      <div class="header-actions">
-        <button id="btnLogout" class="btn btn-secondary" style="padding: 0.45rem 0.85rem; font-size: 0.8rem; color: var(--danger); border-color: #fca5a5;">
-          Keluar
-        </button>
-      </div>
-    </header>
 
-    <!-- Navigasi -->
-    <nav>
-      <a href="/warga/setoran.html">📝 Setor Sampah</a>
-      <a href="/warga/dompet.html" class="active">👛 Dompet Poin</a>
-      <a href="/peringkat.html">🏆 Peringkat RT</a>
+  <div class="main-wrapper">
+    <!-- Navbar Warga -->
+    <nav class="navbar-inner">
+      <a href="setoran.html" class="nav-brand">🌱 eLOLA KENDARI</a>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="setoran.html">Setor</a></li>
+        <li class="nav-item"><a href="dompet.html" class="active">Dompet Poin</a></li>
+        <li class="nav-item"><a href="../peringkat.html">Peringkat</a></li>
+        <li class="nav-item"><button id="btnLogout" class="btn-logout">Keluar</button></li>
+      </ul>
     </nav>
 
-    <!-- Saldo Poin Card -->
-    <div class="card card-highlight" style="padding: 1.75rem 1.5rem; text-align: center; border: 1.5px solid var(--primary-border);">
-      <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
-        Total Saldo Poin Anda
+    <!-- Ringkasan Saldo -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-box-label">Saldo Poin Aktif</div>
+        <div class="stat-box-val" id="valSaldoPoin">0 Poin</div>
+        <div class="stat-box-sub">Terkumpul dari verifikasi sampah</div>
       </div>
-      <div style="font-size: 3rem; font-weight: 800; color: var(--forest-900); margin: 0.35rem 0 0.1rem 0; line-height: 1.1;" id="saldoPoin">
-        0
+      <div class="stat-box">
+        <div class="stat-box-label">Nilai Konversi</div>
+        <div class="stat-box-val" id="valSaldoRupiah" style="color: #0284c7;">Rp0</div>
+        <div class="stat-box-sub">Kurs: 1 Poin = Rp10</div>
       </div>
-      <div style="font-size: 0.95rem; font-weight: 700; color: var(--primary);" id="nilaiRupiah">
-        Setara Rp0
-      </div>
-      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.65rem;">
-        Konversi: 1 Poin = Rp100 &bull; Poin dapat ditukar hadiah sembako atau token
-      </div>
-    </div>
-
-    <!-- Katalog Hadiah -->
-    <div style="margin-top: 2rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
-        <h3 style="margin: 0; font-size: 1.15rem; color: var(--forest-900);">🎁 Katalog Penukaran Hadiah</h3>
-        <span style="font-size: 0.75rem; color: var(--text-muted);">Stok Terbatas</span>
-      </div>
-      <div id="rewardList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <div class="card text-center" style="grid-column: 1 / -1; color: var(--text-muted);">
-          Memuat katalog hadiah...
-        </div>
+      <div class="stat-box">
+        <div class="stat-box-label">Total Sampah Disetor</div>
+        <div class="stat-box-val" id="valTotalKg" style="color: #334155;">0.0 kg</div>
+        <div class="stat-box-sub">Akumulasi seluruh setoran</div>
       </div>
     </div>
 
-    <!-- Riwayat Mutasi Poin -->
-    <div style="margin-top: 1.5rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
-        <h3 style="margin: 0; font-size: 1.15rem; color: var(--forest-900);">📋 Riwayat Mutasi Poin</h3>
-        <span style="font-size: 0.75rem; color: var(--text-muted);">Masuk & Keluar</span>
-      </div>
-      <div id="riwayatList">
-        <div class="card text-center" style="color: var(--text-muted);">
-          Memuat riwayat...
-        </div>
+    <!-- Kotak Penukaran Poin Cepat -->
+    <div class="login-card" style="max-width: 100%; margin-bottom: 20px;">
+      <div class="brand-text">REWARD & REKENING DIGITAL</div>
+      <h2 class="login-title" style="font-size: 1.3rem;">Tukar Poin Sampah</h2>
+      <p class="login-desc">Pilih metode pencairan saldo bank sampah Anda.</p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+        <button type="button" class="btn-auto-daftar" style="margin-top: 0; padding: 12px 8px;" id="btnTukarListrik">
+          ⚡ Token Listrik PLN
+        </button>
+        <button type="button" class="btn-auto-daftar" style="margin-top: 0; padding: 12px 8px;" id="btnTukarPulsa">
+          📱 Pulsa / Kuota
+        </button>
+        <button type="button" class="btn-auto-daftar" style="margin-top: 0; padding: 12px 8px;" id="btnTukarEwallet">
+          💳 Saldo E-Wallet
+        </button>
       </div>
     </div>
 
+    <!-- Riwayat Transaksi -->
+    <div class="login-card" style="max-width: 100%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #0f172a;">Riwayat Poin & Setoran</h3>
+        <span style="font-size: 0.8rem; color: #64748b;">Terakhir diperbarui</span>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Kategori / Aktivitas</th>
+              <th>Berat (kg)</th>
+              <th>Perolehan Poin</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableRiwayatBody">
+            <tr>
+              <td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">Memuat data riwayat...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
-  <script type="module">
-    import { sb, periksaSesi, keluarSesi } from '/js/supabase.js';
-
-    const $ = (id) => document.getElementById(id);
-    const auth = await periksaSesi(['warga', 'asn']);
-    if (!auth) throw new Error("Tidak berhak mengakses");
-
-    $('userName').textContent = auth.profil.nama + (auth.profil.is_asn ? ' (ASN)' : '');
-    $('userUnit').textContent = `Wilayah: ${auth.profil.kelurahan || 'Kadia'} • ${auth.profil.rt || 'RT 01'}`;
-    $('btnLogout').onclick = keluarSesi;
-
-    function renderSaldo(poin) {
-      $('saldoPoin').textContent = Number(poin).toLocaleString('id-ID');
-      $('nilaiRupiah').textContent = `Setara Rp${(poin * 100).toLocaleString('id-ID')}`;
-    }
-    renderSaldo(auth.profil.saldo_poin || 0);
-
-    // Katalog Hadiah
-    async function muatReward() {
-      const { data: rewards, error } = await sb.from('poin_reward').select('*').order('poin_dibutuhkan');
-      const box = $('rewardList');
-      if (error || !rewards || rewards.length === 0) {
-        box.innerHTML = '<div class="card text-center" style="grid-column:1/-1; color:var(--text-muted);">Belum ada hadiah aktif tersedia.</div>';
-        return;
-      }
-
-      // Dedup reward berdasarkan judul jika ada
-      const uniqueRewards = [];
-      const seenTitles = new Set();
-      rewards.forEach(r => {
-        if (!seenTitles.has(r.judul)) {
-          seenTitles.add(r.judul);
-          uniqueRewards.push(r);
-        }
-      });
-
-      box.innerHTML = uniqueRewards.map(r => `
-        <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between; border-top: 3px solid var(--primary);">
-          <div>
-            <b style="color:var(--forest-900); font-size:0.95rem;">${r.judul}</b>
-            <div style="color:var(--primary); font-weight:800; font-size:1.15rem; margin:0.4rem 0 0.2rem;">
-              ${r.poin_dibutuhkan} <span style="font-size:0.8rem; font-weight:600;">poin</span>
-            </div>
-            <small style="color:var(--text-muted);">Sisa Stok: <strong>${r.stok}</strong> unit</small>
-          </div>
-          <button class="btn btn-tukar btn-tukar-reward" data-id="${r.id}" data-poin="${r.poin_dibutuhkan}" data-judul="${r.judul}" style="margin-top:0.85rem; padding:0.55rem 0.85rem; font-size:0.825rem;">
-            Tukar Poin
-          </button>
-        </div>
-      `).join('');
-
-      document.querySelectorAll('.btn-tukar-reward').forEach(b => {
-        b.onclick = () => tukarPoin(b.dataset.id, parseInt(b.dataset.poin), b.dataset.judul);
-      });
-    }
-
-    async function tukarPoin(rewardId, butuhPoin, judul) {
-      if ((auth.profil.saldo_poin || 0) < butuhPoin) {
-        return alert("Poin Anda tidak mencukupi untuk menukar hadiah ini.");
-      }
-      if (!confirm(`Konfirmasi penukaran ${butuhPoin} poin untuk ${judul}?`)) return;
-
-      const sisa = auth.profil.saldo_poin - butuhPoin;
-      const { error: errUpdate } = await sb.from('users').update({ saldo_poin: sisa }).eq('id', auth.session.user.id);
-      if (errUpdate) return alert("Gagal memproses penukaran: " + errUpdate.message);
-
-      await sb.from('riwayat_poin').insert({
-        user_id: auth.session.user.id,
-        judul: `Penukaran: ${judul}`,
-        poin: -butuhPoin,
-        tipe: 'keluar'
-      });
-
-      await sb.from('penukaran_poin').insert({
-        user_id: auth.session.user.id,
-        reward_id: rewardId,
-        poin_dipakai: butuhPoin,
-        status: 'diajukan'
-      });
-
-      auth.profil.saldo_poin = sisa;
-      renderSaldo(sisa);
-      muatRiwayat();
-      alert("Penukaran berhasil dicatat! Silakan ambil hadiah di pos bank sampah.");
-    }
-
-    // Riwayat Poin
-    async function muatRiwayat() {
-      const { data: riwayat } = await sb
-        .from('riwayat_poin')
-        .select('*')
-        .eq('user_id', auth.session.user.id)
-        .order('created_at', { ascending: false });
-
-      const box = $('riwayatList');
-      if (!riwayat || riwayat.length === 0) {
-        box.innerHTML = '<div class="card text-center" style="color:var(--text-muted); padding:1.5rem;">Belum ada riwayat mutasi poin.</div>';
-        return;
-      }
-
-      box.innerHTML = riwayat.map(r => {
-        const isMasuk = (r.poin > 0) || r.tipe === 'masuk';
-        const tgl = new Date(r.created_at).toLocaleDateString('id-ID', { dateStyle: 'medium' });
-
-        return `
-          <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:0.95rem 1.15rem; margin-bottom:0.65rem;">
-            <div>
-              <b style="color:var(--forest-900); font-size:0.9rem;">${r.judul}</b>
-              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${tgl}</div>
-            </div>
-            <div style="font-weight:800; font-size:1rem; color:${isMasuk ? 'var(--primary)' : 'var(--danger)'};">
-              ${isMasuk ? '+' : ''}${r.poin} pt
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    muatReward();
-    muatRiwayat();
-  </script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/supabase.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script type="module" src="../js/dompet.js"></script>
 </body>
 </html>
