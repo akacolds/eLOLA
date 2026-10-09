@@ -1,6 +1,9 @@
 import { sb } from './supabase.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const selectKelurahan = document.getElementById('selectKelurahan');
+  const selectRw = document.getElementById('selectRw');
+  const selectRt = document.getElementById('selectRt');
   const options = document.querySelectorAll('.waste-card-option');
   const inputBerat = document.getElementById('inputBerat');
   const inputCatatan = document.getElementById('inputCatatan');
@@ -11,7 +14,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnKirim = document.getElementById('btnKirimSetoran');
   const setorAlert = document.getElementById('setorAlert');
 
-  // Widget Target ASN
   const targetAsnCard = document.getElementById('targetAsnCard');
   const targetAsnStatus = document.getElementById('targetAsnStatus');
   const targetProgressBar = document.getElementById('targetProgressBar');
@@ -19,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let selectedKategori = 'plastik';
   let poinRate = 100;
 
-  // 1. Cek sesi & profil user
+  // 1. Validasi sesi aktif
   const { data: { session } } = await sb.auth.getSession();
   if (!session?.user) {
     window.location.href = '../index.html';
@@ -28,22 +30,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const userId = session.user.id;
 
-  // Cek apakah akun ASN untuk menampilkan target 2 kg
+  // 2. Ambil profil warga dan parse wilayah RT / RW
   const { data: userProfil } = await sb
     .from('users')
-    .select('is_asn, peran, total_kg')
+    .select('is_asn, peran, total_kg, rt, kelurahan')
     .eq('id', userId)
     .maybeSingle();
 
-  if (userProfil?.is_asn || userProfil?.peran === 'asn') {
-    targetAsnCard?.classList.remove('hidden');
-    const kgSekarang = Number(userProfil.total_kg || 0);
-    const persen = Math.min(100, Math.round((kgSekarang / 2.0) * 100));
-    if (targetAsnStatus) targetAsnStatus.textContent = `${kgSekarang.toFixed(1)} / 2.0 kg (${persen}%)`;
-    if (targetProgressBar) targetProgressBar.style.width = `${persen}%`;
+  if (userProfil) {
+    if (userProfil.kelurahan && selectKelurahan) {
+      selectKelurahan.value = userProfil.kelurahan;
+    }
+
+    if (userProfil.rt) {
+      if (userProfil.rt.includes(' / ')) {
+        const [rtVal, rwVal] = userProfil.rt.split(' / ');
+        if (selectRt && rtVal) selectRt.value = rtVal.trim();
+        if (selectRw && rwVal) selectRw.value = rwVal.trim();
+      } else {
+        if (selectRt) selectRt.value = userProfil.rt;
+      }
+    }
+
+    // Evaluasi kuota wajib ASN
+    if (userProfil.is_asn || userProfil.peran === 'asn') {
+      targetAsnCard?.classList.remove('hidden');
+      const kgSekarang = Number(userProfil.total_kg || 0);
+      const persen = Math.min(100, Math.round((kgSekarang / 2.0) * 100));
+      if (targetAsnStatus) targetAsnStatus.textContent = `${kgSekarang.toFixed(1)} / 2.0 kg (${persen}%)`;
+      if (targetProgressBar) targetProgressBar.style.width = `${persen}%`;
+    }
   }
 
-  // 2. Pemilihan Kategori Sampah
+  // 3. Pilihan jenis sampah
   options.forEach(opt => {
     opt.addEventListener('click', () => {
       options.forEach(o => o.classList.remove('active'));
@@ -54,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // 3. Kalkulasi Estimasi Poin
+  // 4. Hitung estimasi poin
   function hitungEstimasi() {
     const berat = parseFloat(inputBerat.value) || 0;
     const totalPoin = Math.round(berat * poinRate);
@@ -66,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   inputBerat?.addEventListener('input', hitungEstimasi);
 
-  // 4. Pratinjau Foto Bukti
+  // 5. Pratinjau foto bukti
   inputFoto?.addEventListener('change', () => {
     const file = inputFoto.files[0];
     if (file) {
@@ -89,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setorAlert.classList.remove('hidden');
   }
 
-  // 5. Kirim Pengajuan Setoran
+  // 6. Pengiriman setoran
   btnKirim?.addEventListener('click', async () => {
     setorAlert?.classList.add('hidden');
     const berat = parseFloat(inputBerat.value);
@@ -99,14 +118,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const kelurahanPilihan = selectKelurahan ? selectKelurahan.value : 'Lalolara';
+    const rtPilihan = selectRt ? selectRt.value : 'RT 01';
+    const rwPilihan = selectRw ? selectRw.value : 'RW 01';
+    const formatWilayah = `${rtPilihan} / ${rwPilihan}`;
+
     btnKirim.disabled = true;
-    btnKirim.textContent = 'Mengirim data...';
+    btnKirim.textContent = 'Menyimpan...';
 
     try {
       let fotoUrl = null;
       const file = inputFoto?.files[0];
 
-      // Upload file ke Storage jika pengguna memilih foto
+      // Unggah gambar ke Supabase Storage (jika disertakan)
       if (file) {
         btnKirim.textContent = 'Mengunggah foto...';
         const fileExt = file.name.split('.').pop();
@@ -121,14 +145,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             .from('bukti-setoran')
             .getPublicUrl(filePath);
           fotoUrl = urlData.publicUrl;
-        } else {
-          console.warn('Gagal unggah foto ke storage:', uploadErr.message);
         }
       }
 
-      btnKirim.textContent = 'Menyimpan setoran...';
-      const estimasiPoin = hitungEstimasi();
+      // Perbarui domisili RT/RW di profil pengguna
+      await sb
+        .from('users')
+        .update({
+          rt: formatWilayah,
+          kelurahan: kelurahanPilihan
+        })
+        .eq('id', userId);
 
+      // Simpan setoran ke database
+      const estimasiPoin = hitungEstimasi();
       const { error: insertErr } = await sb
         .from('transaksi_setoran')
         .insert({
@@ -143,16 +173,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (insertErr) throw insertErr;
 
-      showAlert('Setoran berhasil diajukan! Menunggu verifikasi petugas bank sampah.', 'success');
-      inputBerat.value = '';
-      if (inputCatatan) inputCatatan.value = '';
-      if (inputFoto) inputFoto.value = '';
-      previewContainer?.classList.add('hidden');
-      hitungEstimasi();
-
+      showAlert(`Setoran berhasil diajukan untuk ${formatWilayah} ${kelurahanPilihan}! Mengalihkan...`, 'success');
       setTimeout(() => {
         window.location.href = 'dompet.html';
-      }, 1200);
+      }, 1000);
 
     } catch (err) {
       showAlert(err.message || 'Gagal mengirim pengajuan setoran.', 'error');
