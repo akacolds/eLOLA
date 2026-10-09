@@ -152,6 +152,11 @@ body {
   margin-top: 10px;
 }
 
+/* Wajib ada agar class hidden menyembunyikan elemen */
+.hidden {
+  display: none !important;
+}
+
 .chip-btn {
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
