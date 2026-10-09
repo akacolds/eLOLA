@@ -1,7 +1,6 @@
 import { sb } from './supabase.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
-  // Cek apakah halaman berada di dalam subfolder (warga, petugas, admin)
+async function initGuard() {
   const isSubFolder = 
     window.location.pathname.includes('/warga/') || 
     window.location.pathname.includes('/petugas/') || 
@@ -9,28 +8,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const loginPath = isSubFolder ? '../index.html' : 'index.html';
 
-  // 1. Validasi Sesi Pengguna
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) {
-    window.location.href = loginPath;
-    return;
-  }
-
-  // 2. Hubungkan Tombol Keluar (Logout)
+  // 1. Pasang fungsi klik tombol logout
   const btnLogout = document.getElementById('btnLogout');
   if (btnLogout) {
     btnLogout.addEventListener('click', async (e) => {
       e.preventDefault();
-      btnLogout.textContent = 'Memproses...';
+      btnLogout.textContent = 'Keluar...';
       btnLogout.style.pointerEvents = 'none';
 
       try {
         await sb.auth.signOut();
       } catch (err) {
-        console.error('Gagal keluar dari sesi:', err);
+        console.error('Gagal keluar:', err);
       } finally {
-        window.location.href = loginPath;
+        window.location.replace(loginPath);
       }
     });
   }
-});
+
+  // 2. Periksa apakah pengguna memiliki sesi login aktif
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    window.location.replace(loginPath);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initGuard);
+} else {
+  initGuard();
+}
