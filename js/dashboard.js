@@ -1,86 +1,158 @@
-import { protectPage, setupLogoutButton } from './auth-guard.js';
-import { db } from './firebase-config.js';
-import { collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getBulanKey } from './utils.js';
+import { sb } from './supabase.js';
 
-protectPage(['admin']).then(() => {
-  setupLogoutButton();
-  initDashboard();
-});
+document.addEventListener('DOMContentLoaded', async () => {
+  const elTotalKg = document.getElementById('adminTotalKg');
+  const elKepatuhanAsn = document.getElementById('adminKepatuhanAsn');
+  const elTotalPoin = document.getElementById('adminTotalPoin');
+  const elTotalUsers = document.getElementById('adminTotalUsers');
+  const tableBody = document.getElementById('tableAdminBody');
 
-function initDashboard() {
-  const bulanKey = getBulanKey();
+  // 1. Cek sesi login
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.user) {
+    window.location.href = '../index.html';
+    return;
+  }
 
-  // 1. Dengarkan rekap_rt untuk total volume, poin, dan grafik batang RT
-  onSnapshot(collection(db, "rekap_rt"), (snap) => {
-    let totKg = 0;
-    let totPoin = 0;
-    const rtData = [];
+  // 2. Ambil dan render data dashboard kota
+  async function muatDashboardAdmin() {
+    try {
+      // Ambil seluruh data pengguna
+      const { data: users, error: errUsers } = await sb
+        .from('users')
+        .select('*');
 
-    snap.forEach(d => {
-      const item = d.data();
-      totKg += (item.totalKg || 0);
-      totPoin += (item.totalPoin || 0);
-      rtData.push({ label: `${item.kelurahan} ${item.rt}`.toUpperCase(), kg: item.totalKg || 0 });
-    });
+      if (errUsers) throw errUsers;
 
-    document.getElementById('kpiVolumeKg').innerText = totKg.toFixed(1);
-    document.getElementById('kpiPoin').innerText = totPoin.toLocaleString();
+      // Ambil seluruh riwayat setoran
+      const { data: setoranList, error: errSetoran } = await sb
+        .from('transaksi_setoran')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    // Gambar grafik batang horizontal dengan CSS murni
-    const maxKg = Math.max(...rtData.map(r => r.kg), 1);
-    document.getElementById('chartVolumeRt').innerHTML = rtData.map(r => `
-      <div>
-        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;">
-          <span>${r.label}</span>
-          <span><strong>${r.kg.toFixed(1)} kg</strong></span>
-        </div>
-        <div style="background:#e2e8f0; height:12px; border-radius:6px; overflow:hidden;">
-          <div style="background:var(--primary); width:${(r.kg / maxKg) * 100}%; height:100%;"></div>
-        </div>
-      </div>
-    `).join('');
-  });
+      if (errSetoran) throw errSetoran;
 
-  // 2. Dengarkan rekap_kepatuhan_asn bulan ini
-  const qAsn = query(collection(db, "rekap_kepatuhan_asn"), where("bulan", "==", bulanKey));
-  onSnapshot(qAsn, (snap) => {
-    const instansiMap = {};
-    let totalAsnAktif = 0;
-    let totalPatuh = 0;
+      // Pemetaan user berdasarkan ID agar tidak bergantung join database
+      const userMap = {};
+      (users || []).forEach(u => {
+        userMap[u.id] = u;
+      });
 
-    snap.forEach(d => {
-      const data = d.data();
-      const instansi = data.instansi || 'Lainnya';
-      if (!instansiMap[instansi]) instansiMap[instansi] = { total: 0, patuh: 0 };
-      instansiMap[instansi].total += 1;
-      totalAsnAktif += 1;
-      if (data.patuh) {
-        instansiMap[instansi].patuh += 1;
-        totalPatuh += 1;
+      // --- HITUNG STATISTIK KOTA ---
+      // Total sampah dari seluruh setoran yang disetujui
+      const totalKgKota = (setoranList || [])
+        .filter(s => ['disetujui', 'approved', 'selesai'].includes((s.status || '').toLowerCase()))
+        .reduce((sum, s) => sum + (Number(s.berat_kg) || 0), 0);
+
+      // Kepatuhan ASN (Target wajib 2.0 kg/bulan)
+      const listAsn = (users || []).filter(u => u.is_asn || u.peran === 'asn');
+      const asnPatuh = listAsn.filter(u => Number(u.total_kg || 0) >= 2.0);
+      const persentaseAsn = listAsn.length > 0 
+        ? Math.round((asnPatuh.length / listAsn.length) * 100) 
+        : 0;
+
+      // Total saldo poin yang beredar di masyarakat
+      const totalPoinBeredar = (users || []).reduce((sum, u) => sum + (Number(u.saldo_poin) || 0), 0);
+
+      // Total seluruh akun terdaftar
+      const totalPengguna = (users || []).length;
+
+      // Tampilkan ke ringkasan widget
+      if (elTotalKg) elTotalKg.textContent = `${totalKgKota.toFixed(1)} kg`;
+      if (elKepatuhanAsn) elKepatuhanAsn.textContent = `${persentaseAsn}%`;
+      if (elTotalPoin) elTotalPoin.textContent = totalPoinBeredar.toLocaleString('id-ID');
+      if (elTotalUsers) elTotalUsers.textContent = totalPengguna.toLocaleString('id-ID');
+
+      // --- RENDER TABEL TRANSAKSI KOTA ---
+      if (!tableBody) return;
+
+      if (!setoranList || setoranList.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 28px 14px;">
+              Belum ada aktivitas setoran sampah yang tercatat.
+            </td>
+          </tr>
+        `;
+        return;
       }
-    });
 
-    document.getElementById('kpiTotalAsn').innerText = totalAsnAktif;
-    const pct = totalAsnAktif > 0 ? ((totalPatuh / totalAsnAktif) * 100).toFixed(0) : 0;
-    document.getElementById('kpiKepatuhan').innerText = `${pct}%`;
+      tableBody.innerHTML = setoranList.map(item => {
+        const profil = userMap[item.user_id] || {};
+        const namaUser = profil.nama || 'Warga';
+        const peranUser = (profil.peran || 'warga').toUpperCase();
 
-    const tbody = document.getElementById('asnTableBody');
-    if (Object.keys(instansiMap).length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--muted);">Belum ada setoran ASN bulan ini.</td></tr>';
-      return;
+        const tgl = item.created_at
+          ? new Date(item.created_at).toLocaleDateString('id-ID', {
+              day: '2-digit',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          : '-';
+
+        const kategori = (item.kategori || 'plastik').replace(/-/g, ' ').toUpperCase();
+        const berat = Number(item.berat_kg || 0).toFixed(1);
+        const poin = item.poin_diterima ?? item.estimasi_poin ?? 0;
+
+        let badgeClass = 'badge-pending';
+        let statusLabel = 'Menunggu';
+        const st = (item.status || '').toLowerCase();
+
+        if (st === 'disetujui' || st === 'approved' || st === 'selesai') {
+          badgeClass = 'badge-approved';
+          statusLabel = 'Disetujui';
+        } else if (st === 'ditolak' || st === 'rejected') {
+          badgeClass = 'badge-rejected';
+          statusLabel = 'Ditolak';
+        }
+
+        return `
+          <tr>
+            <td style="color: #64748b; font-size: 0.85rem;">${tgl}</td>
+            <td>
+              <div style="font-weight: 700; color: #0f172a;">${namaUser}</div>
+              <div style="font-size: 0.75rem; color: #64748b;">${profil.rt || 'RT -'} • ${profil.kelurahan || 'Lalolara'}</div>
+            </td>
+            <td>
+              <span class="badge" style="background: #f1f5f9; color: #334155;">${peranUser}</span>
+            </td>
+            <td style="font-weight: 600;">${kategori}</td>
+            <td>${berat} kg</td>
+            <td style="font-weight: 700; color: #15803d;">+${poin}</td>
+            <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+    } catch (err) {
+      console.error('Gagal memuat dashboard admin:', err);
+      if (tableBody) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; color: #dc2626; padding: 24px;">
+              Gagal memuat rekapan: ${err.message}
+            </td>
+          </tr>
+        `;
+      }
     }
+  }
 
-    tbody.innerHTML = Object.entries(instansiMap).map(([ins, val]) => {
-      const p = ((val.patuh / val.total) * 100).toFixed(0);
-      return `
-        <tr>
-          <td><strong>${ins}</strong></td>
-          <td>${val.total}</td>
-          <td>${val.patuh}</td>
-          <td><span class="badge ${p >= 50 ? 'badge-terverifikasi' : 'badge-ditolak'}">${p}%</span></td>
-        </tr>
-      `;
-    }).join('');
-  });
-}
+  // 3. Supabase Realtime Listener
+  sb.channel('realtime-dashboard-admin')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'transaksi_setoran' },
+      () => muatDashboardAdmin()
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'users' },
+      () => muatDashboardAdmin()
+    )
+    .subscribe();
+
+  // Muat data awal
+  muatDashboardAdmin();
+});
