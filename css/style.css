@@ -28,7 +28,7 @@ body {
 /* Kartu Login / Auth */
 .login-card {
   width: 100%;
-  max-width: 580px;
+  max-width: 500px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
