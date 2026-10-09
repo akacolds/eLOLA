@@ -20,7 +20,7 @@
       </ul>
     </nav>
 
-    <!-- Target Kuota ASN (Otomatis Tampil Khusus ASN) -->
+    <!-- Target Kuota ASN -->
     <div id="targetAsnCard" class="target-summary-card hidden">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <span style="font-weight: 700; font-size: 0.9rem; color: #166534;">Target Wajib Setor ASN (Bulan Ini)</span>
@@ -74,9 +74,18 @@
         <div class="calc-summary-value" id="valEstimasiPoin">0 Poin</div>
       </div>
 
+      <!-- Input Bukti Foto (Opsional) -->
+      <div class="form-group">
+        <label for="inputFoto">Bukti Foto Sampah (Opsional)</label>
+        <input type="file" id="inputFoto" accept="image/*">
+        <div id="previewContainer" class="hidden" style="margin-top: 10px;">
+          <img id="imgPreview" src="" alt="Pratinjau Foto" style="max-height: 180px; border-radius: 8px; border: 1px solid #cbd5e1; object-fit: cover; display: block;">
+        </div>
+      </div>
+
       <div class="form-group">
         <label for="inputCatatan">Catatan Tambahan (Opsional)</label>
-        <input type="text" id="inputCatatan" placeholder="Contoh: Botol air mineral sudah dipres ringkas">
+        <input type="text" id="inputCatatan" placeholder="Contoh: Botol plastik bersih sudah dipres ringkas">
       </div>
 
       <button type="button" class="btn-submit" id="btnKirimSetoran">Kirim Pengajuan Setoran</button>
