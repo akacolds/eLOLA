@@ -13,42 +13,45 @@
     <h1 class="login-title">Bank Sampah Digital</h1>
     <p class="login-desc">Satu Portal Masuk Terpadu untuk Warga, ASN, Petugas, dan Admin DLH</p>
 
+    <!-- Tempat pesan status & error dari auth.js -->
+    <div id="authAlert" class="alert-box hidden"></div>
+
     <div class="info-box">
       <div class="info-box-title">ⓘ Ketentuan Lokasi Setoran Sampah</div>
       <div><b>Warga Umum:</b> Penyetoran sampah bebas di <b>Bank Sampah</b> terdekat.</div>
       <div><b>ASN:</b> Wajib menyetorkan sampah di <b>Balai Kota</b> (minimal 2 kg/bulan).</div>
     </div>
 
-    <form id="formLogin">
-      <div class="form-group">
-        <label for="emailInput">Alamat Email / Akun Kedinasan</label>
-        <input type="email" id="emailInput" placeholder="contoh: nama@email.com atau akun@elola.go.id" required>
-      </div>
+    <div class="form-group">
+      <label for="inputEmail">Alamat Email / Akun Kedinasan</label>
+      <input type="email" id="inputEmail" placeholder="contoh: nama@email.com atau akun@elola.go.id" required>
+    </div>
 
-      <div class="form-group">
-        <label for="passwordInput">Kata Sandi</label>
-        <input type="password" id="passwordInput" placeholder="Minimal 6 karakter" required>
-      </div>
+    <div class="form-group">
+      <label for="inputPassword">Kata Sandi</label>
+      <input type="password" id="inputPassword" placeholder="Minimal 6 karakter" required>
+    </div>
 
-      <button type="submit" class="btn-submit" id="btnMasuk">Masuk ke Sistem</button>
-    </form>
+    <button type="button" class="btn-submit" id="btnLogin">Masuk ke Sistem</button>
 
-    <button type="button" class="btn-auto-daftar" id="btnAutoDaftar">✨ Auto-Daftar Warga Baru</button>
+    <button type="button" class="btn-auto-daftar" id="btnAutoRegisterWarga">✨ Auto-Daftar Warga Baru</button>
 
+    <!-- Bagian Akun Demo & Cepat Isi -->
     <div class="demo-wrapper">
-      <details>
-        <summary>🔒 Informasi Akun Khusus & Demo <span style="color: #16a34a;">▼ Buka</span></summary>
-        <div class="demo-content">
-          <p>Akun <b>Admin, Petugas, & ASN</b> menggunakan email kedinasan khusus yang didaftarkan oleh instansi. Warga umum bebas auto-daftar kapan saja.</p>
-          <p style="margin-top: 6px; font-weight: 600;">Klik untuk isi otomatis (Password: <code>password123</code>):</p>
-          <div class="demo-chips">
-            <button type="button" class="chip-btn" onclick="isiAkun('admin@dlh.kendari.go.id')">🔵 Admin DLH</button>
-            <button type="button" class="chip-btn" onclick="isiAkun('petugas@elola.kendari.go.id')">📋 Petugas</button>
-            <button type="button" class="chip-btn" onclick="isiAkun('asn@kendari.go.id')">🏛️ ASN Balai Kota</button>
-            <button type="button" class="chip-btn" onclick="isiAkun('warga.demo@gmail.com')">🏡 Warga Demo</button>
-          </div>
+      <div id="toggleDemoInfo" class="demo-header-toggle">
+        <span>🔒 Informasi Akun Khusus & Demo</span>
+        <span id="demoChevron" style="color: #16a34a; font-weight: 700;">▼ Buka</span>
+      </div>
+      <div id="demoContent" class="demo-content hidden">
+        <p>Akun <b>Admin, Petugas, & ASN</b> menggunakan email kedinasan khusus yang didaftarkan oleh instansi. Warga umum bebas auto-daftar kapan saja.</p>
+        <p style="margin-top: 6px; font-weight: 600;">Klik untuk isi otomatis (Password: <code>password123</code>):</p>
+        <div class="demo-chips">
+          <button type="button" class="chip-btn demo-pill" data-email="admin@dlh.kendari.go.id" data-role="Admin DLH">🔵 Admin DLH</button>
+          <button type="button" class="chip-btn demo-pill" data-email="petugas@elola.kendari.go.id" data-role="Petugas">📋 Petugas</button>
+          <button type="button" class="chip-btn demo-pill" data-email="asn@kendari.go.id" data-role="ASN Balai Kota">🏛️ ASN Balai Kota</button>
+          <button type="button" class="chip-btn demo-pill" data-email="warga.demo@gmail.com" data-role="Warga Demo">🏡 Warga Demo</button>
         </div>
-      </details>
+      </div>
     </div>
 
     <div class="leaderboard-container">
@@ -56,14 +59,7 @@
     </div>
   </div>
 
-  <script src="js/utils.js"></script>
-  <script src="js/supabase.js"></script>
-  <script src="js/auth.js"></script>
-  <script>
-    function isiAkun(email) {
-      document.getElementById('emailInput').value = email;
-      document.getElementById('passwordInput').value = 'password123';
-    }
-  </script>
+  <!-- PENTING: harus ada type="module" -->
+  <script type="module" src="js/auth.js"></script>
 </body>
 </html>
