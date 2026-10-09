@@ -9,70 +9,48 @@ document.addEventListener('DOMContentLoaded', () => {
   const podium3Nama = document.getElementById('podium3Nama');
   const podium3Kg = document.getElementById('podium3Kg');
 
-  // Ambil dan akumulasikan data peringkat per RT
+  // Ambil data langsung dari tabel peringkat_rt
   async function muatPeringkat() {
     try {
-      const { data: users, error } = await sb
-        .from('users')
-        .select('rt, kelurahan, total_kg');
+      const { data, error } = await sb
+        .from('peringkat_rt')
+        .select('*')
+        .order('total_kg', { ascending: false });
 
       if (error) throw error;
 
-      if (!users || users.length === 0) {
+      if (!data || data.length === 0) {
         if (tableBody) {
           tableBody.innerHTML = `
             <tr>
               <td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">
-                Belum ada data setoran sampah.
+                Belum ada data peringkat.
               </td>
             </tr>`;
         }
         return;
       }
 
-      // Rekapitulasi bobot per RT
-      const rekap = {};
-      users.forEach((item) => {
-        const rt = item.rt || 'RT 01';
-        const kel = item.kelurahan || 'Kadia';
-        const key = `${rt} - ${kel}`;
-
-        if (!rekap[key]) {
-          rekap[key] = {
-            rt: rt,
-            kelurahan: kel,
-            totalKg: 0,
-            partisipan: 0
-          };
-        }
-
-        rekap[key].totalKg += Number(item.total_kg) || 0;
-        rekap[key].partisipan += 1;
-      });
-
-      // Urutkan dari total sampah tertinggi
-      const peringkatList = Object.values(rekap).sort((a, b) => b.totalKg - a.totalKg);
-
-      renderPodium(peringkatList);
-      renderTabel(peringkatList);
+      renderPodium(data);
+      renderTabel(data);
 
     } catch (err) {
-      console.error('Gagal mengambil peringkat:', err);
+      console.error('Gagal mengambil data peringkat:', err);
     }
   }
 
   function renderPodium(list) {
     if (podium1Nama && podium1Kg) {
       podium1Nama.textContent = list[0] ? `${list[0].rt} ${list[0].kelurahan}` : '-';
-      podium1Kg.textContent = list[0] ? `${list[0].totalKg.toFixed(1)} kg` : '0.0 kg';
+      podium1Kg.textContent = list[0] ? `${Number(list[0].total_kg).toFixed(1)} kg` : '0.0 kg';
     }
     if (podium2Nama && podium2Kg) {
       podium2Nama.textContent = list[1] ? `${list[1].rt} ${list[1].kelurahan}` : '-';
-      podium2Kg.textContent = list[1] ? `${list[1].totalKg.toFixed(1)} kg` : '0.0 kg';
+      podium2Kg.textContent = list[1] ? `${Number(list[1].total_kg).toFixed(1)} kg` : '0.0 kg';
     }
     if (podium3Nama && podium3Kg) {
       podium3Nama.textContent = list[2] ? `${list[2].rt} ${list[2].kelurahan}` : '-';
-      podium3Kg.textContent = list[2] ? `${list[2].totalKg.toFixed(1)} kg` : '0.0 kg';
+      podium3Kg.textContent = list[2] ? `${Number(list[2].total_kg).toFixed(1)} kg` : '0.0 kg';
     }
   }
 
@@ -95,24 +73,21 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${item.kelurahan}</td>
           <td>${item.partisipan} Partisipan</td>
           <td style="text-align: right; font-weight: 800; color: #15803d;">
-            ${item.totalKg.toFixed(1)} kg
+            ${Number(item.total_kg).toFixed(1)} kg
           </td>
         </tr>
       `;
     }).join('');
   }
 
-  // Listener Realtime Supabase untuk tabel users dan transaksi_setoran
-  sb.channel('realtime-klasemen')
+  // Listener Realtime khusus tabel peringkat_rt
+  sb.channel('realtime-peringkat-channel')
     .on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'users' },
-      () => muatPeringkat()
-    )
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'transaksi_setoran' },
-      () => muatPeringkat()
+      { event: '*', schema: 'public', table: 'peringkat_rt' },
+      () => {
+        muatPeringkat();
+      }
     )
     .subscribe();
 
