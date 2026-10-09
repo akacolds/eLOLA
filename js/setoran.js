@@ -1,125 +1,164 @@
-import { protectPage, setupLogoutButton } from './auth-guard.js';
-import { db } from './firebase-config.js';
-import { collection, query, where, orderBy, limit, onSnapshot, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { showToast, formatTanggal, compressImageToBase64 } from './utils.js';
+import { sb } from './supabase.js';
 
-let currentUser = null;
-let userProfile = null;
-let kategoriMap = {};
+document.addEventListener('DOMContentLoaded', async () => {
+  const options = document.querySelectorAll('.waste-card-option');
+  const inputBerat = document.getElementById('inputBerat');
+  const inputCatatan = document.getElementById('inputCatatan');
+  const inputFoto = document.getElementById('inputFoto');
+  const previewContainer = document.getElementById('previewContainer');
+  const imgPreview = document.getElementById('imgPreview');
+  const valEstimasiPoin = document.getElementById('valEstimasiPoin');
+  const btnKirim = document.getElementById('btnKirimSetoran');
+  const setorAlert = document.getElementById('setorAlert');
 
-protectPage(['warga']).then(({ user, profile }) => {
-  currentUser = user;
-  userProfile = profile;
-  document.getElementById('userName').innerText = profile.nama;
-  document.getElementById('userUnit').innerText = `${profile.kelurahan.toUpperCase()} (${profile.rt}) · ${profile.unitBankSampah}`;
-  setupLogoutButton();
-  loadCategories();
-  listenUserSetoran();
-});
+  // Widget Target ASN
+  const targetAsnCard = document.getElementById('targetAsnCard');
+  const targetAsnStatus = document.getElementById('targetAsnStatus');
+  const targetProgressBar = document.getElementById('targetProgressBar');
 
-async function loadCategories() {
-  const container = document.getElementById('categoryChips');
-  const snap = await getDocs(query(collection(db, "kategori_sampah"), where("aktif", "==", true)));
-  container.innerHTML = '';
-  snap.forEach(docSnap => {
-    const k = docSnap.data();
-    kategoriMap[docSnap.id] = k;
-    const chip = document.createElement('div');
-    chip.className = 'chip';
-    chip.innerText = `${k.nama} (${k.bobotPoinPerKg} pt/kg)`;
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      document.getElementById('selectedCategory').value = docSnap.id;
-      document.getElementById('selectedWeight').value = k.bobotPoinPerKg;
-      recalcEstimate();
-    });
-    container.appendChild(chip);
-  });
-}
+  let selectedKategori = 'plastik';
+  let poinRate = 100;
 
-function recalcEstimate() {
-  const kg = parseFloat(document.getElementById('estimasiKg').value) || 0;
-  const bobot = parseFloat(document.getElementById('selectedWeight').value) || 0;
-  document.getElementById('estPoin').innerText = Math.round(kg * bobot);
-}
-
-document.getElementById('estimasiKg').addEventListener('input', recalcEstimate);
-
-document.getElementById('formSetor').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const katId = document.getElementById('selectedCategory').value;
-  const kg = parseFloat(document.getElementById('estimasiKg').value);
-  const file = document.getElementById('fotoInput').files[0];
-  if (!katId) return showToast("Pilih salah satu kategori!", "error");
-  if (!file) return showToast("Sertakan foto bukti sampah!", "error");
-
-  const btn = document.getElementById('btnKirim');
-  btn.disabled = true;
-  btn.innerText = "Memproses...";
-
-  try {
-    const fotoBase64 = await compressImageToBase64(file);
-    await addDoc(collection(db, "transaksi_setoran"), {
-      uid: currentUser.uid,
-      namaPenyetor: userProfile.nama,
-      rt: userProfile.rt,
-      kelurahan: userProfile.kelurahan,
-      isASN: userProfile.isASN || false,
-      unitBankSampah: userProfile.unitBankSampah,
-      kategoriId: katId,
-      kategoriNama: kategoriMap[katId]?.nama || katId,
-      estimasiKg: kg,
-      beratAktualKg: 0,
-      fotoUrl: fotoBase64,
-      status: 'menunggu',
-      alasanTolak: '',
-      poin: 0,
-      petugasUid: null,
-      dibuatPada: serverTimestamp(),
-      diverifikasiPada: null
-    });
-    showToast("Setoran berhasil dikirim!", "success");
-    document.getElementById('formSetor').reset();
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    document.getElementById('estPoin').innerText = '0';
-  } catch (err) {
-    showToast(err.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "Kirim Antrean Setoran";
+  // 1. Cek sesi & profil user
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.user) {
+    window.location.href = '../index.html';
+    return;
   }
-});
 
-function listenUserSetoran() {
-  const q = query(
-    collection(db, "transaksi_setoran"),
-    where("uid", "==", currentUser.uid),
-    orderBy("dibuatPada", "desc"),
-    limit(5)
-  );
+  const userId = session.user.id;
 
-  onSnapshot(q, (snapshot) => {
-    const list = document.getElementById('listSetoran');
-    if (snapshot.empty) {
-      list.innerHTML = '<p style="color:var(--muted)">Belum ada setoran.</p>';
+  // Cek apakah akun ASN untuk menampilkan target 2 kg
+  const { data: userProfil } = await sb
+    .from('users')
+    .select('is_asn, peran, total_kg')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (userProfil?.is_asn || userProfil?.peran === 'asn') {
+    targetAsnCard?.classList.remove('hidden');
+    const kgSekarang = Number(userProfil.total_kg || 0);
+    const persen = Math.min(100, Math.round((kgSekarang / 2.0) * 100));
+    if (targetAsnStatus) targetAsnStatus.textContent = `${kgSekarang.toFixed(1)} / 2.0 kg (${persen}%)`;
+    if (targetProgressBar) targetProgressBar.style.width = `${persen}%`;
+  }
+
+  // 2. Pemilihan Kategori Sampah
+  options.forEach(opt => {
+    opt.addEventListener('click', () => {
+      options.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      selectedKategori = opt.getAttribute('data-kategori');
+      poinRate = Number(opt.getAttribute('data-poin')) || 100;
+      hitungEstimasi();
+    });
+  });
+
+  // 3. Kalkulasi Estimasi Poin
+  function hitungEstimasi() {
+    const berat = parseFloat(inputBerat.value) || 0;
+    const totalPoin = Math.round(berat * poinRate);
+    if (valEstimasiPoin) {
+      valEstimasiPoin.textContent = `${totalPoin.toLocaleString('id-ID')} Poin`;
+    }
+    return totalPoin;
+  }
+
+  inputBerat?.addEventListener('input', hitungEstimasi);
+
+  // 4. Pratinjau Foto Bukti
+  inputFoto?.addEventListener('change', () => {
+    const file = inputFoto.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imgPreview.src = e.target.result;
+        previewContainer.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    } else {
+      previewContainer.classList.add('hidden');
+      imgPreview.src = '';
+    }
+  });
+
+  function showAlert(msg, tipe = 'info') {
+    if (!setorAlert) return;
+    setorAlert.textContent = msg;
+    setorAlert.className = `alert-box alert-${tipe}`;
+    setorAlert.classList.remove('hidden');
+  }
+
+  // 5. Kirim Pengajuan Setoran
+  btnKirim?.addEventListener('click', async () => {
+    setorAlert?.classList.add('hidden');
+    const berat = parseFloat(inputBerat.value);
+
+    if (!berat || berat <= 0) {
+      showAlert('Silakan masukkan estimasi berat sampah yang valid.', 'error');
       return;
     }
-    list.innerHTML = snapshot.docs.map(docSnap => {
-      const d = docSnap.data();
-      return `
-        <div class="card">
-          <div style="display:flex; justify-content:space-between;">
-            <strong>${d.kategoriNama}</strong>
-            <span class="badge badge-${d.status}">${d.status}</span>
-          </div>
-          <div style="font-size:12px; color:var(--muted); margin:4px 0;">
-            ${formatTanggal(d.dibuatPada)} · Est: ${d.estimasiKg} kg
-          </div>
-          ${d.status === 'terverifikasi' ? `<div>✅ <strong>${d.beratAktualKg} kg</strong> diakui (+${d.poin} poin)</div>` : ''}
-          ${d.status === 'ditolak' ? `<div style="color:var(--danger)">Alasan tolak: ${d.alasanTolak || '-'}</div>` : ''}
-        </div>
-      `;
-    }).join('');
+
+    btnKirim.disabled = true;
+    btnKirim.textContent = 'Mengirim data...';
+
+    try {
+      let fotoUrl = null;
+      const file = inputFoto?.files[0];
+
+      // Upload file ke Storage jika pengguna memilih foto
+      if (file) {
+        btnKirim.textContent = 'Mengunggah foto...';
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${userId}/${Date.now()}.${fileExt}`;
+
+        const { error: uploadErr } = await sb.storage
+          .from('bukti-setoran')
+          .upload(filePath, file);
+
+        if (!uploadErr) {
+          const { data: urlData } = sb.storage
+            .from('bukti-setoran')
+            .getPublicUrl(filePath);
+          fotoUrl = urlData.publicUrl;
+        } else {
+          console.warn('Gagal unggah foto ke storage:', uploadErr.message);
+        }
+      }
+
+      btnKirim.textContent = 'Menyimpan setoran...';
+      const estimasiPoin = hitungEstimasi();
+
+      const { error: insertErr } = await sb
+        .from('transaksi_setoran')
+        .insert({
+          user_id: userId,
+          kategori: selectedKategori,
+          berat_kg: berat,
+          estimasi_poin: estimasiPoin,
+          foto_url: fotoUrl,
+          catatan: inputCatatan?.value?.trim() || null,
+          status: 'menunggu'
+        });
+
+      if (insertErr) throw insertErr;
+
+      showAlert('Setoran berhasil diajukan! Menunggu verifikasi petugas bank sampah.', 'success');
+      inputBerat.value = '';
+      if (inputCatatan) inputCatatan.value = '';
+      if (inputFoto) inputFoto.value = '';
+      previewContainer?.classList.add('hidden');
+      hitungEstimasi();
+
+      setTimeout(() => {
+        window.location.href = 'dompet.html';
+      }, 1200);
+
+    } catch (err) {
+      showAlert(err.message || 'Gagal mengirim pengajuan setoran.', 'error');
+    } finally {
+      btnKirim.disabled = false;
+      btnKirim.textContent = 'Kirim Pengajuan Setoran';
+    }
   });
-}
+});
