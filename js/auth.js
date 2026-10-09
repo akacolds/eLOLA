@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const demoContent = document.getElementById('demoContent');
   const demoChevron = document.getElementById('demoChevron');
 
-  // Periksa apakah pengguna sudah memiliki sesi login aktif
+  // Periksa sesi login yang sudah ada
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
     const { data: profil } = await sb
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Helper Alert
+  // Notifikasi Alert
   function showAlert(msg, tipe = 'info') {
     if (!alertBox) return;
     alertBox.textContent = msg;
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     btn.textContent = isLoading ? loadingText : defaultText;
   }
 
-  // Toggle Accordion Akun Demo & Kedinasan
+  // Buka-tutup Accordion Akun Demo
   toggleDemoInfo?.addEventListener('click', () => {
     const isHidden = demoContent.classList.contains('hidden');
     if (isHidden) {
@@ -55,18 +55,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Tombol Isi Otomatis Akun Demo
+  // Tombol Isi Otomatis Akun Demo (mengambil nilai dari data-email dan data-password)
   document.querySelectorAll('.demo-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       const email = pill.getAttribute('data-email');
+      const password = pill.getAttribute('data-password');
+      const role = pill.getAttribute('data-role');
+
       inputEmail.value = email;
-      inputPassword.value = 'password123';
+      inputPassword.value = password;
       hideAlert();
-      showAlert(`Akun ${pill.getAttribute('data-role')} dipilih. Klik "Masuk ke Sistem" untuk melanjutkan.`, 'info');
+      showAlert(`Akun ${role} dipilih. Klik "Masuk ke Sistem" untuk melanjutkan.`, 'info');
     });
   });
 
-  // 1. Eksekusi Login Terpadu (Campur Login ASN, Petugas, Admin, Warga)
+  // 1. Eksekusi Login
   async function prosesLogin() {
     hideAlert();
     const email = inputEmail.value.trim();
@@ -77,18 +80,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if (password.length < 6) {
-      showAlert('Kata sandi minimal 6 karakter.', 'error');
-      return;
-    }
-
     setLoading(btnLogin, true, 'Masuk ke Sistem', 'Memverifikasi Akun...');
 
     try {
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
       if (error) {
-        // Jika akun belum ditemukan dan bukan domain kedinasan resmi, lakukan auto-daftar Warga
         const isKedinasan = email.endsWith('.go.id') || email.includes('admin') || email.includes('petugas') || email.includes('asn');
 
         if (error.message.toLowerCase().includes('invalid login credentials') || error.message.toLowerCase().includes('user not found')) {
@@ -97,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await prosesAutoDaftarWarga(email, password);
             return;
           } else {
-            throw new Error('Akun kedinasan khusus tidak ditemukan atau kata sandi keliru. Harap gunakan email khusus resmi yang diberikan.');
+            throw new Error('Akun kedinasan khusus tidak ditemukan atau kata sandi keliru.');
           }
         }
         throw error;
@@ -110,7 +107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         .eq('id', data.user.id)
         .maybeSingle();
 
-      // Jika data profil belum ada di tabel users, sinkronkan
+      // Sinkronkan data jika belum tersimpan di tabel users
       if (!profil) {
         const metadataPeran = data.user.user_metadata?.peran || 'warga';
         const namaDefault = data.user.user_metadata?.nama || email.split('@')[0];
@@ -145,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 2. Eksekusi Auto-Daftar Warga Baru
+  // 2. Eksekusi Auto-Daftar Warga
   async function prosesAutoDaftarWarga(customEmail = null, customPass = null) {
     hideAlert();
     const email = customEmail || inputEmail.value.trim();
@@ -156,17 +153,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if (password.length < 6) {
-      showAlert('Kata sandi minimal 6 karakter.', 'error');
-      return;
-    }
-
     setLoading(btnAutoRegisterWarga, true, '✨ Auto-Daftar Warga Baru', 'Mendaftarkan Warga...');
 
     try {
       const namaWarga = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
-      // SignUp dengan peran otomatis 'warga'
       const { data, error } = await sb.auth.signUp({
         email,
         password,
@@ -183,9 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (error) throw error;
 
-      // Jika user berhasil dibuat
       if (data?.user) {
-        // Pastikan row ada di tabel users
         await sb.from('users').upsert({
           id: data.user.id,
           email: data.user.email,
@@ -198,16 +187,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           rt: 'RT 01'
         }, { onConflict: 'id' });
 
-        showAlert('Pendaftaran Warga otomatis berhasil! Mengalihkan ke dashboard setor...', 'success');
+        showAlert('Pendaftaran Warga otomatis berhasil! Mengalihkan...', 'success');
         setTimeout(() => arahKeRole('warga'), 800);
       }
     } catch (err) {
-      // Jika ternyata user sudah ada, sarankan masuk langsung
       if (err.message.toLowerCase().includes('already registered')) {
         showAlert('Email ini sudah terdaftar. Mencoba langsung masuk...', 'info');
         await prosesLogin();
       } else {
-        showAlert(err.message || 'Gagal mendaftar otomatis. Silakan coba lagi.', 'error');
+        showAlert(err.message || 'Gagal mendaftar otomatis.', 'error');
       }
     } finally {
       setLoading(btnAutoRegisterWarga, false, '✨ Auto-Daftar Warga Baru', 'Mendaftarkan Warga...');
@@ -218,7 +206,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnLogin?.addEventListener('click', prosesLogin);
   btnAutoRegisterWarga?.addEventListener('click', () => prosesAutoDaftarWarga());
 
-  // Submit via Enter Key di Input
   inputPassword?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') prosesLogin();
   });
