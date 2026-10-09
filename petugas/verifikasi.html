@@ -3,201 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>eLOLA - Verifikasi Petugas Bank Sampah</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <title>Verifikasi Setoran - Petugas eLOLA</title>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-  <div class="container-wide">
-    
-    <!-- Top Header -->
-    <header>
-      <div>
-        <div class="brand-badge" style="font-size: 0.75rem; padding: 0.25rem 0.65rem; margin-bottom: 0.35rem;">
-          🌱 POS PETUGAS BANK SAMPAH
-        </div>
-        <h3 id="petugasName">Petugas Verifikasi</h3>
-        <p id="petugasUnit">Unit Penimbangan & Validasi Setoran</p>
+
+  <div class="main-wrapper" style="max-width: 900px;">
+    <!-- Navbar Petugas -->
+    <nav class="navbar-inner" style="max-width: 900px;">
+      <a href="verifikasi.html" class="nav-brand">📋 PETUGAS BANK SAMPAH</a>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="verifikasi.html" class="active">Antrean Verifikasi</a></li>
+        <li class="nav-item"><a href="../peringkat.html">Peringkat</a></li>
+        <li class="nav-item"><button id="btnLogout" class="btn-logout">Keluar</button></li>
+      </ul>
+    </nav>
+
+    <!-- Ringkasan Tugas -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-box-label">Antrean Menunggu</div>
+        <div class="stat-box-val" id="valTotalPending" style="color: #d97706;">0</div>
+        <div class="stat-box-sub">Warga belum diverifikasi</div>
       </div>
-      <div class="header-actions">
-        <a href="/peringkat.html" class="btn btn-secondary" style="padding: 0.5rem 0.95rem; font-size: 0.8rem;">
-          🏆 Papan RT
-        </a>
-        <button id="btnLogout" class="btn btn-secondary" style="padding: 0.5rem 0.95rem; font-size: 0.8rem; color: var(--danger); border-color: #fca5a5;">
-          Keluar
+      <div class="stat-box">
+        <div class="stat-box-label">Selesai Hari Ini</div>
+        <div class="stat-box-val" id="valTotalVerified">0</div>
+        <div class="stat-box-sub">Total setoran disetujui</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">Akumulasi Timbangan</div>
+        <div class="stat-box-val" id="valTotalKgPetugas" style="color: #0284c7;">0.0 kg</div>
+        <div class="stat-box-sub">Sampah masuk hari ini</div>
+      </div>
+    </div>
+
+    <!-- Tabel Antrean Verifikasi -->
+    <div class="login-card" style="max-width: 100%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <h2 class="login-title" style="font-size: 1.3rem; margin-bottom: 2px;">Daftar Setoran Masuk</h2>
+          <p class="login-desc" style="margin-bottom: 0;">Sesuaikan timbangan riil sebelum menyetujui setoran.</p>
+        </div>
+        <button type="button" class="btn-action" style="background: #f1f5f9; color: #334155;" id="btnRefreshAntrean">
+          🔄 Muat Ulang
         </button>
       </div>
-    </header>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
-      <div>
-        <h2 style="margin: 0; font-size: 1.45rem; font-weight: 800; color: var(--forest-900);">
-          Antrean Verifikasi Setoran Masuk
-        </h2>
-        <p style="margin: 0.25rem 0 0; font-size: 0.825rem; color: var(--text-muted);">
-          Timbang ulang sampah fisik secara akurat sebelum menyetujui penambahan poin warga/ASN
-        </p>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Nama Penyetor</th>
+              <th>Jenis Akun</th>
+              <th>Kategori</th>
+              <th>Estimasi Berat</th>
+              <th style="min-width: 110px;">Berat Asli (kg)</th>
+              <th style="text-align: center;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tableAntreanBody">
+            <tr>
+              <td colspan="7" style="text-align: center; color: #94a3b8; padding: 24px;">Memeriksa antrean setoran...</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <button id="btnRefresh" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
-        🔄 Segarkan Antrean
-      </button>
     </div>
-
-    <div id="antreanList">
-      <div class="card text-center" style="padding: 2.5rem; color: var(--text-muted);">
-        Memuat antrean setoran...
-      </div>
-    </div>
-
   </div>
 
-  <script type="module">
-    import { sb, periksaSesi, keluarSesi } from '/js/supabase.js';
-
-    const $ = (id) => document.getElementById(id);
-    const auth = await periksaSesi(['petugas', 'admin']);
-    if (!auth) throw new Error("Akses ditolak");
-
-    $('petugasName').textContent = auth.profil.nama || 'Petugas Lapangan';
-    $('petugasUnit').textContent = `Peran: ${(auth.profil.peran || 'petugas').toUpperCase()} • Pos: ${auth.profil.kelurahan || 'DLH Kendari'}`;
-    $('btnLogout').onclick = keluarSesi;
-    $('btnRefresh').onclick = muatAntrean;
-
-    async function muatAntrean() {
-      const box = $('antreanList');
-      box.innerHTML = '<div class="card text-center" style="padding: 2rem; color: var(--text-muted);">Memuat antrean setoran...</div>';
-
-      try {
-        const { data: list, error } = await sb
-          .from('transaksi_setoran')
-          .select('*, users(id, nama, kelurahan, rt, saldo_poin, total_kg, is_asn, peran)')
-          .eq('status', 'menunggu')
-          .order('created_at', { ascending: true });
-
-        if (error) throw error;
-
-        if (!list || list.length === 0) {
-          box.innerHTML = `
-            <div class="card text-center" style="padding: 3rem 1.5rem;">
-              <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">✨</div>
-              <h3 style="margin: 0 0 0.25rem 0; color: var(--forest-900);">Antrean Kosong</h3>
-              <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">
-                Tidak ada setoran yang menunggu verifikasi saat ini.
-              </p>
-            </div>
-          `;
-          return;
-        }
-
-        box.innerHTML = list.map(item => {
-          const isAsn = item.users?.is_asn || item.users?.peran === 'asn';
-          const tgl = new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-          const estPoin = item.estimasi_poin || Math.round((parseFloat(item.berat_kg) || 0) * 100);
-
-          return `
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.25rem; border-left: 4px solid var(--primary);">
-              <div>
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
-                  <b style="font-size: 1.05rem; color: var(--forest-900);">${item.users?.nama || 'Warga'}</b>
-                  <span class="badge ${isAsn ? 'badge-role asn' : 'badge-role'}" style="font-size: 0.7rem;">
-                    ${isAsn ? '🏛️ ASN Balai Kota' : '🏡 Warga'}
-                  </span>
-                </div>
-                
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.45rem;">
-                  📍 Wilayah: <strong>${item.users?.kelurahan || 'Kadia'} - ${item.users?.rt || 'RT 01'}</strong> &bull; Waktu: ${tgl}
-                </div>
-
-                <div style="font-size: 0.85rem; background: var(--bg-card-subtle); padding: 0.45rem 0.75rem; border-radius: var(--radius-sm); display: inline-block; border: 1px solid var(--primary-soft);">
-                  Kategori: <strong>${item.kategori}</strong> &bull; Estimasi Input: <strong>${item.berat_kg} kg</strong> (~${estPoin} poin)
-                </div>
-              </div>
-
-              <div style="display:flex; gap:0.65rem; align-items:center; flex-wrap:wrap;">
-                <div style="text-align: right;">
-                  <label style="display:block; font-size:0.725rem; font-weight:700; color:var(--text-muted); margin-bottom:2px;">Timbangan Riil (kg)</label>
-                  <input 
-                    type="number" 
-                    step="0.1" 
-                    min="0.1" 
-                    value="${item.berat_kg}" 
-                    id="berat_${item.id}" 
-                    style="width:105px; padding:0.5rem 0.65rem; text-align:center; font-weight:700;" 
-                    title="Hasil Timbangan Riil Petugas"
-                  />
-                </div>
-                
-                <div style="display:flex; gap:0.5rem; align-items:flex-end;">
-                  <button class="btn btn-acc btn-confirm-setoran" data-id="${item.id}" data-uid="${item.user_id}" data-kategori="${item.kategori}" style="padding:0.65rem 1.15rem; font-size:0.825rem;">
-                    ✓ Setujui
-                  </button>
-                  <button class="btn btn-tolak btn-reject-setoran" data-id="${item.id}" style="padding:0.65rem 0.95rem; font-size:0.825rem;">
-                    ✕ Tolak
-                  </button>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        // Event binding
-        document.querySelectorAll('.btn-confirm-setoran').forEach(btn => {
-          btn.onclick = () => verifikasi(btn.dataset.id, btn.dataset.uid, true, btn.dataset.kategori);
-        });
-        document.querySelectorAll('.btn-reject-setoran').forEach(btn => {
-          btn.onclick = () => verifikasi(btn.dataset.id, null, false, null);
-        });
-
-      } catch (err) {
-        console.error('Error muat antrean:', err);
-        box.innerHTML = `<div class="card text-center" style="padding: 2rem; color: var(--danger);">Gagal memuat antrean: ${err.message}</div>`;
-      }
-    }
-
-    async function verifikasi(setoranId, userId, terima, kategori) {
-      if (terima) {
-        const beratRiil = parseFloat($(`berat_${setoranId}`)?.value) || 1;
-        
-        // Cari rate poin per kg dari kategori (default 100 pt/kg)
-        let ratePoin = 100;
-        const { data: katData } = await sb.from('kategori_sampah').select('poin_per_kg').eq('nama', kategori).maybeSingle();
-        if (katData && katData.poin_per_kg) {
-          ratePoin = katData.poin_per_kg;
-        }
-
-        const poinFinal = Math.round(beratRiil * ratePoin);
-
-        // Ambil saldo pengguna saat ini
-        const { data: u } = await sb.from('users').select('saldo_poin, total_kg').eq('id', userId).single();
-        const saldoBaru = (Number(u?.saldo_poin) || 0) + poinFinal;
-        const totalKgBaru = (parseFloat(u?.total_kg) || 0) + beratRiil;
-
-        // 1. Update profil pengguna
-        await sb.from('users').update({ saldo_poin: saldoBaru, total_kg: totalKgBaru }).eq('id', userId);
-
-        // 2. Update status setoran
-        await sb.from('transaksi_setoran').update({
-          status: 'terverifikasi',
-          berat_kg: beratRiil,
-          poin_diterima: poinFinal
-        }).eq('id', setoranId);
-
-        // 3. Catat riwayat poin
-        await sb.from('riwayat_poin').insert({
-          user_id: userId,
-          judul: `Setoran ${kategori || 'Sampah'} (${beratRiil} kg)`,
-          poin: poinFinal,
-          tipe: 'masuk'
-        });
-
-      } else {
-        if (!confirm('Apakah Anda yakin ingin menolak setoran sampah ini?')) return;
-        await sb.from('transaksi_setoran').update({ status: 'ditolak' }).eq('id', setoranId);
-      }
-
-      muatAntrean();
-    }
-
-    muatAntrean();
-  </script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/supabase.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script type="module" src="../js/verifikasi.js"></script>
 </body>
 </html>
