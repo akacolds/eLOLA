@@ -15,17 +15,16 @@
       <ul class="nav-menu">
         <li class="nav-item"><a href="dashboard.html" class="active">Dashboard Kota</a></li>
         <li class="nav-item"><a href="../peringkat.html">Peringkat RT</a></li>
-        <li class="nav-item"><button id="btnLogout" class="btn-logout">Keluar</button></li>
+        <li class="nav-item"><button type="button" id="btnLogout" class="btn-logout">Keluar</button></li>
       </ul>
     </nav>
 
-    <!-- Header Selamat Datang -->
     <div style="margin-bottom: 20px;">
       <h1 class="login-title" style="font-size: 1.6rem; margin-bottom: 4px;">Pusat Kendali Pengelolaan Sampah</h1>
       <p class="login-desc" style="margin-bottom: 0;">Monitoring data setoran warga dan kedisiplinan kuota ASN se-Kota Kendari.</p>
     </div>
 
-    <!-- Ringkasan Statistik Utama -->
+    <!-- Ringkasan Statistik -->
     <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
       <div class="stat-box">
         <div class="stat-box-label">Total Sampah Terkumpul</div>
@@ -49,7 +48,7 @@
       </div>
     </div>
 
-    <!-- Tabel Rekap Transaksi Kota -->
+    <!-- Tabel Monitoring Transaksi -->
     <div class="login-card" style="max-width: 100%;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a;">Aktivitas Setoran Terkini</h3>
@@ -79,9 +78,7 @@
     </div>
   </div>
 
-  <script src="../js/utils.js"></script>
-  <script src="../js/supabase.js"></script>
-  <script src="../js/auth-guard.js"></script>
+  <script type="module" src="../js/auth-guard.js"></script>
   <script type="module" src="../js/dashboard.js"></script>
 </body>
 </html>
