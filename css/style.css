@@ -554,3 +554,120 @@ body {
   color: #d97706;
   margin-top: 4px;
 }
+
+/* ==========================================================================
+   Halaman Papan Peringkat (Leaderboard & Podium)
+   ========================================================================== */
+
+/* Area Podium Top 3 */
+.podium-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 16px 0 24px 0;
+  align-items: flex-end;
+}
+
+.podium-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 10px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease;
+}
+
+.podium-card:hover {
+  transform: translateY(-3px);
+}
+
+/* Juara 1 (Tengah & Lebih Menonjol) */
+.podium-1 {
+  border-color: #f59e0b;
+  background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+  padding: 24px 12px 18px 12px;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+}
+
+.podium-rank {
+  font-size: 1.6rem;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.podium-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.podium-points {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #15803d;
+  margin-top: 4px;
+}
+
+.podium-1 .podium-points {
+  color: #b45309;
+  font-size: 1.05rem;
+}
+
+/* Penomoran & Medali di Tabel Klasemen */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.rank-1 {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.rank-2 {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.rank-3 {
+  background-color: #ffedd5;
+  color: #c2410c;
+}
+
+.rank-other {
+  background-color: transparent;
+  color: #94a3b8;
+}
+
+/* Penyesuaian Tampilan Layar HP */
+@media (max-width: 520px) {
+  .podium-grid {
+    gap: 6px;
+  }
+
+  .podium-card {
+    padding: 12px 6px;
+  }
+
+  .podium-1 {
+    padding: 18px 6px 12px 6px;
+  }
+
+  .podium-name {
+    font-size: 0.8rem;
+  }
+
+  .podium-points {
+    font-size: 0.82rem;
+  }
+}
