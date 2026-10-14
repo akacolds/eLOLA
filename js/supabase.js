@@ -2,81 +2,84 @@
 const SUPABASE_URL = "https://sezmeitlvzcvqleutdxl.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_lAfH12E4Opmc9qmeLhmxAw_nP9XpKju";
 
-// Cek apakah library CDN Supabase sudah terpasang
-if (typeof supabase !== "undefined" && supabase.createClient) {
-  window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} else if (typeof window.supabase !== "undefined" && window.supabase.createClient) {
-  window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} else {
-  console.error("SDK Supabase belum terpasang atau gagal dimuat dari CDN!");
+// Helper inisialisasi yang tahan banting
+function getSupabase() {
+  if (window.supabaseClient) {
+    return window.supabaseClient;
+  }
+
+  // Cek global 'supabase' dari CDN unpkg / jsdelivr
+  const lib = window.supabase || (typeof supabase !== "undefined" ? supabase : null);
+  
+  if (lib && typeof lib.createClient === "function") {
+    window.supabaseClient = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return window.supabaseClient;
+  }
+
+  throw new Error("SDK Supabase belum termuat dari CDN. Periksa koneksi internet atau script tag di HTML.");
 }
 
 window.SupabaseDB = (() => {
-  const sb = () => {
-    if (!window.supabaseClient) {
-      throw new Error("Koneksi Supabase belum siap. Periksa koneksi internet atau CDN script.");
-    }
-    return window.supabaseClient;
-  };
-
   return {
+    getClient() {
+      return getSupabase();
+    },
+
     // --- PROFILES / AUTH ---
     async getProfile(userId) {
-      const { data, error } = await sb()
+      const sb = getSupabase();
+      const { data, error } = await sb
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .maybeSingle();
+
       if (error) throw error;
       return data;
     },
 
-    // ... method lainnya tetap sama
-  };
-})();
-
-    // --- KATEGORI SAMPAH ---
-    async getKategoriSampah() {
-      const { data, error } = await sb()
-        .from("kategori_sampah")
-        .select("*")
-        .order("id", { ascending: true });
+    async updateProfile(userId, payload) {
+      const sb = getSupabase();
+      const { data, error } = await sb
+        .from("profiles")
+        .update(payload)
+        .eq("id", userId);
       if (error) throw error;
       return data;
     },
 
-    // --- SETORAN (Sesuai kolom tabel: setoran) ---
+    // --- SETORAN ---
     async getSetoran(userId = null) {
-      let query = sb()
+      const sb = getSupabase();
+      let query = sb
         .from("setoran")
         .select("*, profiles:user_id(nama, peran)")
         .order("created_at", { ascending: false });
 
-      if (userId) {
-        query = query.eq("user_id", userId);
-      }
+      if (userId) query = query.eq("user_id", userId);
       const { data, error } = await query;
       if (error) throw error;
       return data;
     },
 
     async tambahSetoran({ userId, rw, rt, rincian, kg, poin, fotoUrl = "" }) {
+      const sb = getSupabase();
       const payload = {
         user_id: userId,
         rw: rw,
         rt: rt,
-        rincian: rincian,         // jsonb
-        klaim: rincian,           // jsonb
-        kg: kg,                   // numeric
-        kg_klaim: kg,             // numeric
-        poin: poin,               // int4
-        foto_url: fotoUrl,        // text
-        status: "menunggu",       // text
+        rincian: rincian,
+        klaim: rincian,
+        kg: kg,
+        kg_klaim: kg,
+        poin: poin,
+        foto_url: fotoUrl,
+        status: "menunggu",
         catatan: "",
         created_at: new Date().toISOString()
       };
 
-      const { data, error } = await sb()
+      const { data, error } = await sb
         .from("setoran")
         .insert([payload])
         .select()
@@ -87,6 +90,7 @@ window.SupabaseDB = (() => {
     },
 
     async verifikasiSetoran(id, { aksi, rincianBaru, kgBaru, poinBaru, alasan = "", namaPetugas = "" }) {
+      const sb = getSupabase();
       const updateData = {
         status: aksi === "setujui" ? "disetujui" : "ditolak",
         catatan: alasan,
@@ -100,7 +104,7 @@ window.SupabaseDB = (() => {
         updateData.poin = poinBaru;
       }
 
-      const { data, error } = await sb()
+      const { data, error } = await sb
         .from("setoran")
         .update(updateData)
         .eq("id", id)
@@ -111,9 +115,10 @@ window.SupabaseDB = (() => {
       return data;
     },
 
-    // --- HADIAH & PENUKARAN (Sesuai tabel: hadiah & penukaran) ---
+    // --- HADIAH & PENUKARAN ---
     async getHadiah() {
-      const { data, error } = await sb()
+      const sb = getSupabase();
+      const { data, error } = await sb
         .from("hadiah")
         .select("*")
         .order("harga", { ascending: true });
@@ -122,7 +127,8 @@ window.SupabaseDB = (() => {
     },
 
     async getRiwayatPenukaran(userId = null) {
-      let q = sb()
+      const sb = getSupabase();
+      let q = sb
         .from("penukaran")
         .select("*")
         .order("created_at", { ascending: false });
@@ -133,15 +139,14 @@ window.SupabaseDB = (() => {
     },
 
     async tukarHadiah(userId, hadiah) {
-      // 1. Kurangi stok hadiah
-      const { error: errStok } = await sb()
+      const sb = getSupabase();
+      const { error: errStok } = await sb
         .from("hadiah")
         .update({ stok: hadiah.stok - 1 })
         .eq("id", hadiah.id);
       if (errStok) throw errStok;
 
-      // 2. Buat catatan di tabel penukaran
-      const { data, error } = await sb()
+      const { data, error } = await sb
         .from("penukaran")
         .insert([{
           user_id: userId,
@@ -153,16 +158,6 @@ window.SupabaseDB = (() => {
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
-    },
-
-    // --- PERINGKAT RT ---
-    async getPeringkatRT() {
-      const { data, error } = await sb()
-        .from("peringkat_rt")
-        .select("*")
-        .order("total_kg", { ascending: false });
       if (error) throw error;
       return data;
     }
