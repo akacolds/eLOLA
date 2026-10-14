@@ -43,13 +43,9 @@ document.addEventListener("DOMContentLoaded", () => {
   tMasuk.onclick = () => setMode(true);
   tDaftar.onclick = () => setMode(false);
 
-fMasuk.onsubmit = async (e) => {
+  // LOGIN SUPABASE
+  fMasuk.onsubmit = async (e) => {
     e.preventDefault();
-
-    if (!window.supabaseClient) {
-      return notif("err", "Gagal menghubungkan ke Supabase. Pastikan script CDN sudah termuat.");
-    }
-
     const email = idMasuk.value.trim();
     const password = $("sMasuk").value;
     const btn = fMasuk.querySelector("button[type=submit]");
@@ -57,14 +53,19 @@ fMasuk.onsubmit = async (e) => {
     btn.textContent = "Memverifikasi...";
 
     try {
-      const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+      // Ambil client supabase lewat SupabaseDB
+      const sb = window.SupabaseDB.getClient();
+
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
+      // Ambil profil data
       let profil = await window.SupabaseDB.getProfile(data.user.id);
 
+      // Jika data profil belum ada di database, buat otomatis
       if (!profil) {
         const defaultNama = email.split("@")[0];
-        const { data: profilBaru, error: errInsert } = await window.supabaseClient
+        const { data: profilBaru, error: errInsert } = await sb
           .from("profiles")
           .insert([{
             id: data.user.id,
@@ -87,7 +88,7 @@ fMasuk.onsubmit = async (e) => {
       else if (profil.peran === "petugas") location.href = "/petugas/verifikasi.html";
       else location.href = "/warga/setoran.html";
     } catch (err) {
-      notif("err", err.message || "Email atau kata sandi salah.");
+      notif("err", err.message || "Email atau kata sandi tidak sesuai.");
       btn.disabled = false; 
       btn.textContent = "Masuk ke eLOLA →";
     }
