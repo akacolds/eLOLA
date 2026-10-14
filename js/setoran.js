@@ -1,5 +1,5 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const user = window.AuthGuard(["warga", "asn"]);
+document.addEventListener("DOMContentLoaded", async () => {
+  const user = await window.AuthGuard(["warga", "asn"]);
   if (!user) return;
 
   const { $, fmt, bulat1, JENIS, notif, tglJam } = window.Utils;
@@ -48,35 +48,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("fSetor").onsubmit = async (e) => {
     e.preventDefault();
+    const btn = $("bSetor");
+    btn.disabled = true; btn.textContent = "Mengirim...";
+
+    let totKg = 0, totPoin = 0;
+    const rincianBersih = {};
+    JENIS.forEach(j => {
+      if (berat[j.k] > 0) {
+        rincianBersih[j.k] = berat[j.k];
+        totKg += berat[j.k];
+        totPoin += berat[j.k] * j.poin;
+      }
+    });
+
     try {
       await window.SupabaseDB.tambahSetoran({
-        akun: user.id,
+        userId: user.id,
         rw: $("rw").value,
         rt: $("rt").value,
-        rincian: berat
+        rincian: rincianBersih,
+        kg: bulat1(totKg),
+        poin: Math.round(totPoin)
       });
-      notif("ok", "Setoran berhasil dikirim dan menunggu verifikasi petugas!");
+
+      notif("ok", "Setoran sampah berhasil disimpan ke antrean!");
       JENIS.forEach(j => { berat[j.k] = 0; $("in-" + j.k).value = 0; });
       hitung();
       muatRiwayat();
     } catch (err) {
       notif("err", err.message);
+    } finally {
+      btn.textContent = "Kirim Setoran →";
+      btn.disabled = false;
     }
   };
 
   async function muatRiwayat() {
-    const list = await window.SupabaseDB.getSetoran(user.id);
-    const wadah = $("isiRiwayat");
-    if (!wadah) return;
-    wadah.innerHTML = list.map(s => `
-      <tr>
-        <td>${tglJam(s.waktu)}</td>
-        <td>${Object.entries(s.rincian).filter(([, v]) => v > 0).map(([k, v]) => `${k}${v}kg`).join(", ")}</td>
-        <td>${s.kg} kg</td>
-        <td>${s.poin}</td>
-        <td><span class="chip ${s.status === 'disetujui' ? 'ok' : s.status === 'ditolak' ? 'tolak' : ''}">${s.status}</span></td>
-      </tr>
-    `).join("");
+    try {
+      const list = await window.SupabaseDB.getSetoran(user.id);
+      const wadah = $("isiRiwayat");
+      if (!wadah) return;
+      wadah.innerHTML = list.map(s => `
+        <tr>
+          <td>${tglJam(s.created_at)}</td>
+          <td>${Object.entries(s.rincian || {}).map(([k, v]) => `${k}${v}kg`).join(", ")}</td>
+          <td>${s.kg} kg</td>
+          <td>${s.poin}</td>
+          <td><span class="chip ${s.status === 'disetujui' ? 'ok' : s.status === 'ditolak' ? 'tolak' : ''}">${s.status}</span></td>
+        </tr>
+      `).join("");
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   muatRiwayat();
