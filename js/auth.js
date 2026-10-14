@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const { $, baca, tulis, notif } = window.Utils;
+  const { $, notif } = window.Utils;
   let peranAktif = "warga";
   let modeMasuk = true;
 
@@ -17,12 +17,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (p === "petugas") pPetugas.classList.add("aktif");
 
     if (p === "petugas") {
-      lblIdMasuk.textContent = "ID Petugas / Admin";
-      idMasuk.placeholder = "PTG-001 / ADM-001";
+      lblIdMasuk.textContent = "Email Petugas / Admin";
+      idMasuk.placeholder = "petugas@kendari.go.id";
       tDaftar.classList.add("hidden");
       setMode(true);
     } else {
-      lblIdMasuk.textContent = "Email (Gmail)";
+      lblIdMasuk.textContent = "Email";
       idMasuk.placeholder = "nama@gmail.com";
       tDaftar.classList.remove("hidden");
     }
@@ -43,43 +43,67 @@ document.addEventListener("DOMContentLoaded", () => {
   tMasuk.onclick = () => setMode(true);
   tDaftar.onclick = () => setMode(false);
 
-  fMasuk.onsubmit = (e) => {
+  // LOGIN SUPABASE
+  fMasuk.onsubmit = async (e) => {
     e.preventDefault();
-    const id = idMasuk.value.trim();
-    const sandi = $("sMasuk").value;
-    const akun = baca("elola_akun", {});
+    const email = idMasuk.value.trim();
+    const password = $("sMasuk").value;
+    const btn = fMasuk.querySelector("button[type=submit]");
+    btn.disabled = true; btn.textContent = "Memverifikasi...";
 
-    const u = akun[id] || akun[id.toLowerCase()];
-    if (!u || u.sandi !== sandi) {
-      return notif("err", "ID/Email atau Kata Sandi salah.");
+    try {
+      const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      // Ambil profile peran
+      const profil = await window.SupabaseDB.getProfile(data.user.id);
+      notif("ok", "Berhasil masuk!");
+
+      if (profil.peran === "admin") location.href = "/admin/dashboard.html";
+      else if (profil.peran === "petugas") location.href = "/petugas/verifikasi.html";
+      else location.href = "/warga/setoran.html";
+    } catch (err) {
+      notif("err", err.message || "Email atau kata sandi tidak sesuai.");
+      btn.disabled = false; btn.textContent = "Masuk ke eLOLA →";
     }
-    tulis("elola_sesi", { id: id, peran: u.peran, nama: u.nama });
-
-    if (u.peran === "admin") location.href = "/admin/dashboard.html";
-    else if (u.peran === "petugas") location.href = "/petugas/verifikasi.html";
-    else location.href = "/warga/setoran.html";
   };
 
-  fDaftar.onsubmit = (e) => {
+  // DAFTAR SUPABASE
+  fDaftar.onsubmit = async (e) => {
     e.preventDefault();
     const nama = $("nama").value.trim();
     const email = $("emailDaftar").value.trim().toLowerCase();
-    const sandi = $("sDaftar").value;
+    const password = $("sDaftar").value;
     const rt = $("rt").value;
     const nikNip = $("nikNip") ? $("nikNip").value.trim() : "";
+    const btn = fDaftar.querySelector("button[type=submit]");
 
-    if (!nama || !email || sandi.length < 6 || !rt) {
-      return notif("err", "Semua kolom wajib diisi dengan benar.");
+    btn.disabled = true; btn.textContent = "Mendaftarkan...";
+
+    try {
+      // 1. Auth SignUp
+      const { data, error } = await window.supabaseClient.auth.signUp({ email, password });
+      if (error) throw error;
+
+      if (data.user) {
+        // 2. Tambah data ke tabel profiles (sesuai ERD profiles)
+        await window.supabaseClient.from("profiles").insert([{
+          id: data.user.id,
+          nama: nama,
+          peran: peranAktif,
+          nik_nip: nikNip,
+          kelurahan: "Lalolara",
+          rw: "RW 01",
+          rt: rt,
+          foto: ""
+        }]);
+
+        notif("ok", "Pendaftaran berhasil! Mengalihkan...");
+        setTimeout(() => { location.href = "/warga/setoran.html"; }, 1000);
+      }
+    } catch (err) {
+      notif("err", err.message);
+      btn.disabled = false; btn.textContent = "Buat Akun eLOLA →";
     }
-
-    const akun = baca("elola_akun", {});
-    if (akun[email]) return notif("err", "Email sudah terdaftar.");
-
-    akun[email] = {
-      nama, sandi, peran: peranAktif, kelurahan: "Lalolara", rw: "RW 01", rt, nikNip
-    };
-    tulis("elola_akun", akun);
-    tulis("elola_sesi", { id: email, peran: peranAktif, nama });
-    location.href = "/warga/setoran.html";
   };
 });
