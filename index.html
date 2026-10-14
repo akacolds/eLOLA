@@ -4,110 +4,72 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>eLOLA – Masuk & Daftar</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,600&family=Instrument+Sans:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Instrument+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-
-<main class="kartu masuk">
-  <section class="kiri">
-    <div class="logo">
-      <svg viewBox="0 0 42 42" aria-hidden="true">
-        <rect width="42" height="42" rx="11" fill="#58b45d"/>
-        <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
-        <path d="M21 14v17" stroke="#58b45d" stroke-width="2.2" stroke-linecap="round"/>
-      </svg>
-      <div><b>eLOLA</b><small>Bank Sampah Digital</small></div>
-    </div>
-    <div>
-      <h2>Buku tabungan sampah, <em>versi digital</em> untuk seluruh warga dan ASN.</h2>
-      <p>Setiap setoran jadi poin yang tersimpan aman.</p>
-    </div>
-  </section>
-
-  <section class="kanan">
-    <div class="peran" role="group" aria-label="Jenis pengguna">
-      <button type="button" id="pWarga" class="aktif">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg>
-        <b>Warga</b><span>Setor sampah &amp; kumpulkan poin</span>
-      </button>
-      <button type="button" id="pAsn">
-        <svg viewBox="0 0 24 24"><path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6"/></svg>
-        <b>ASN</b><span>Setor sampah &amp; penuhi kepatuhan</span>
-      </button>
-      <button type="button" id="pPetugas">
-        <svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
-        <b>Petugas / Admin</b><span>Verifikasi &amp; pantau data</span>
-      </button>
-    </div>
-
-    <div class="tab" role="tablist">
-      <button type="button" id="tMasuk" class="aktif">Masuk</button>
-      <button type="button" id="tDaftar">Daftar Akun</button>
-    </div>
-
-    <div id="notif" class="notif hidden" role="status"></div>
-
-    <form id="fMasuk" novalidate>
-      <label for="idMasuk" id="lblIdMasuk">Gmail</label>
-      <input id="idMasuk" type="email" autocomplete="username" placeholder="nama@gmail.com">
-      <label for="sMasuk">Kata Sandi</label>
-      <div class="sandi">
-        <input id="sMasuk" type="password" autocomplete="current-password" placeholder="••••••••">
-        <button type="button" class="lihat" data-t="sMasuk" aria-label="Tampilkan kata sandi">
-          <svg class="mata-tutup" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 6.1A10.6 10.6 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 6.7C3.9 8.5 2 12 2 12s3.5 6 10 6c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
-          <svg class="mata-buka" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
+  <main class="kartu">
+    <section class="kiri">
+      <div class="logo">
+        <svg viewBox="0 0 42 42">
+          <rect width="42" height="42" rx="11" fill="#58b45d"/>
+          <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
+          <path d="M21 14v17" stroke="#58b45d" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <div><b>eLOLA</b><small>Bank Sampah Digital</small></div>
       </div>
-      <p class="pesan" id="pMasuk" aria-live="polite"></p>
-      <button class="tombol" id="bMasuk" type="submit" disabled>Masuk ke eLOLA →</button>
-    </form>
+      <div>
+        <h2>Tabungan sampah versi digital warga Lalolara.</h2>
+        <p>Setiap setoran ditimbang, diverifikasi, dan dikonversi menjadi poin reward.</p>
+      </div>
+      <div style="font-size:.8rem;color:#cfe3d0">Kelurahan Lalolara, Kendari</div>
+    </section>
 
-    <form id="fDaftar" class="hidden" novalidate>
-      <label for="nama">Nama Lengkap</label>
-      <input id="nama" type="text" autocomplete="name">
-
-      <div id="blokAsn" class="hidden">
-        <label for="nikNip">NIP / NIK</label>
-        <input id="nikNip" type="text" inputmode="numeric" placeholder="NIP 18 angka atau NIK 16 angka">
+    <section class="kanan">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+        <button type="button" id="pWarga" class="tombol-kecil utama">Warga</button>
+        <button type="button" id="pAsn" class="tombol-kecil">ASN</button>
+        <button type="button" id="pPetugas" class="tombol-kecil">Petugas</button>
       </div>
 
-      <div class="dua">
-        <div>
-          <label for="kel">Kelurahan</label>
-          <select id="kel"><option value="">Pilih</option><option>Kadia</option><option>Lalolara</option></select>
+      <div class="tab">
+        <button type="button" id="tMasuk" class="aktif">Masuk</button>
+        <button type="button" id="tDaftar">Daftar Akun</button>
+      </div>
+
+      <div id="notif" class="notif hidden"></div>
+
+      <form id="fMasuk">
+        <label for="idMasuk" id="lblIdMasuk">Email (Gmail)</label>
+        <input id="idMasuk" type="text" required placeholder="nama@gmail.com">
+        <label for="sMasuk">Kata Sandi</label>
+        <input id="sMasuk" type="password" required placeholder="••••••••">
+        <button class="tombol" type="submit" style="margin-top:18px">Masuk ke eLOLA →</button>
+      </form>
+
+      <form id="fDaftar" class="hidden">
+        <label for="nama">Nama Lengkap</label>
+        <input id="nama" type="text" required>
+        <div id="blokAsn" class="hidden">
+          <label for="nikNip">NIP / NIK</label>
+          <input id="nikNip" type="text">
         </div>
-        <div>
-          <label for="rt">RT</label>
-          <select id="rt"><option value="">Pilih</option><option>RT 01</option><option>RT 02</option><option>RT 03</option><option>RT 04</option><option>RT 05</option></select>
-        </div>
-      </div>
+        <label for="rt">RT</label>
+        <select id="rt" required>
+          <option value="">Pilih RT</option>
+          <option>RT 01</option><option>RT 02</option><option>RT 03</option><option>RT 04</option>
+        </select>
+        <label for="emailDaftar">Gmail</label>
+        <input id="emailDaftar" type="email" required placeholder="nama@gmail.com">
+        <label for="sDaftar">Kata Sandi (min. 6 karakter)</label>
+        <input id="sDaftar" type="password" required>
+        <button class="tombol" type="submit" style="margin-top:18px">Buat Akun eLOLA →</button>
+      </form>
+    </section>
+  </main>
 
-      <label for="emailDaftar">Gmail</label>
-      <input id="emailDaftar" type="email" autocomplete="email" placeholder="nama@gmail.com">
-
-      <label for="sDaftar">Kata Sandi eLOLA (minimal 6 karakter)</label>
-      <div class="sandi">
-        <input id="sDaftar" type="password" autocomplete="new-password">
-        <button type="button" class="lihat" data-t="sDaftar" aria-label="Tampilkan kata sandi">
-          <svg class="mata-tutup" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 6.1A10.6 10.6 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 6.7C3.9 8.5 2 12 2 12s3.5 6 10 6c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
-          <svg class="mata-buka" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
-      </div>
-      <p class="catatan-kecil">Buat sandi baru khusus eLOLA. Jangan pakai sandi Gmail kamu.</p>
-
-      <p class="pesan" id="pDaftar" aria-live="polite"></p>
-      <button class="tombol" id="bDaftar" type="submit" disabled>Buat akun eLOLA →</button>
-    </form>
-
-    <p class="bantuan" id="bantuan"></p>
-  </section>
-</main>
-
-<script src="js/utils.js"></script>
-<script src="js/supabase.js"></script>
-<script src="js/auth-guard.js"></script>
-<script src="js/seed-init.js"></script>
-<script src="js/auth.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/seed-init.js"></script>
+  <script src="/js/auth.js"></script>
 </body>
 </html>
