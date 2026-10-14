@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>eLOLA – Dompet & Hadiah</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,600&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<main class="kartu lebar">
+  <section class="kiri">
+    <div class="atas">
+      <div class="logo">
+        <svg viewBox="0 0 42 42" aria-hidden="true">
+          <rect width="42" height="42" rx="11" fill="#58b45d"/>
+          <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
+          <path d="M21 14v17" stroke="#58b45d" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <div><b>eLOLA</b><small>Bank Sampah Digital</small></div>
+      </div>
+      <nav class="menu" id="menu" aria-label="Menu utama"></nav>
+    </div>
+    <div class="tengah">
+      <h2 id="salam">Halo.</h2>
+      <p class="peran-label" id="peranLabel"></p>
+      <p id="subsalam">Tukar poin hasil setoran dengan hadiah.</p>
+    </div>
+  </section>
+
+  <section class="kanan">
+    <div class="kepala-halaman">
+      <div>
+        <h1>Dompet Poin</h1>
+        <p>Saldo dihitung dari setoran yang sudah disetujui petugas, dikurangi poin yang sudah kamu tukar.</p>
+      </div>
+      <span class="langsung" id="langsung" role="status"><i></i><span>Menyambung…</span></span>
+    </div>
+
+    <div class="saldo">
+      <div><b id="saldo">0</b><span>poin tersedia</span></div>
+      <div><b id="rupiah">Rp 0</b><span>nilai dalam rupiah (1 poin = 10 rupiah)</span></div>
+      <div><b id="kgTotal">0 kg</b><span>total sampah yang kamu setor</span></div>
+    </div>
+
+    <div class="tab" role="tablist" style="margin-top:24px">
+      <button type="button" id="tHadiah" class="aktif">Katalog Hadiah</button>
+      <button type="button" id="tSetoran">Riwayat Setoran</button>
+      <button type="button" id="tTukar">Riwayat Penukaran</button>
+    </div>
+
+    <div id="notif" class="notif hidden" role="status"></div>
+
+    <div class="isi-tab" id="pHadiah"><div class="katalog" id="katalog"></div></div>
+
+    <div class="isi-tab hidden" id="pSetoran">
+      <div class="tabel-bungkus">
+        <table class="tabel">
+          <thead><tr><th>Tanggal</th><th>Sampah</th><th class="angka">Berat</th><th class="angka">Poin</th><th>Status</th></tr></thead>
+          <tbody id="isiSetoran"></tbody>
+        </table>
+      </div>
+      <div class="kosong-blok hidden" id="kosongSetoran">Belum ada setoran. Mulai dari menu Setor Sampah.</div>
+    </div>
+
+    <div class="isi-tab hidden" id="pTukar">
+      <div class="tabel-bungkus">
+        <table class="tabel">
+          <thead><tr><th>Tanggal</th><th>Hadiah</th><th class="angka">Poin</th><th>Kode</th></tr></thead>
+          <tbody id="isiTukar"></tbody>
+        </table>
+      </div>
+      <div class="kosong-blok hidden" id="kosongTukar">Belum ada penukaran.</div>
+    </div>
+
+    <dialog id="dlgTukar" aria-label="Konfirmasi penukaran">
+      <div class="dlg-isi">
+        <h2 style="font-family:var(--font-judul);font-size:1.2rem" id="judulTukar"></h2>
+        <p class="catatan-kecil" id="ketTukar" style="font-size:.88rem;margin:8px 0 16px"></p>
+        <div class="aksi" style="justify-content:flex-end">
+          <button type="button" class="tombol-kecil" id="batalTukar">Batal</button>
+          <button type="button" class="tombol-kecil utama" id="yaTukar">Tukar sekarang</button>
+        </div>
+      </div>
+    </dialog>
+  </section>
+</main>
+
+<script src="../js/utils.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/seed-init.js"></script>
+<script src="../js/dompet.js"></script>
+</body>
+</html>

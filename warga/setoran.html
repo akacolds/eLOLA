@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>eLOLA – Setor Sampah</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,600&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<main class="kartu">
+  <section class="kiri">
+    <div class="atas">
+      <div class="logo">
+        <svg viewBox="0 0 42 42" aria-hidden="true">
+          <rect width="42" height="42" rx="11" fill="#58b45d"/>
+          <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
+          <path d="M21 14v17" stroke="#58b45d" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <div><b>eLOLA</b><small>Bank Sampah Digital</small></div>
+      </div>
+      <nav class="menu" id="menu" aria-label="Menu utama"></nav>
+    </div>
+    <div class="tengah">
+      <h2 id="salam">Halo.</h2>
+      <p class="peran-label" id="peranLabel"></p>
+      <p id="subsalam">Isi berat tiap jenis sampah, poinmu terhitung otomatis.</p>
+      <div class="ringkas" id="ringkas">
+        <div>
+          <div class="angka" id="totalPoin">0</div>
+          <div class="label" id="labelPoin">poin dari 0 setoran disetujui</div>
+        </div>
+        <div class="kuota hidden" id="kuota">
+          <div class="baris"><b>Kuota ASN bulan ini</b><span id="kuotaAngka">0 / 2,0 kg</span></div>
+          <div class="jalur" role="progressbar" aria-label="Kuota setoran ASN bulan ini" aria-valuemin="0" aria-valuemax="2" aria-valuenow="0" id="jalur"><i id="isiJalur"></i></div>
+          <p class="ket" id="kuotaKet"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="kanan">
+    <div id="aplikasi">
+      <div class="tab" role="tablist">
+        <button type="button" id="tSetor" class="aktif">Setor Sampah</button>
+        <button type="button" id="tRiwayat">Riwayat</button>
+      </div>
+
+      <div id="notif" class="notif hidden" role="status"></div>
+
+      <form id="fSetor" novalidate>
+        <span class="judul-kecil">Wilayah setoran</span>
+        <div class="tiga" style="margin-top:-2px">
+          <div>
+            <label for="kel" style="margin-top:0">Kelurahan</label>
+            <select id="kel" disabled><option>Lalolara</option></select>
+          </div>
+          <div>
+            <label for="rw" style="margin-top:0">RW</label>
+            <select id="rw"><option value="">Pilih</option><option>RW 01</option><option>RW 02</option><option>RW 03</option><option>RW 04</option><option>RW 05</option></select>
+          </div>
+          <div>
+            <label for="rt" style="margin-top:0">RT</label>
+            <select id="rt"><option value="">Pilih</option><option>RT 01</option><option>RT 02</option><option>RT 03</option><option>RT 04</option></select>
+          </div>
+        </div>
+        <p class="catatan-kecil">Wilayah otomatis tersimpan ke profilmu.</p>
+
+        <span class="judul-kecil">Jenis dan berat sampah (kg)</span>
+        <div class="jenis" id="daftarJenis" style="margin-top:-2px"></div>
+
+        <div class="estimasi" aria-live="polite">
+          <div><small>Total berat</small><b id="totKg">0 kg</b></div>
+          <div><small>Estimasi poin</small><b id="totPoin">0</b></div>
+        </div>
+
+        <span class="judul-kecil">Bukti foto sampah (opsional)</span>
+        <label class="unggah" id="zonaUnggah" style="margin-top:0">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          <span>Ambil atau pilih foto</span>
+          <input id="foto" type="file" accept="image/*">
+        </label>
+        <div class="pratinjau hidden" id="pratinjau">
+          <img id="imgPratinjau" alt="Pratinjau foto sampah">
+          <p id="infoFoto"></p>
+          <button type="button" id="hapusFoto">Hapus</button>
+        </div>
+        <p class="catatan-kecil" id="infoSimpan"></p>
+
+        <p class="pesan" id="pSetor" aria-live="polite"></p>
+        <button class="tombol" id="bSetor" type="submit" disabled>Kirim setoran →</button>
+        <p class="catatan-kecil" style="text-align:center;margin-top:14px">Poin bersifat estimasi sampai petugas memverifikasi setoranmu.</p>
+      </form>
+
+      <section id="tampilRiwayat" class="hidden">
+        <div class="rekap" aria-live="polite">
+          <div><b id="rkSetoran">0</b><small>setoran</small></div>
+          <div><b id="rkKg">0</b><small>kg sampah</small></div>
+          <div><b id="rkPoin">0</b><small>poin</small></div>
+        </div>
+        <div class="filter">
+          <div>
+            <label for="fPeriode">Periode</label>
+            <select id="fPeriode"><option value="semua">Semua waktu</option><option value="ini">Bulan ini</option><option value="lalu">Bulan lalu</option></select>
+          </div>
+          <div>
+            <label for="fJenis">Jenis sampah</label>
+            <select id="fJenis"><option value="">Semua jenis</option><option>Plastik</option><option>Kertas</option><option>Logam</option><option>Kaca</option></select>
+          </div>
+        </div>
+        <div class="riwayat" id="daftarRiwayat"></div>
+        <div class="kosong hidden" id="kosong">
+          <p id="kosongTeks"></p>
+          <button type="button" class="tombol" id="keSetor">Setor sekarang</button>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<script src="../js/utils.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/seed-init.js"></script>
+<script src="../js/setoran.js"></script>
+</body>
+</html>
