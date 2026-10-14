@@ -1,38 +1,44 @@
+// Konfigurasi Project Supabase
 const SUPABASE_URL = "https://sezmeitlvzcvqleutdxl.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_lAfH12E4Opmc9qmeLhmxAw_nP9XpKju";
 
-// Helper yang menunggu library CDN siap
-async function getSupabaseAsync() {
-  if (window.supabaseClient) {
-    return window.supabaseClient;
-  }
+// Inisialisasi instan tanpa infinite loop
+function initSupabase() {
+  if (window.supabaseClient) return window.supabaseClient;
 
-  // Jika CDN butuh beberapa milidetik untuk parse di browser, tunggu di sini
-  let percobaan = 0;
-  while (!window.supabase && typeof supabase === "undefined" && percobaan < 25) {
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    percobaan++;
-  }
-
+  // Cek apakah library CDN supabase sudah siap
   const lib = window.supabase || (typeof supabase !== "undefined" ? supabase : null);
-
   if (lib && typeof lib.createClient === "function") {
-    window.supabaseClient = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return window.supabaseClient;
+    try {
+      window.supabaseClient = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      return window.supabaseClient;
+    } catch (e) {
+      console.warn("Gagal inisialisasi Supabase:", e);
+    }
   }
-
-  throw new Error("SDK Supabase gagal dimuat. Periksa koneksi internet atau tag script CDN.");
+  return null;
 }
 
+// Coba inisialisasi langsung saat script dimuat
+initSupabase();
+
 window.SupabaseDB = (() => {
+  const getClientOrThrow = () => {
+    const client = initSupabase();
+    if (!client) {
+      throw new Error("SDK Supabase belum siap. Pastikan script CDN supabase termuat dan koneksi internet aktif.");
+    }
+    return client;
+  };
+
   return {
-    async getClient() {
-      return await getSupabaseAsync();
+    getClient() {
+      return initSupabase();
     },
 
-    // --- PROFILES / AUTH ---
+    // --- PROFILES ---
     async getProfile(userId) {
-      const sb = await getSupabaseAsync();
+      const sb = getClientOrThrow();
       const { data, error } = await sb
         .from("profiles")
         .select("*")
@@ -44,7 +50,7 @@ window.SupabaseDB = (() => {
     },
 
     async updateProfile(userId, payload) {
-      const sb = await getSupabaseAsync();
+      const sb = getClientOrThrow();
       const { data, error } = await sb
         .from("profiles")
         .update(payload)
@@ -55,7 +61,7 @@ window.SupabaseDB = (() => {
 
     // --- SETORAN ---
     async getSetoran(userId = null) {
-      const sb = await getSupabaseAsync();
+      const sb = getClientOrThrow();
       let query = sb
         .from("setoran")
         .select("*, profiles:user_id(nama, peran)")
@@ -68,7 +74,7 @@ window.SupabaseDB = (() => {
     },
 
     async tambahSetoran({ userId, rw, rt, rincian, kg, poin, fotoUrl = "" }) {
-      const sb = await getSupabaseAsync();
+      const sb = getClientOrThrow();
       const payload = {
         user_id: userId,
         rw: rw,
@@ -95,7 +101,7 @@ window.SupabaseDB = (() => {
     },
 
     async verifikasiSetoran(id, { aksi, rincianBaru, kgBaru, poinBaru, alasan = "", namaPetugas = "" }) {
-      const sb = await getSupabaseAsync();
+      const sb = getClientOrThrow();
       const updateData = {
         status: aksi === "setujui" ? "disetujui" : "ditolak",
         catatan: alasan,
@@ -122,7 +128,7 @@ window.SupabaseDB = (() => {
 
     // --- HADIAH & PENUKARAN ---
     async getHadiah() {
-      const sb = await getSupabaseAsync();
+      const sb = getClientOrThrow();
       const { data, error } = await sb
         .from("hadiah")
         .select("*")
@@ -132,7 +138,7 @@ window.SupabaseDB = (() => {
     },
 
     async getRiwayatPenukaran(userId = null) {
-      const sb = await getSupabaseAsync();
+      const sb = getClientOrThrow();
       let q = sb
         .from("penukaran")
         .select("*")
@@ -144,7 +150,7 @@ window.SupabaseDB = (() => {
     },
 
     async tukarHadiah(userId, hadiah) {
-      const sb = await getSupabaseAsync();
+      const sb = getClientOrThrow();
       const { error: errStok } = await sb
         .from("hadiah")
         .update({ stok: hadiah.stok - 1 })
