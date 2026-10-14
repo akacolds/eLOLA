@@ -3,65 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>eLOLA – Klasemen</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,600&family=Instrument+Sans:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="css/style.css">
+  <title>eLOLA – Klasemen RT</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Instrument+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-
-<main class="kartu lebar">
-  <section class="kiri">
-    <div class="atas">
+  <main class="kartu lebar">
+    <section class="kiri">
       <div class="logo">
-        <svg viewBox="0 0 42 42" aria-hidden="true">
+        <svg viewBox="0 0 42 42">
           <rect width="42" height="42" rx="11" fill="#58b45d"/>
           <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
           <path d="M21 14v17" stroke="#58b45d" stroke-width="2.2" stroke-linecap="round"/>
         </svg>
         <div><b>eLOLA</b><small>Bank Sampah Digital</small></div>
       </div>
-      <nav class="menu" id="menu" aria-label="Menu utama"></nav>
-    </div>
-    <div class="tengah">
-      <h2 id="salam">Halo.</h2>
-      <p class="peran-label" id="peranLabel"></p>
-      <p id="subsalam">Peringkat RT se-Kelurahan Lalolara berdasarkan poin setoran yang sudah disetujui.</p>
-      <div class="ringkas">
+      <div>
+        <h2>Klasemen Sampah Antar RT</h2>
+        <p>Peringkat RT se-Kelurahan Lalolara berdasarkan perolehan poin setoran warga.</p>
+      </div>
+      <a href="/index.html" class="tombol-kecil" style="color:#fff;border-color:#fff">← Kembali</a>
+    </section>
+    <section class="kanan">
+      <div class="kepala-halaman">
         <div>
-          <div class="angka" id="rankSaya">-</div>
-          <div class="label" id="labelRank">peringkat RT kamu</div>
+          <h1>Peringkat Wilayah</h1>
+          <p>Terhitung dari akumulasi setoran sampah terverifikasi.</p>
         </div>
       </div>
-    </div>
-  </section>
-
-  <section class="kanan">
-    <div class="kepala-halaman">
-      <div>
-        <h1>Papan Klasemen Kelurahan Lalolara</h1>
-        <p>Semua RT dari RW 01 sampai RW 05. Urutan bergeser otomatis begitu petugas menyetujui setoran.</p>
+      <div class="podium" id="podium"></div>
+      <div style="margin-top:24px">
+        <h3 style="font-family:var(--font-judul);margin-bottom:10px">Peringkat Lengkap</h3>
+        <div class="rank-daftar" id="daftarRank"></div>
       </div>
-      <span class="langsung" id="langsung" role="status"><i></i><span>Menyambung…</span></span>
-    </div>
-
-    <div class="segmen" role="group" aria-label="Periode klasemen" style="margin-top:16px">
-      <button type="button" id="pSemua" class="aktif">Semua waktu</button>
-      <button type="button" id="pBulan">Bulan ini</button>
-    </div>
-
-    <div class="podium" id="podium" aria-label="Tiga besar"></div>
-
-    <div class="bagian">
-      <h2>Peringkat lengkap</h2>
-      <div class="rank-daftar" id="daftar"></div>
-    </div>
-  </section>
-</main>
-
-<script src="js/utils.js"></script>
-<script src="js/supabase.js"></script>
-<script src="js/auth-guard.js"></script>
-<script src="js/seed-init.js"></script>
-<script src="js/peringkat.js"></script>
+    </section>
+  </main>
+  <script src="/js/utils.js"></script>
+  <script src="/js/peringkat.js"></script>
 </body>
 </html>
