@@ -1,33 +1,38 @@
-// Konfigurasi Supabase Client
 const SUPABASE_URL = "https://sezmeitlvzcvqleutdxl.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_lAfH12E4Opmc9qmeLhmxAw_nP9XpKju";
 
-// Helper inisialisasi yang tahan banting
-function getSupabase() {
+// Helper yang menunggu library CDN siap
+async function getSupabaseAsync() {
   if (window.supabaseClient) {
     return window.supabaseClient;
   }
 
-  // Cek global 'supabase' dari CDN unpkg / jsdelivr
+  // Jika CDN butuh beberapa milidetik untuk parse di browser, tunggu di sini
+  let percobaan = 0;
+  while (!window.supabase && typeof supabase === "undefined" && percobaan < 25) {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    percobaan++;
+  }
+
   const lib = window.supabase || (typeof supabase !== "undefined" ? supabase : null);
-  
+
   if (lib && typeof lib.createClient === "function") {
     window.supabaseClient = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     return window.supabaseClient;
   }
 
-  throw new Error("SDK Supabase belum termuat dari CDN. Periksa koneksi internet atau script tag di HTML.");
+  throw new Error("SDK Supabase gagal dimuat. Periksa koneksi internet atau tag script CDN.");
 }
 
 window.SupabaseDB = (() => {
   return {
-    getClient() {
-      return getSupabase();
+    async getClient() {
+      return await getSupabaseAsync();
     },
 
     // --- PROFILES / AUTH ---
     async getProfile(userId) {
-      const sb = getSupabase();
+      const sb = await getSupabaseAsync();
       const { data, error } = await sb
         .from("profiles")
         .select("*")
@@ -39,7 +44,7 @@ window.SupabaseDB = (() => {
     },
 
     async updateProfile(userId, payload) {
-      const sb = getSupabase();
+      const sb = await getSupabaseAsync();
       const { data, error } = await sb
         .from("profiles")
         .update(payload)
@@ -50,7 +55,7 @@ window.SupabaseDB = (() => {
 
     // --- SETORAN ---
     async getSetoran(userId = null) {
-      const sb = getSupabase();
+      const sb = await getSupabaseAsync();
       let query = sb
         .from("setoran")
         .select("*, profiles:user_id(nama, peran)")
@@ -63,7 +68,7 @@ window.SupabaseDB = (() => {
     },
 
     async tambahSetoran({ userId, rw, rt, rincian, kg, poin, fotoUrl = "" }) {
-      const sb = getSupabase();
+      const sb = await getSupabaseAsync();
       const payload = {
         user_id: userId,
         rw: rw,
@@ -90,7 +95,7 @@ window.SupabaseDB = (() => {
     },
 
     async verifikasiSetoran(id, { aksi, rincianBaru, kgBaru, poinBaru, alasan = "", namaPetugas = "" }) {
-      const sb = getSupabase();
+      const sb = await getSupabaseAsync();
       const updateData = {
         status: aksi === "setujui" ? "disetujui" : "ditolak",
         catatan: alasan,
@@ -117,7 +122,7 @@ window.SupabaseDB = (() => {
 
     // --- HADIAH & PENUKARAN ---
     async getHadiah() {
-      const sb = getSupabase();
+      const sb = await getSupabaseAsync();
       const { data, error } = await sb
         .from("hadiah")
         .select("*")
@@ -127,7 +132,7 @@ window.SupabaseDB = (() => {
     },
 
     async getRiwayatPenukaran(userId = null) {
-      const sb = getSupabase();
+      const sb = await getSupabaseAsync();
       let q = sb
         .from("penukaran")
         .select("*")
@@ -139,7 +144,7 @@ window.SupabaseDB = (() => {
     },
 
     async tukarHadiah(userId, hadiah) {
-      const sb = getSupabase();
+      const sb = await getSupabaseAsync();
       const { error: errStok } = await sb
         .from("hadiah")
         .update({ stok: hadiah.stok - 1 })
