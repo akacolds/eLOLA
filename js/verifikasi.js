@@ -1,40 +1,51 @@
-document.addEventListener("DOMContentLoaded", () => {
-  window.AuthGuard(["petugas", "admin"]);
-  const { $, baca, notif, tglJam } = window.Utils;
+document.addEventListener("DOMContentLoaded", async () => {
+  const user = await window.AuthGuard(["petugas", "admin"]);
+  if (!user) return;
 
-  async function muat() {
-    const list = (baca("elola_setoran", [])).filter(s => s.status === "menunggu");
-    const wadah = $("antrean");
-    wadah.innerHTML = list.length ? "" : "<p style='color:var(--abu)'>Tidak ada antrean setoran saat ini.</p>";
+  const { $, notif, tglJam } = window.Utils;
 
-    list.forEach(s => {
-      const el = document.createElement("div");
-      el.className = "setoran-kartu";
-      el.innerHTML = `
-        <div style="display:flex;justify-content:space-between">
-          <b>${s.akun}</b>
-          <span>${s.rw} / ${s.rt}</span>
-        </div>
-        <small>${tglJam(s.waktu)}</small>
-        <p style="margin:8px 0">${Object.entries(s.rincian).map(([k, v]) => `${k}:${v}kg`).join(", ")}</p>
-        <div style="display:flex;gap:8px">
-          <button class="tombol-kecil utama" onclick="prosesVerif(${s.nomor}, 'setujui')">Setujui</button>
-          <button class="tombol-kecil bahaya" onclick="prosesVerif(${s.nomor}, 'tolak')">Tolak</button>
-        </div>
-      `;
-      wadah.append(el);
-    });
+  async function muatAntrean() {
+    try {
+      const list = (await window.SupabaseDB.getSetoran()).filter(s => s.status === "menunggu");
+      const wadah = $("antrean");
+      wadah.innerHTML = list.length ? "" : "<p style='color:var(--abu)'>Tidak ada antrean setoran saat ini.</p>";
+
+      list.forEach(s => {
+        const namaPenyetor = s.profiles ? s.profiles.nama : s.user_id;
+        const el = document.createElement("div");
+        el.className = "setoran-kartu";
+        el.innerHTML = `
+          <div style="display:flex;justify-content:space-between">
+            <b>${namaPenyetor}</b>
+            <span>${s.rw} / ${s.rt}</span>
+          </div>
+          <small>${tglJam(s.created_at)}</small>
+          <p style="margin:8px 0">${Object.entries(s.rincian || {}).map(([k, v]) => `${k}:${v}kg`).join(", ")}</p>
+          <div style="display:flex;gap:8px">
+            <button class="tombol-kecil utama" onclick="verif(${s.id}, 'setujui')">Setujui</button>
+            <button class="tombol-kecil bahaya" onclick="verif(${s.id}, 'tolak')">Tolak</button>
+          </div>
+        `;
+        wadah.append(el);
+      });
+    } catch (err) {
+      notif("err", err.message);
+    }
   }
 
-  window.prosesVerif = async (nomor, aksi) => {
+  window.verif = async (id, aksi) => {
     try {
-      await window.SupabaseDB.verifikasiSetoran(nomor, aksi, null, aksi === "tolak" ? "Ditolak petugas" : "");
-      notif("ok", `Setoran S${String(nomor).padStart(5, '0')} berhasil di-${aksi}`);
-      muat();
+      await window.SupabaseDB.verifikasiSetoran(id, {
+        aksi,
+        namaPetugas: user.nama || user.email,
+        alasan: aksi === "tolak" ? "Tidak memenuhi kriteria pilah sampah." : ""
+      });
+      notif("ok", `Setoran #${id} berhasil di-${aksi}`);
+      muatAntrean();
     } catch (e) {
       notif("err", e.message);
     }
   };
 
-  muat();
+  muatAntrean();
 });
