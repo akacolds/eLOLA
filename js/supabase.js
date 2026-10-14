@@ -1,84 +1,164 @@
-window.SupabaseDB = (() => {
-  const { baca, tulis, nomorBaru, bulat1, JENIS } = window.Utils;
+// Konfigurasi Supabase Client
+const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
-  const poinMap = Object.fromEntries(JENIS.map(j => [j.k, j.poin]));
+// Inisialisasi library supabase-js
+window.supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+window.SupabaseDB = (() => {
+  const sb = () => window.supabaseClient;
 
   return {
-    async getSetoran(filterAkun = null) {
-      let data = baca("elola_setoran", []);
-      if (filterAkun) data = data.filter(d => d.akun === filterAkun);
-      return data.sort((a, b) => b.waktu.localeCompare(a.waktu));
+    // --- PROFILES / AUTH ---
+    async getProfile(userId) {
+      const { data, error } = await sb()
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+      if (error) throw error;
+      return data;
     },
-    async tambahSetoran(setoran) {
-      const list = baca("elola_setoran", []);
-      let kgTot = 0, poinTot = 0;
-      for (const [k, v] of Object.entries(setoran.rincian)) {
-        kgTot += v;
-        poinTot += Math.round(v * (poinMap[k] || 0));
-      }
-      const baru = {
-        nomor: nomorBaru(),
-        id: "S" + String(nomorBaru()).padStart(5, "0"),
-        akun: setoran.akun,
-        waktu: new Date().toISOString(),
-        rw: setoran.rw,
-        rt: setoran.rt,
-        rincian: setoran.rincian,
-        klaim: setoran.rincian,
-        kg: bulat1(kgTot),
-        kg_klaim: bulat1(kgTot),
-        poin: poinTot,
-        status: "menunggu",
-        catatan: "",
-        foto: setoran.foto || ""
-      };
-      list.push(baru);
-      tulis("elola_setoran", list);
-      return baru;
-    },
-    async verifikasiSetoran(nomor, aksi, rincianTimbang = null, alasan = "") {
-      const list = baca("elola_setoran", []);
-      const item = list.find(x => x.nomor === Number(nomor));
-      if (!item) throw new Error("Setoran tidak ditemukan");
-      if (aksi === "tolak") {
-        item.status = "ditolak";
-        item.catatan = alasan;
-      } else if (aksi === "setujui") {
-        item.status = "disetujui";
-        if (rincianTimbang) {
-          item.rincian = rincianTimbang;
-          let kgTot = 0, poinTot = 0;
-          for (const [k, v] of Object.entries(rincianTimbang)) {
-            kgTot += v;
-            poinTot += Math.round(v * (poinMap[k] || 0));
-          }
-          item.kg = bulat1(kgTot);
-          item.poin = poinTot;
-        }
-      }
-      tulis("elola_setoran", list);
-      return item;
-    },
-    async getHadiah() {
-      return baca("elola_hadiah", []);
-    },
-    async tukarHadiah(akunId, hadiahId) {
-      const hadiahList = baca("elola_hadiah", []);
-      const h = hadiahList.find(x => x.id === Number(hadiahId));
-      if (!h || h.stok < 1) throw new Error("Hadiah tidak tersedia");
-      
-      const setoran = (baca("elola_setoran", [])).filter(s => s.akun === akunId && s.status === "disetujui");
-      const poinDapat = setoran.reduce((s, x) => s + x.poin, 0);
-      const tukarList = baca("elola_tukar", []);
-      const poinTukar = tukarList.filter(t => t.akun === akunId).reduce((s, x) => s + x.poin, 0);
-      const saldo = poinDapat - poinTukar;
 
-      if (saldo < h.harga) throw new Error("Poin tidak mencukupi");
-      h.stok--;
-      tukarList.push({ nomor: nomorBaru(), id: "T" + String(nomorBaru()).padStart(5, "0"), akun: akunId, nama: h.nama, poin: h.harga, waktu: new Date().toISOString() });
-      tulis("elola_hadiah", hadiahList);
-      tulis("elola_tukar", tukarList);
-      return h;
+    async updateProfile(userId, payload) {
+      const { data, error } = await sb()
+        .from("profiles")
+        .update(payload)
+        .eq("id", userId);
+      if (error) throw error;
+      return data;
+    },
+
+    // --- KATEGORI SAMPAH ---
+    async getKategoriSampah() {
+      const { data, error } = await sb()
+        .from("kategori_sampah")
+        .select("*")
+        .order("id", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+
+    // --- SETORAN (Sesuai kolom tabel: setoran) ---
+    async getSetoran(userId = null) {
+      let query = sb()
+        .from("setoran")
+        .select("*, profiles:user_id(nama, peran)")
+        .order("created_at", { ascending: false });
+
+      if (userId) {
+        query = query.eq("user_id", userId);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+
+    async tambahSetoran({ userId, rw, rt, rincian, kg, poin, fotoUrl = "" }) {
+      const payload = {
+        user_id: userId,
+        rw: rw,
+        rt: rt,
+        rincian: rincian,         // jsonb
+        klaim: rincian,           // jsonb
+        kg: kg,                   // numeric
+        kg_klaim: kg,             // numeric
+        poin: poin,               // int4
+        foto_url: fotoUrl,        // text
+        status: "menunggu",       // text
+        catatan: "",
+        created_at: new Date().toISOString()
+      };
+
+      const { data, error } = await sb()
+        .from("setoran")
+        .insert([payload])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+
+    async verifikasiSetoran(id, { aksi, rincianBaru, kgBaru, poinBaru, alasan = "", namaPetugas = "" }) {
+      const updateData = {
+        status: aksi === "setujui" ? "disetujui" : "ditolak",
+        catatan: alasan,
+        petugas: namaPetugas,
+        verified_at: new Date().toISOString()
+      };
+
+      if (aksi === "setujui" && rincianBaru) {
+        updateData.rincian = rincianBaru;
+        updateData.kg = kgBaru;
+        updateData.poin = poinBaru;
+      }
+
+      const { data, error } = await sb()
+        .from("setoran")
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+
+    // --- HADIAH & PENUKARAN (Sesuai tabel: hadiah & penukaran) ---
+    async getHadiah() {
+      const { data, error } = await sb()
+        .from("hadiah")
+        .select("*")
+        .order("harga", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+
+    async getRiwayatPenukaran(userId = null) {
+      let q = sb()
+        .from("penukaran")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (userId) q = q.eq("user_id", userId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data;
+    },
+
+    async tukarHadiah(userId, hadiah) {
+      // 1. Kurangi stok hadiah
+      const { error: errStok } = await sb()
+        .from("hadiah")
+        .update({ stok: hadiah.stok - 1 })
+        .eq("id", hadiah.id);
+      if (errStok) throw errStok;
+
+      // 2. Buat catatan di tabel penukaran
+      const { data, error } = await sb()
+        .from("penukaran")
+        .insert([{
+          user_id: userId,
+          hadiah_id: hadiah.id,
+          nama_hadiah: hadiah.nama,
+          poin: hadiah.harga,
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+
+    // --- PERINGKAT RT ---
+    async getPeringkatRT() {
+      const { data, error } = await sb()
+        .from("peringkat_rt")
+        .select("*")
+        .order("total_kg", { ascending: false });
+      if (error) throw error;
+      return data;
     }
   };
 })();
