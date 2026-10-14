@@ -8,17 +8,17 @@ window.supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_
 window.SupabaseDB = (() => {
   const sb = () => window.supabaseClient;
 
-  return {
-    // --- PROFILES / AUTH ---
-    async getProfile(userId) {
-      const { data, error } = await sb()
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+// --- PROFILES / AUTH ---
+async getProfile(userId) {
+  const { data, error } = await sb()
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle(); // Mengembalikan null (bukan error) jika profil belum ada
+
+  if (error) throw error;
+  return data;
+},
 
     async updateProfile(userId, payload) {
       const { data, error } = await sb()
