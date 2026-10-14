@@ -3,90 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>eLOLA – Pusat Kendali Kota</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,600&family=Instrument+Sans:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="../css/style.css">
+  <title>eLOLA – Dashboard Admin DLH</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Instrument+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-
-<main class="kartu lebar">
-  <section class="kiri">
-    <div class="atas">
-      <div class="logo">
-        <svg viewBox="0 0 42 42" aria-hidden="true">
-          <rect width="42" height="42" rx="11" fill="#58b45d"/>
-          <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
-          <path d="M21 14v17" stroke="#58b45d" stroke-width="2.2" stroke-linecap="round"/>
-        </svg>
-        <div><b>eLOLA</b><small>Bank Sampah Digital</small></div>
+  <main class="kartu lebar">
+    <section class="kiri">
+      <div class="bar-atas">
+        <button class="keluar-btn" onclick="keluarAkun()">Keluar</button>
       </div>
-      <nav class="menu" id="menu" aria-label="Menu utama"></nav>
-    </div>
-    <div class="tengah">
-      <h2 id="salam">Halo.</h2>
-      <p class="peran-label" id="peranLabel"></p>
-      <p id="subsalam">Pantau sampah, kepatuhan ASN, dan transaksi se-kota.</p>
-      <div class="ringkas">
+      <div class="atas">
+        <div class="logo">
+          <svg viewBox="0 0 42 42">
+            <rect width="42" height="42" rx="11" fill="#58b45d"/>
+            <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
+            <path d="M21 14v17" stroke="#58b45d" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+          <div><b>eLOLA</b><small>Bank Sampah Digital</small></div>
+        </div>
+        <nav class="menu">
+          <a href="/admin/dashboard.html" class="aktif">Dashboard Admin</a>
+          <a href="/petugas/verifikasi.html">Verifikasi Petugas</a>
+          <a href="/peringkat.html">Klasemen RT</a>
+        </nav>
+      </div>
+      <div>
+        <h2 id="salam">Halo Admin</h2>
+        <p class="peran-label" id="peranLabel"></p>
+      </div>
+    </section>
+
+    <section class="kanan">
+      <div class="kepala-halaman">
         <div>
-          <div class="angka" id="kiriMenunggu">0</div>
-          <div class="label">setoran menunggu verifikasi</div>
+          <h1>Pusat Kendali Bank Sampah</h1>
+          <p>Rekapitulasi total sampah, sirkulasi poin, dan audit log setoran se-kelurahan.</p>
         </div>
       </div>
-    </div>
-  </section>
 
-  <section class="kanan">
-    <div class="kepala-halaman">
-      <div>
-        <h1>Pusat Kendali Kota</h1>
-        <p>Rekap seluruh Kelurahan Lalolara. Angka diperbarui otomatis.</p>
+      <div class="saldo" style="margin-top:14px">
+        <div><b id="stKg">0 kg</b><span>Total Sampah Terkumpul</span></div>
+        <div><b id="stPoin">0</b><span>Total Poin Beredar</span></div>
+        <div><b id="stAkun">0</b><span>Pengguna Terdaftar</span></div>
       </div>
-      <span class="langsung" id="langsung" role="status"><i></i><span>Menyambung…</span></span>
-    </div>
 
-    <div class="statistik">
-      <div>
-        <b id="stKg">0 kg</b><span>Total sampah terkumpul</span>
-        <small id="stKgBulan">Bulan ini 0 kg</small>
-      </div>
-      <div>
-        <b id="stAsn">0%</b><span>Kepatuhan ASN bulan ini</span>
-        <small id="stAsnKet">0 dari 0 ASN memenuhi kuota</small>
-        <div class="batang" aria-hidden="true"><i id="stAsnBar"></i></div>
-      </div>
-      <div>
-        <b id="stPoin">0</b><span>Total poin beredar</span>
-        <small id="stPoinKet">Diterbitkan 0, ditukar 0</small>
-      </div>
-      <div>
-        <b id="stAkun">0</b><span>Akun terdaftar</span>
-        <small id="stAkunKet"></small>
-      </div>
-    </div>
-
-    <div class="bagian">
-      <h2>Log setoran se-kota</h2>
-      <div class="segmen" role="group" aria-label="Filter status">
-        <button type="button" data-f="" class="aktif">Semua</button>
-        <button type="button" data-f="menunggu">Menunggu</button>
-        <button type="button" data-f="disetujui">Disetujui</button>
-        <button type="button" data-f="ditolak">Ditolak</button>
-      </div>
-      <div class="tabel-bungkus" style="margin-top:12px">
+      <h3 style="font-family:var(--font-judul);margin:24px 0 10px">Log Transaksi Setoran</h3>
+      <div class="tabel-bungkus">
         <table class="tabel">
-          <thead><tr><th>Waktu</th><th>Penyetor</th><th>RW / RT</th><th>Sampah</th><th class="angka">Berat</th><th class="angka">Poin</th><th>Status</th><th>Petugas</th></tr></thead>
-          <tbody id="log"></tbody>
+          <thead>
+            <tr><th>Waktu</th><th>Akun Penyetor</th><th>Wilayah</th><th>Berat</th><th>Poin</th><th>Status</th></tr>
+          </thead>
+          <tbody id="tabelLog"></tbody>
         </table>
       </div>
-      <div class="kosong-blok hidden" id="logKosong">Tidak ada setoran untuk filter ini.</div>
-    </div>
-  </section>
-</main>
+    </section>
+  </main>
 
-<script src="../js/utils.js"></script>
-<script src="../js/supabase.js"></script>
-<script src="../js/auth-guard.js"></script>
-<script src="../js/seed-init.js"></script>
-<script src="../js/dashboard.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/auth-guard.js"></script>
+  <script src="/js/dashboard.js"></script>
 </body>
 </html>
