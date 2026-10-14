@@ -43,51 +43,55 @@ document.addEventListener("DOMContentLoaded", () => {
   tMasuk.onclick = () => setMode(true);
   tDaftar.onclick = () => setMode(false);
 
-// LOGIN SUPABASE
 fMasuk.onsubmit = async (e) => {
-  e.preventDefault();
-  const email = idMasuk.value.trim();
-  const password = $("sMasuk").value;
-  const btn = fMasuk.querySelector("button[type=submit]");
-  btn.disabled = true; btn.textContent = "Memverifikasi...";
+    e.preventDefault();
 
-  try {
-    const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-
-    // Ambil profile peran
-    let profil = await window.SupabaseDB.getProfile(data.user.id);
-
-    // Jika akun ada di Auth tapi profilnya belum dibuat di tabel profiles
-    if (!profil) {
-      const defaultNama = email.split("@")[0];
-      const { data: profilBaru, error: errInsert } = await window.supabaseClient
-        .from("profiles")
-        .insert([{
-          id: data.user.id,
-          nama: defaultNama,
-          peran: peranAktif, // 'warga', 'asn', atau 'petugas'
-          kelurahan: "Lalolara",
-          rw: "RW 01",
-          rt: "RT 01"
-        }])
-        .select()
-        .maybeSingle();
-
-      if (errInsert) throw errInsert;
-      profil = profilBaru;
+    if (!window.supabaseClient) {
+      return notif("err", "Gagal menghubungkan ke Supabase. Pastikan script CDN sudah termuat.");
     }
 
-    notif("ok", "Berhasil masuk!");
+    const email = idMasuk.value.trim();
+    const password = $("sMasuk").value;
+    const btn = fMasuk.querySelector("button[type=submit]");
+    btn.disabled = true; 
+    btn.textContent = "Memverifikasi...";
 
-    if (profil.peran === "admin") location.href = "/admin/dashboard.html";
-    else if (profil.peran === "petugas") location.href = "/petugas/verifikasi.html";
-    else location.href = "/warga/setoran.html";
-  } catch (err) {
-    notif("err", err.message || "Email atau kata sandi tidak sesuai.");
-    btn.disabled = false; btn.textContent = "Masuk ke eLOLA →";
-  }
-};
+    try {
+      const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      let profil = await window.SupabaseDB.getProfile(data.user.id);
+
+      if (!profil) {
+        const defaultNama = email.split("@")[0];
+        const { data: profilBaru, error: errInsert } = await window.supabaseClient
+          .from("profiles")
+          .insert([{
+            id: data.user.id,
+            nama: defaultNama,
+            peran: peranAktif,
+            kelurahan: "Lalolara",
+            rw: "RW 01",
+            rt: "RT 01"
+          }])
+          .select()
+          .maybeSingle();
+
+        if (errInsert) throw errInsert;
+        profil = profilBaru;
+      }
+
+      notif("ok", "Berhasil masuk!");
+
+      if (profil.peran === "admin") location.href = "/admin/dashboard.html";
+      else if (profil.peran === "petugas") location.href = "/petugas/verifikasi.html";
+      else location.href = "/warga/setoran.html";
+    } catch (err) {
+      notif("err", err.message || "Email atau kata sandi salah.");
+      btn.disabled = false; 
+      btn.textContent = "Masuk ke eLOLA →";
+    }
+  };
 
   // DAFTAR SUPABASE
   fDaftar.onsubmit = async (e) => {
