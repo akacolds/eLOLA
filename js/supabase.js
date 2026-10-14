@@ -2,32 +2,38 @@
 const SUPABASE_URL = "https://sezmeitlvzcvqleutdxl.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_lAfH12E4Opmc9qmeLhmxAw_nP9XpKju";
 
-// Inisialisasi library supabase-js
-window.supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+// Cek apakah library CDN Supabase sudah terpasang
+if (typeof supabase !== "undefined" && supabase.createClient) {
+  window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else if (typeof window.supabase !== "undefined" && window.supabase.createClient) {
+  window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+  console.error("SDK Supabase belum terpasang atau gagal dimuat dari CDN!");
+}
 
 window.SupabaseDB = (() => {
-  const sb = () => window.supabaseClient;
+  const sb = () => {
+    if (!window.supabaseClient) {
+      throw new Error("Koneksi Supabase belum siap. Periksa koneksi internet atau CDN script.");
+    }
+    return window.supabaseClient;
+  };
 
-// --- PROFILES / AUTH ---
-async getProfile(userId) {
-  const { data, error } = await sb()
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .maybeSingle(); // Mengembalikan null (bukan error) jika profil belum ada
-
-  if (error) throw error;
-  return data;
-},
-
-    async updateProfile(userId, payload) {
+  return {
+    // --- PROFILES / AUTH ---
+    async getProfile(userId) {
       const { data, error } = await sb()
         .from("profiles")
-        .update(payload)
-        .eq("id", userId);
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
+
+    // ... method lainnya tetap sama
+  };
+})();
 
     // --- KATEGORI SAMPAH ---
     async getKategoriSampah() {
