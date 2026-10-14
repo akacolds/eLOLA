@@ -43,8 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
   tMasuk.onclick = () => setMode(true);
   tDaftar.onclick = () => setMode(false);
 
-  // LOGIN SUPABASE
-  fMasuk.onsubmit = async (e) => {
+fMasuk.onsubmit = async (e) => {
     e.preventDefault();
     const email = idMasuk.value.trim();
     const password = $("sMasuk").value;
@@ -53,18 +52,18 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.textContent = "Memverifikasi...";
 
     try {
-      // Ambil client supabase lewat SupabaseDB
       const sb = window.SupabaseDB.getClient();
 
+      // Login ke Supabase Auth
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Ambil profil data
+      // Ambil data profil dari tabel profiles
       let profil = await window.SupabaseDB.getProfile(data.user.id);
 
-      // Jika data profil belum ada di database, buat otomatis
+      // Jika profil belum ada di tabel profiles, buat baris default
       if (!profil) {
-        const defaultNama = email.split("@")[0];
+        const defaultNama = email.split("@")[0].replace(/[._\-\d]+/g, " ");
         const { data: profilBaru, error: errInsert } = await sb
           .from("profiles")
           .insert([{
@@ -78,17 +77,24 @@ document.addEventListener("DOMContentLoaded", () => {
           .select()
           .maybeSingle();
 
-        if (errInsert) throw errInsert;
-        profil = profilBaru;
+        if (!errInsert && profilBaru) {
+          profil = profilBaru;
+        } else {
+          profil = { peran: peranAktif };
+        }
       }
 
       notif("ok", "Berhasil masuk!");
 
-      if (profil.peran === "admin") location.href = "/admin/dashboard.html";
-      else if (profil.peran === "petugas") location.href = "/petugas/verifikasi.html";
-      else location.href = "/warga/setoran.html";
+      // Arahkan sesuai peran akun
+      setTimeout(() => {
+        if (profil.peran === "admin") location.href = "/admin/dashboard.html";
+        else if (profil.peran === "petugas") location.href = "/petugas/verifikasi.html";
+        else location.href = "/warga/setoran.html";
+      }, 500);
+
     } catch (err) {
-      notif("err", err.message || "Email atau kata sandi tidak sesuai.");
+      notif("err", err.message || "Email atau kata sandi salah.");
       btn.disabled = false; 
       btn.textContent = "Masuk ke eLOLA →";
     }
