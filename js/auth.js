@@ -52,16 +52,14 @@ fMasuk.onsubmit = async (e) => {
     btn.textContent = "Memverifikasi...";
 
     try {
-      const sb = window.SupabaseDB.getClient();
+      // Ambil client dengan await agar pasti siap
+      const sb = await window.SupabaseDB.getClient();
 
-      // Login ke Supabase Auth
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Ambil data profil dari tabel profiles
       let profil = await window.SupabaseDB.getProfile(data.user.id);
 
-      // Jika profil belum ada di tabel profiles, buat baris default
       if (!profil) {
         const defaultNama = email.split("@")[0].replace(/[._\-\d]+/g, " ");
         const { data: profilBaru, error: errInsert } = await sb
@@ -77,14 +75,23 @@ fMasuk.onsubmit = async (e) => {
           .select()
           .maybeSingle();
 
-        if (!errInsert && profilBaru) {
-          profil = profilBaru;
-        } else {
-          profil = { peran: peranAktif };
-        }
+        profil = (!errInsert && profilBaru) ? profilBaru : { peran: peranAktif };
       }
 
       notif("ok", "Berhasil masuk!");
+
+      setTimeout(() => {
+        if (profil.peran === "admin") location.href = "/admin/dashboard.html";
+        else if (profil.peran === "petugas") location.href = "/petugas/verifikasi.html";
+        else location.href = "/warga/setoran.html";
+      }, 400);
+
+    } catch (err) {
+      notif("err", err.message || "Email atau kata sandi salah.");
+      btn.disabled = false; 
+      btn.textContent = "Masuk ke eLOLA →";
+    }
+  };
 
       // Arahkan sesuai peran akun
       setTimeout(() => {
