@@ -11,7 +11,7 @@
   <main class="kartu lebar">
     <section class="kiri">
       <div class="bar-atas">
-        <button class="keluar-btn" onclick="keluarAkun()">Keluar</button>
+        <button class="keluar-btn" type="button" onclick="window.keluarAkun ? window.keluarAkun() : location.replace('/index.html')">Keluar</button>
       </div>
       <div class="atas">
         <div class="logo">
@@ -51,6 +51,81 @@
   <script src="/js/utils.js"></script>
   <script src="/js/supabase.js"></script>
   <script src="/js/auth-guard.js"></script>
-  <script src="/js/verifikasi.js"></script>
+
+  <!-- Script Verifikasi dengan Realtime Supabase -->
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const user = await window.AuthGuard(["petugas", "admin"]);
+      if (!user) return;
+
+      const { $, notif, tglJam } = window.Utils;
+
+      async function muatAntrean() {
+        try {
+          const list = (await window.SupabaseDB.getSetoran()).filter(s => s.status === "menunggu");
+          const wadah = $("antrean");
+          if (!wadah) return;
+
+          if (!list.length) {
+            wadah.innerHTML = "<p style='color:var(--abu)'>Tidak ada antrean setoran saat ini.</p>";
+            return;
+          }
+
+          wadah.innerHTML = list.map(s => {
+            const namaPenyetor = s.profiles ? s.profiles.nama : "Warga (ID: " + s.user_id.substring(0, 6) + "...)";
+            const rincianStr = Object.entries(s.rincian || {}).map(([k, v]) => `${k}: ${v}kg`).join(", ");
+            const fotoHtml = s.foto_url ? `<div style="margin:8px 0;"><a href="${s.foto_url}" target="_blank" style="color:var(--hijau-tua);font-weight:600;text-decoration:underline;">Lihat Foto Bukti Sampah</a></div>` : "";
+            
+            return `
+              <div class="setoran-kartu" id="antrean-item-${s.id}">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <b>${namaPenyetor}</b>
+                  <span style="font-weight:600;color:var(--hijau-tua);">${s.rw} / ${s.rt}</span>
+                </div>
+                <small style="color:var(--abu);">${tglJam(s.created_at)}</small>
+                <p style="margin:8px 0;font-weight:600;">Rincian: ${rincianStr} (Total: ${s.kg} kg | ${s.poin} Poin)</p>
+                ${fotoHtml}
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                  <button class="tombol-kecil utama" onclick="verif(${s.id}, 'setujui')">Setujui</button>
+                  <button class="tombol-kecil bahaya" onclick="verif(${s.id}, 'tolak')">Tolak</button>
+                </div>
+              </div>
+            `;
+          }).join("");
+        } catch (err) {
+          console.error(err);
+          notif("err", err.message);
+        }
+      }
+
+      window.verif = async (id, aksi) => {
+        try {
+          await window.SupabaseDB.verifikasiSetoran(id, {
+            aksi,
+            namaPetugas: user.nama || user.email,
+            alasan: aksi === "tolak" ? "Tidak memenuhi kriteria pilah sampah." : ""
+          });
+          notif("ok", `Setoran #${id} berhasil di-${aksi}`);
+          muatAntrean();
+        } catch (e) {
+          notif("err", e.message);
+        }
+      };
+
+      // Muat data awal
+      await muatAntrean();
+
+      // Aktifkan Realtime Listener dari Supabase
+      const sb = window.SupabaseDB.getClient();
+      if (sb) {
+        sb.channel('public:setoran')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'setoran' }, payload => {
+            console.log('Perubahan data terdeteksi secara real-time:', payload);
+            muatAntrean();
+          })
+          .subscribe();
+      }
+    });
+  </script>
 </body>
 </html>
