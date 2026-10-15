@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>eLOLA – Klasemen RT</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Instrument+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="/css/style.css">
@@ -10,7 +10,7 @@
 <body>
   <main class="kartu lebar">
     <section class="kiri">
-      <div class="logo">
+      <div class="logo" style="padding-right:0">
         <svg viewBox="0 0 42 42">
           <rect width="42" height="42" rx="11" fill="#58b45d"/>
           <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
@@ -22,7 +22,7 @@
         <h2>Klasemen Sampah Antar RT</h2>
         <p>Peringkat RT se-Kelurahan Lalolara berdasarkan perolehan poin setoran warga.</p>
       </div>
-      <a href="/index.html" class="tombol-kecil" style="color:#fff;border-color:#fff">← Kembali</a>
+      <a href="/index.html" onclick="if(history.length>1){history.back();return false;}" class="tombol-kecil">← Kembali</a>
     </section>
     <section class="kanan">
       <div class="kepala-halaman">
@@ -38,10 +38,11 @@
       </div>
     </section>
   </main>
-<!-- CDN Supabase JS -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/js/utils.js"></script>
-<script src="/js/supabase.js"></script>
+
+  <!-- CDN Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/supabase.js"></script>
   <script src="/js/peringkat.js"></script>
 </body>
 </html>
