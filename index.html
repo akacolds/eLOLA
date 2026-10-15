@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>eLOLA – Masuk & Daftar</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Instrument+Sans:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="/css/style.css">
@@ -10,7 +10,7 @@
 <body>
   <main class="kartu">
     <section class="kiri">
-      <div class="logo">
+      <div class="logo" style="padding-right:0">
         <svg viewBox="0 0 42 42">
           <rect width="42" height="42" rx="11" fill="#58b45d"/>
           <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
@@ -27,7 +27,7 @@
 
     <section class="kanan">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
-        <button type="button" id="pWarga" class="tombol-kecil utama">Warga</button>
+        <button type="button" id="pWarga" class="tombol-kecil aktif">Warga</button>
         <button type="button" id="pAsn" class="tombol-kecil">ASN</button>
         <button type="button" id="pPetugas" class="tombol-kecil">Petugas</button>
       </div>
@@ -67,7 +67,8 @@
       </form>
     </section>
   </main>
-<!-- CDN Supabase Resmi -->
+
+  <!-- CDN Supabase Resmi -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Script Aplikasi -->
