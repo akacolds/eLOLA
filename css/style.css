@@ -43,7 +43,7 @@ body {
 }
 
 /* =========================================================
-   FULLSCREEN LAYOUT & PANEL KIRI TANPA SLIDE (OVERFLOW HIDDEN)
+   FULLSCREEN LAYOUT & PANEL KIRI TANPA SLIDE
    ========================================================= */
 .kartu {
   display: grid;
@@ -63,7 +63,6 @@ body {
   grid-template-columns: clamp(300px, 27vw, 380px) minmax(0, 1fr);
 }
 
-/* Panel Kiri: Dikunci 100vh, TANPA scroll/slide */
 .kiri {
   background: linear-gradient(160deg, #2f593a 0%, var(--hijau-tua) 60%, #1e3c26 100%);
   color: #fff;
@@ -76,7 +75,7 @@ body {
   top: 0;
   height: 100vh;
   height: 100dvh;
-  overflow: hidden; /* Mencegah slide / scrollbar */
+  overflow: hidden;
   z-index: 1;
 }
 
@@ -84,7 +83,6 @@ body {
   padding-right: clamp(60px, 6vw, 90px);
 }
 
-/* Cahaya organik halus di sudut kiri atas */
 .kiri::before {
   content: "";
   position: absolute;
@@ -98,7 +96,6 @@ body {
   z-index: -1;
 }
 
-/* Potongan Miring Bergelombang di Sisi Kanan Panel Kiri */
 .kiri::after {
   content: "";
   position: absolute;
@@ -181,70 +178,8 @@ body {
   color: #cfe3d0;
 }
 
-.ringkas {
-  margin-top: 20px;
-  display: grid;
-  gap: 14px;
-}
-
-.ringkas .angka {
-  font-family: var(--font-judul);
-  font-weight: 700;
-  font-size: 2.2rem;
-  line-height: 1;
-}
-
-.ringkas .label {
-  margin-top: 4px;
-  font-size: .8rem;
-  color: #cfe3d0;
-}
-
-.kuota .baris {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-  font-size: .84rem;
-  font-weight: 600;
-}
-
-.kuota .baris span {
-  font-weight: 500;
-  color: #cfe3d0;
-  font-size: .78rem;
-}
-
-.jalur {
-  margin-top: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, .16);
-  overflow: hidden;
-}
-
-.jalur i {
-  display: block;
-  height: 100%;
-  width: 0;
-  border-radius: 999px;
-  background: var(--daun);
-  transition: width .45s ease;
-}
-
-.jalur i.penuh {
-  background: var(--hijau-logo);
-}
-
-.kuota .ket {
-  margin-top: 6px;
-  font-size: .75rem;
-  color: #cfe3d0;
-  line-height: 1.35;
-}
-
 /* =========================================================
-   PANEL KANAN / AREA KONTEN UTAMA (BISA SCROLL JIKA PANJANG)
+   PANEL KANAN / AREA KONTEN UTAMA (BISA SCROLL)
    ========================================================= */
 .kanan {
   padding: clamp(24px, 4vw, 48px);
@@ -253,7 +188,7 @@ body {
   background: var(--putih);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   overflow-y: auto;
   max-height: 100vh;
   max-height: 100dvh;
@@ -419,60 +354,6 @@ input:focus, select:focus {
   background: var(--sage);
 }
 
-.tombol-kecil.utama,
-.tombol-kecil.aktif {
-  background: var(--hijau);
-  border-color: var(--hijau);
-  color: #fff;
-}
-
-.tombol-kecil.utama:hover,
-.tombol-kecil.aktif:hover {
-  background: var(--hijau-tua);
-  border-color: var(--hijau-tua);
-  color: #fff;
-}
-
-.tombol-kecil.bahaya {
-  border-color: var(--merah);
-  color: var(--merah);
-}
-
-.tombol-kecil.bahaya:hover {
-  background: #fde8e6;
-}
-
-.kiri .tombol-kecil {
-  color: #fff;
-  border-color: rgba(255, 255, 255, .45);
-  align-self: flex-start;
-}
-
-.kiri .tombol-kecil:hover {
-  background: rgba(255, 255, 255, .15);
-  color: #fff;
-}
-
-/* Notifikasi */
-.notif {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 14px 0;
-  padding: 12px 16px;
-  border-radius: 14px;
-  font-size: .86rem;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-.notif.ok { background: #e2f3dc; color: #1f5a2c; }
-.notif.info { background: #fff4d6; color: #7a5a00; }
-.notif.err { background: #fde8e6; color: #8f1d17; }
-.hidden { display: none !important; }
-
-/* Tombol Keluar di Pojok Atas Sidebar */
 .bar-atas {
   position: absolute;
   top: clamp(20px, 2.5vw, 32px);
@@ -499,7 +380,6 @@ input:focus, select:focus {
   background: rgba(255, 255, 255, .22);
 }
 
-/* Header Halaman Kanan */
 .kepala-halaman {
   display: flex;
   justify-content: space-between;
@@ -523,7 +403,7 @@ input:focus, select:focus {
 }
 
 /* =========================================================
-   KOMPONEN SETORAN, PODIUM, TABEL, & DOMPET
+   KOMPONEN SETORAN, TABEL, & DOMPET
    ========================================================= */
 .baris-jenis {
   display: flex;
@@ -615,83 +495,6 @@ input:focus, select:focus {
   font-size: 1.4rem;
 }
 
-/* Podium & Klasemen */
-.podium {
-  display: grid;
-  grid-template-columns: 1fr 1.15fr 1fr;
-  gap: clamp(8px, 1.8vw, 16px);
-  align-items: end;
-  margin-top: 18px;
-}
-
-.podium .juara {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: clamp(12px, 1.8vw, 18px) clamp(8px, 1.2vw, 12px);
-  border-radius: 18px 18px 10px 10px;
-  background: var(--sage);
-  text-align: center;
-  min-width: 0;
-}
-
-.podium .juara b {
-  font-size: clamp(.8rem, 1.4vw, .98rem);
-  overflow-wrap: anywhere;
-  margin-top: 4px;
-}
-
-.podium .juara small {
-  font-size: clamp(.72rem, 1.2vw, .84rem);
-  margin-top: 4px;
-  opacity: .9;
-}
-
-.podium .juara.j1 {
-  background: var(--hijau-tua);
-  color: #fff;
-  min-height: 195px;
-}
-
-.podium .juara.j2 {
-  min-height: 155px;
-}
-
-.podium .juara.j3 {
-  min-height: 125px;
-  background: #d9e8d3;
-}
-
-.podium .urut {
-  font-family: var(--font-judul);
-  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
-  font-weight: 700;
-  line-height: 1;
-}
-
-.rank-daftar {
-  display: grid;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.rank-baris {
-  display: grid;
-  grid-template-columns: 38px minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  padding: 10px 14px;
-  border: 1.5px solid var(--garis);
-  border-radius: 14px;
-  background: #fff;
-}
-
-.rank-baris.saya {
-  border-color: var(--hijau-tua);
-  background: #eef6ea;
-}
-
-/* Antrean & Tabel */
 .tabel-bungkus {
   width: 100%;
   max-width: 100%;
@@ -725,30 +528,6 @@ table.tabel {
   vertical-align: middle;
 }
 
-.setoran-kartu {
-  border: 1.5px solid var(--garis);
-  border-radius: 16px;
-  background: #fff;
-  padding: 16px;
-  margin-bottom: 12px;
-}
-
-.chip {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #fff4d6;
-  color: #7a5a00;
-  font-size: .7rem;
-  font-weight: 600;
-  text-transform: capitalize;
-  white-space: nowrap;
-}
-
-.chip.ok { background: #e2f3dc; color: #1f5a2c; }
-.chip.tolak { background: #fde8e6; color: #8f1d17; }
-
-/* Dompet & Katalog */
 .saldo {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -810,6 +589,24 @@ table.tabel {
   margin-top: 4px;
 }
 
+.notif {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: .86rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.notif.ok { background: #e2f3dc; color: #1f5a2c; }
+.notif.info { background: #fff4d6; color: #7a5a00; }
+.notif.err { background: #fde8e6; color: #8f1d17; }
+.hidden { display: none !important; }
+
 /* =========================================================
    RESPONSIVE TABLET & MOBILE
    ========================================================= */
@@ -848,10 +645,6 @@ table.tabel {
     max-width: 100%;
   }
 
-  .kiri .atas {
-    gap: 14px;
-  }
-
   .bar-atas {
     top: 20px;
     right: 18px;
@@ -883,45 +676,5 @@ table.tabel {
     max-height: none;
     overflow-y: visible;
     padding: 18px 18px 32px;
-  }
-}
-
-@media (max-width: 520px) {
-  input, select {
-    font-size: 16px;
-    padding: 11px 12px;
-  }
-
-  .saldo {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .katalog {
-    grid-template-columns: 1fr;
-  }
-
-  .podium {
-    grid-template-columns: 1fr 1.1fr 1fr;
-    gap: 8px;
-  }
-
-  .podium .juara.j1 { min-height: 150px; }
-  .podium .juara.j2 { min-height: 120px; }
-  .podium .juara.j3 { min-height: 100px; }
-
-  .baris-jenis {
-    padding: 10px 12px;
-    gap: 8px;
-  }
-
-  .langkah input {
-    width: 54px;
-    padding: 5px 2px;
-  }
-
-  .langkah button {
-    width: 30px;
-    height: 30px;
   }
 }
