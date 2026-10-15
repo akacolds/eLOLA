@@ -11,7 +11,7 @@
   <main class="kartu lebar">
     <section class="kiri">
       <div class="bar-atas">
-        <button class="keluar-btn" onclick="keluarAkun()">Keluar</button>
+        <button class="keluar-btn" type="button" onclick="window.keluarAkun ? window.keluarAkun() : location.replace('/index.html')">Keluar</button>
       </div>
       <div class="atas">
         <div class="logo">
@@ -100,7 +100,6 @@
           </div>
         </div>
 
-        <!-- INPUT UPLOAD FOTO BUKTI -->
         <label for="fotoBukti">Foto Bukti / Kondisi Sampah (Opsional)</label>
         <input type="file" id="fotoBukti" accept="image/*" style="padding: 10px;">
 
@@ -126,7 +125,7 @@
     </section>
   </main>
 
-  <!-- Skrip Interaksi Hitung Berat -->
+  <!-- Skrip Kalkulator Berat & Integrasi Supabase -->
   <script>
     const beratData = { Plastik: 0, Kertas: 0, Logam: 0, Kaca: 0 };
     const poinPerKg = { Plastik: 150, Kertas: 100, Logam: 250, Kaca: 75 };
@@ -168,90 +167,124 @@
   <script src="/js/utils.js"></script>
   <script src="/js/supabase.js"></script>
   <script src="/js/auth-guard.js"></script>
-  <script src="/js/setoran.js"></script>
 
-  <!-- Script Tambahan untuk Handler Upload Foto ke Supabase Storage -->
+  <!-- Handler Pengiriman Form & Update Riwayat Otomatis -->
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
+      const currentUser = await window.AuthGuard(["warga", "asn"]);
+      if (!currentUser) return;
+
       const formSetor = document.getElementById("fSetor");
-      if (!formSetor) return;
+      
+      // Fungsi untuk memuat ulang tabel riwayat setoran dari Supabase
+      window.muatRiwayatUlang = async () => {
+        try {
+          const list = await window.SupabaseDB.getSetoran(currentUser.id);
+          const wadah = document.getElementById("isiRiwayat");
+          if (!wadah) return;
+          
+          if (!list || list.length === 0) {
+            wadah.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--abu);">Belum ada riwayat setoran.</td></tr>`;
+            return;
+          }
 
-      formSetor.addEventListener("submit", async (e) => {
-        // Cek apakah ada file foto yang diunggah
-        const fileInput = document.getElementById("fotoBukti");
-        if (fileInput && fileInput.files && fileInput.files[0]) {
-          e.stopImmediatePropagation(); // Mencegah submit standar sejenak untuk upload gambar
-          e.preventDefault();
+          wadah.innerHTML = list.map(s => {
+            const rincianStr = Object.entries(s.rincian || {}).map(([k, v]) => `${k} ${v}kg`).join(", ");
+            const tgl = window.Utils.tglJam(s.created_at);
+            const statusClass = s.status === 'disetujui' ? 'ok' : s.status === 'ditolak' ? 'tolak' : '';
+            return `
+              <tr>
+                <td>${tgl}</td>
+                <td>${rincianStr}</td>
+                <td>${s.kg} kg</td>
+                <td>${s.poin}</td>
+                <td><span class="chip ${statusClass}">${s.status}</span></td>
+              </tr>
+            `;
+          }).join("");
+        } catch (err) {
+          console.error("Gagal memuat riwayat:", err);
+        }
+      };
 
-          const btn = document.getElementById("bSetor");
-          btn.disabled = true;
-          btn.textContent = "Mengunggah Foto & Setoran...";
+      // Jalankan saat pertama kali halaman terbuka
+      window.muatRiwayatUlang();
 
-          try {
+      // Submit Form dengan Upload Gambar & Simpan ke Supabase
+      formSetor.onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById("bSetor");
+        btn.disabled = true;
+        btn.textContent = "Mengirim Setoran...";
+
+        try {
+          let publicUrl = "";
+          const fileInput = document.getElementById("fotoBukti");
+          
+          if (fileInput && fileInput.files && fileInput.files[0]) {
+            btn.textContent = "Mengunggah Foto...";
             const file = fileInput.files[0];
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36.substring(2))}.${fileExt}`;
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
             const filePath = `setoran/${fileName}`;
 
             const sb = window.SupabaseDB.getClient();
-            if (!sb) throw new Error("Supabase belum terhubung.");
-
-            // Upload ke bucket Supabase Storage (Pastikan kamu sudah buat bucket bernama 'setoran' atau ubah sesuai nama bucketmu)
             const { error: uploadError } = await sb.storage
               .from('setoran')
               .upload(filePath, file);
 
             if (uploadError) throw uploadError;
 
-            // Dapatkan Public URL dari file yang diupload
-            const { data: { publicUrl } } = sb.storage
+            const { data: { publicUrl: url } } = sb.storage
               .from('setoran')
               .getPublicUrl(filePath);
-
-            // Simpan URL foto ke dalam fungsi tambahSetoran
-            const user = await window.AuthGuard(["warga", "asn"]);
-            let totKg = 0, totPoin = 0;
-            const rincianBersih = {};
-            
-            Object.keys(beratData).forEach(k => {
-              if (beratData[k] > 0) {
-                rincianBersih[k] = beratData[k];
-                totKg += beratData[k];
-                totPoin += beratData[k] * poinPerKg[k];
-              }
-            });
-
-            await window.SupabaseDB.tambahSetoran({
-              userId: user.id,
-              rw: document.getElementById("rw").value,
-              rt: document.getElementById("rt").value,
-              rincian: rincianBersih,
-              kg: Math.round(totKg * 10) / 10,
-              poin: Math.round(totPoin),
-              fotoUrl: publicUrl
-            });
-
-            window.Utils.notif("ok", "Setoran sampah dan foto berhasil dikirim!");
-            // Reset form
-            Object.keys(beratData).forEach(k => {
-              beratData[k] = 0;
-              document.getElementById("in-" + k).value = 0;
-            });
-            fileInput.value = "";
-            hitungTotal();
-            
-            // Reload riwayat jika fungsi tersedia
-            if (typeof muatRiwayat === 'function') muatRiwayat();
-
-          } catch (err) {
-            console.error(err);
-            window.Utils.notif("err", "Gagal mengunggah foto: " + err.message);
-          } finally {
-            btn.textContent = "Kirim Setoran →";
-            btn.disabled = false;
+              
+            publicUrl = url;
           }
+
+          let totKg = 0, totPoin = 0;
+          const rincianBersih = {};
+          
+          Object.keys(beratData).forEach(k => {
+            if (beratData[k] > 0) {
+              rincianBersih[k] = beratData[k];
+              totKg += beratData[k];
+              totPoin += beratData[k] * poinPerKg[k];
+            }
+          });
+
+          btn.textContent = "Menyimpan ke Database...";
+          await window.SupabaseDB.tambahSetoran({
+            userId: currentUser.id,
+            rw: document.getElementById("rw").value,
+            rt: document.getElementById("rt").value,
+            rincian: rincianBersih,
+            kg: Math.round(totKg * 10) / 10,
+            poin: Math.round(totPoin),
+            fotoUrl: publicUrl
+          });
+
+          window.Utils.notif("ok", "Setoran sampah berhasil dikirim ke antrean verifikasi!");
+          
+          // Reset input berat & file
+          Object.keys(beratData).forEach(k => {
+            beratData[k] = 0;
+            document.getElementById("in-" + k).value = 0;
+          });
+          if (fileInput) fileInput.value = "";
+          hitungTotal();
+
+          // Update tabel riwayat seketika
+          await window.muatRiwayatUlang();
+
+        } catch (err) {
+          console.error(err);
+          window.Utils.notif("err", err.message || "Gagal mengirim setoran.");
+        } finally {
+          btn.textContent = "Kirim Setoran →";
+          btn.disabled = false;
         }
-      }, true);
+      };
     });
   </script>
 </body>
