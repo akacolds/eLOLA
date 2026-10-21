@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>eLOLA – Masuk & Daftar</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Instrument+Sans:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main class="kartu">
+    <section class="kiri">
+      <div class="logo">
+        <svg viewBox="0 0 42 42">
+          <rect width="42" height="42" rx="11" fill="#58b45d"/>
+          <path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/>
+          <path d="M21 14v17" stroke="#58b45d" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <div><b>eLOLA</b><small>Bank Sampah Digital</small></div>
+      </div>
+      <div>
+        <h2>Tabungan sampah versi digital warga Lalolara.</h2>
+        <p>Setiap setoran ditimbang, diverifikasi, dan dikonversi menjadi poin reward.</p>
+      </div>
+      <div style="font-size:.8rem;color:#cfe3d0">Kelurahan Lalolara, Kendari</div>
+    </section>
+
+    <section class="kanan">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+        <button type="button" id="pWarga" class="tombol-kecil utama">Warga</button>
+        <button type="button" id="pAsn" class="tombol-kecil">ASN</button>
+        <button type="button" id="pPetugas" class="tombol-kecil">Petugas</button>
+      </div>
+
+      <div class="tab">
+        <button type="button" id="tMasuk" class="aktif">Masuk</button>
+        <button type="button" id="tDaftar">Daftar Akun</button>
+      </div>
+
+      <div id="notif" class="notif hidden"></div>
+
+      <form id="fMasuk">
+        <label for="idMasuk" id="lblIdMasuk">Email (Gmail)</label>
+        <input id="idMasuk" type="text" required placeholder="nama@gmail.com">
+        <label for="sMasuk">Kata Sandi</label>
+        <input id="sMasuk" type="password" required placeholder="••••••••">
+        <button class="tombol" type="submit" style="margin-top:18px">Masuk ke eLOLA →</button>
+      </form>
+
+      <form id="fDaftar" class="hidden">
+        <label for="nama">Nama Lengkap</label>
+        <input id="nama" type="text" required>
+        <div id="blokAsn" class="hidden">
+          <label for="nikNip">NIP / NIK</label>
+          <input id="nikNip" type="text">
+        </div>
+        <label for="rt">RT</label>
+        <select id="rt" required>
+          <option value="">Pilih RT</option>
+          <option>RT 01</option><option>RT 02</option><option>RT 03</option><option>RT 04</option>
+        </select>
+        <label for="emailDaftar">Gmail</label>
+        <input id="emailDaftar" type="email" required placeholder="nama@gmail.com">
+        <label for="sDaftar">Kata Sandi (min. 6 karakter)</label>
+        <input id="sDaftar" type="password" required>
+        <button class="tombol" type="submit" style="margin-top:18px">Buat Akun eLOLA →</button>
+      </form>
+    </section>
+  </main>
+<!-- CDN Supabase Resmi -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Script Aplikasi -->
+  <script src="/js/utils.js"></script>
+  <script src="/js/seed-init.js"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>
