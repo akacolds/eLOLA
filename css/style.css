@@ -831,3 +831,21 @@ body:has(> main.kartu.lebar) > main.kartu.lebar > .kanan {
   .profil-avatar { width: 28px; height: 28px; flex-basis: 28px; }
   .topbar-keluar { padding: 6px 8px; font-size: .7rem; }
 }
+
+
+/* Panel administrasi: daftar pengguna, daftar setoran baca-saja, dan ekspor PDF */
+.admin-panel { margin-top: 26px; padding: 20px; border: 1px solid var(--garis, #e1e8e2); border-radius: 18px; background: var(--putih, #fff); min-width: 0; }
+.admin-panel-kepala { display:flex; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+.admin-panel-kepala h2 { margin:0 0 5px; font-family:var(--font-judul); font-size:1.25rem; }
+.admin-panel-kepala p { margin:0; color:var(--teks-redup, #68756b); font-size:.92rem; line-height:1.5; }
+.admin-cari { min-height:42px; max-width:100%; padding:10px 12px; border:1px solid #d7e2d8; border-radius:10px; background:#fff; color:inherit; font:inherit; }
+.admin-panel .tabel-bungkus { max-width:100%; overflow:auto; }
+.admin-panel .tabel { min-width:720px; width:100%; }
+.rekap-pdf-kontrol { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0 18px; }
+.rekap-pdf-kontrol label { font-weight:700; }
+.rekap-ringkas { margin-top:12px; }
+.admin-status { display:inline-block; padding:5px 9px; border-radius:999px; background:#eef2ee; color:#3c4a3f; font-size:.78rem; font-weight:700; white-space:nowrap; }
+.admin-status.ok { background:#dcfce7; color:#166534; }
+.admin-status.tolak { background:#fee2e2; color:#991b1b; }
+.admin-status.tunggu { background:#fef3c7; color:#92400e; }
+@media (max-width:700px) { .admin-panel { padding:14px; margin-top:18px; } .admin-panel-kepala { align-items:stretch; } .admin-cari { width:100%; } .rekap-pdf-kontrol { align-items:stretch; flex-direction:column; } .rekap-pdf-kontrol .tombol { width:100%; } }
