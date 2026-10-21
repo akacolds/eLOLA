@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173d2b">
+  <title>eLOLA – Dashboard Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-body">
+  <main class="kartu lebar admin-shell">
+    <aside class="kiri admin-sidebar">
+      <div class="bar-atas"><button class="keluar-btn" onclick="keluarAkun()">Keluar ↗</button></div>
+      <div class="atas">
+        <div class="logo"><svg viewBox="0 0 42 42" aria-hidden="true"><rect width="42" height="42" rx="11" fill="#b9e66e"/><path d="M21 8c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#173d2b"/><path d="M21 14v17" stroke="#b9e66e" stroke-width="2.2" stroke-linecap="round"/></svg><div><b>eLOLA</b><small>Bank Sampah Digital</small></div></div>
+        <div class="admin-nav-label">MENU UTAMA</div>
+        <nav class="menu admin-menu">
+          <a href="/admin/dashboard.html" class="aktif"><span>▦</span> Dashboard Admin</a>
+          <a href="/petugas/verifikasi.html"><span>✓</span> Verifikasi Setoran</a>
+          <a href="/peringkat.html"><span>♧</span> Klasemen Wilayah</a>
+          <a href="#riwayatAktivitas"><span>↺</span> Riwayat Aktivitas</a>
+        </nav>
+      </div>
+      <div class="sidebar-note"><span class="live-dot"></span><div><b>Panel Administrator</b><small>Kelurahan Lalolara</small></div></div>
+    </aside>
+
+    <section class="kanan admin-content">
+      <header class="admin-topbar">
+        <div><div class="eyebrow">PUSAT KENDALI eLOLA</div><h1 id="salam">Dashboard Admin</h1><p id="peranLabel">Ringkasan operasional bank sampah digital.</p></div>
+        <button id="refreshDashboard" class="tombol-kecil utama" type="button">↻ Perbarui data</button>
+      </header>
+      <div id="dashboardError" class="notif err hidden" role="alert"></div>
+      <div id="dashboardLoading" class="dashboard-loading">Mengambil data dari Supabase…</div>
+
+      <section class="section-block">
+        <div class="section-heading"><div><h2>Ringkasan operasional</h2><p>Data setoran yang sudah disetujui dan akun terdaftar.</p></div><span class="period-pill" id="periodeLabel">Bulan ini</span></div>
+        <div class="admin-stat-grid">
+          <article class="admin-stat stat-green"><div class="stat-top"><span>Total sampah disetujui</span><span class="stat-icon">♻</span></div><b id="stKg">—</b><small>Akumulasi seluruh setoran sah</small></article>
+          <article class="admin-stat"><div class="stat-top"><span>Total poin setoran</span><span class="stat-icon">✳</span></div><b id="stPoin">—</b><small>Poin dari setoran disetujui</small></article>
+          <article class="admin-stat"><div class="stat-top"><span>Akun terdaftar</span><span class="stat-icon">♙</span></div><b id="stAkun">—</b><small>Profil yang terbaca dari database</small></article>
+          <article class="admin-stat stat-amber"><div class="stat-top"><span>Menunggu verifikasi</span><span class="stat-icon">◷</span></div><b id="stPending">—</b><small>Setoran belum diputuskan</small></article>
+          <article class="admin-stat"><div class="stat-top"><span>Hadiah tersedia</span><span class="stat-icon">◇</span></div><b id="stHadiah">—</b><small>Jenis hadiah di katalog</small></article>
+          <article class="admin-stat"><div class="stat-top"><span>Penukaran poin</span><span class="stat-icon">↗</span></div><b id="stPenukaran">—</b><small>Total transaksi penukaran</small></article>
+        </div>
+      </section>
+
+      <section class="section-block compliance-section">
+        <div class="section-heading"><div><div class="eyebrow">MONITORING ASN</div><h2>Tingkat kepatuhan setoran ASN</h2><p>Target bulanan: minimal 2 kg sampah per ASN, dihitung dari setoran berstatus disetujui.</p></div><div class="period-controls"><label for="filterBulan">Periode rekap</label><input id="filterBulan" type="month" aria-label="Pilih bulan rekap ASN"><span class="target-pill">Target 2 kg / bulan</span></div></div>
+        <div class="compliance-hero">
+          <div class="compliance-main"><span>Tingkat kepatuhan bulan ini</span><div class="compliance-number"><b id="asnCompliance">—</b><small id="asnComplianceCaption">Menghitung data ASN…</small></div><div class="compliance-track"><i id="asnComplianceBar"></i></div></div>
+          <div class="compliance-total"><span>Total ASN terdata</span><b id="asnTotal">—</b><small id="asnMonthLabel">Periode berjalan</small></div>
+        </div>
+        <div class="compliance-cards">
+          <article class="compliance-card compliant"><div class="compliance-card-head"><span class="status-dot"></span><span>Memenuhi target</span></div><b id="asnCompliant">—</b><p>ASN menyetor ≥ 2 kg</p></article>
+          <article class="compliance-card partial"><div class="compliance-card-head"><span class="status-dot"></span><span>Belum mencapai target</span></div><b id="asnPartial">—</b><p>ASN menyetor lebih dari 0 kg, tetapi kurang dari 2 kg</p></article>
+          <article class="compliance-card none"><div class="compliance-card-head"><span class="status-dot"></span><span>Belum menyetor</span></div><b id="asnNone">—</b><p>Belum ada setoran disetujui bulan ini</p></article>
+        </div>
+        <div class="table-toolbar"><div><h3>Rekap setoran ASN</h3><p>Berat yang dihitung hanya setoran disetujui pada bulan berjalan.</p></div><div class="table-tools"><input id="cariAsn" type="search" placeholder="Cari nama / NIP…" aria-label="Cari ASN"><select id="filterAsn" aria-label="Filter kepatuhan"><option value="semua">Semua status</option><option value="patuh">Memenuhi target</option><option value="parsial">Belum mencapai 2 kg</option><option value="nihil">Belum menyetor</option></select><button id="exportAsn" type="button" class="tombol-kecil">Unduh CSV</button></div></div>
+        <div class="tabel-bungkus admin-table-wrap"><table class="tabel admin-table"><thead><tr><th>Nama ASN</th><th>NIP / NIK</th><th>Wilayah</th><th>Berat bulan ini</th><th>Progress</th><th>Status kepatuhan</th></tr></thead><tbody id="tabelAsn"><tr><td colspan="6" class="empty-cell">Memuat rekap ASN…</td></tr></tbody></table></div>
+        <div class="table-footnote" id="asnTableSummary">Rekap berdasarkan bulan berjalan.</div>
+      </section>
+
+      <section class="section-block directory-section">
+        <div class="section-heading"><div><div class="eyebrow">DATA AKUN</div><h2>Direktori pengguna</h2><p>Ringkasan akun yang terdaftar pada profil eLOLA.</p></div></div>
+        <div class="table-toolbar"><div><h3>Daftar pengguna</h3><p>Informasi akun untuk kebutuhan administrasi.</p></div><div class="table-tools"><input id="cariPengguna" type="search" placeholder="Cari nama / NIP…" aria-label="Cari pengguna"><select id="filterPeran" aria-label="Filter peran"><option value="semua">Semua peran</option><option value="warga">Warga</option><option value="asn">ASN</option><option value="petugas">Petugas</option><option value="admin">Admin</option></select></div></div>
+        <div class="tabel-bungkus admin-table-wrap"><table class="tabel admin-table"><thead><tr><th>Nama</th><th>Peran</th><th>NIP / NIK</th><th>Wilayah</th><th>Instansi</th></tr></thead><tbody id="tabelPengguna"><tr><td colspan="5" class="empty-cell">Memuat pengguna…</td></tr></tbody></table></div>
+        <p class="table-footnote" id="penggunaSummary">Daftar pengguna diambil dari Supabase.</p>
+      </section>
+
+      <section class="section-block directory-section">
+        <div class="section-heading"><div><div class="eyebrow">POIN & HADIAH</div><h2>Katalog hadiah</h2><p>Ringkasan hadiah dan stok dari database.</p></div></div>
+        <div class="tabel-bungkus admin-table-wrap"><table class="tabel admin-table"><thead><tr><th>Nama hadiah</th><th>Harga poin</th><th>Stok</th><th>Ketersediaan</th></tr></thead><tbody id="tabelHadiah"><tr><td colspan="4" class="empty-cell">Memuat katalog hadiah…</td></tr></tbody></table></div>
+        <p class="table-footnote">Bagian ini bersifat ringkasan. Pengelolaan stok tetap mengikuti fitur dan kebijakan database yang sudah ada.</p>
+      </section>
+
+      <section class="section-block trend-section">
+        <div class="section-heading"><div><div class="eyebrow">TREN PENGELOLAAN</div><h2>Perkembangan setoran 6 bulan</h2><p>Akumulasi berat sampah yang sudah disetujui per bulan.</p></div></div>
+        <div id="trendChart" class="trend-chart" role="img" aria-label="Grafik tren berat setoran enam bulan"></div>
+        <p id="trendSummary" class="trend-summary">Menghitung tren dari data Supabase…</p>
+      </section>
+
+      <section class="section-block">
+        <div class="section-heading"><div><h2>Aktivitas setoran terbaru</h2><p>Transaksi dari seluruh pengguna eLOLA.</p></div></div>
+        <div class="tabel-bungkus admin-table-wrap"><table class="tabel admin-table"><thead><tr><th>Waktu</th><th>Penyetor</th><th>Wilayah</th><th>Berat</th><th>Poin</th><th>Status</th></tr></thead><tbody id="tabelLog"><tr><td colspan="6" class="empty-cell">Memuat transaksi…</td></tr></tbody></table></div>
+      </section>
+      <section class="section-block settings-summary">
+        <div class="section-heading"><div><div class="eyebrow">KONFIGURASI</div><h2>Pengaturan operasional</h2><p>Ringkasan parameter yang sedang dipakai aplikasi.</p></div></div>
+        <div class="settings-grid"><article><span>Target setoran ASN</span><b>2 kg / bulan</b><small>Sumber: Utils.KUOTA_ASN</small></article><article><span>Perhitungan kepatuhan</span><b>Setoran disetujui</b><small>Menunggu dan ditolak tidak dihitung.</small></article><article><span>Periode rekap</span><b>Bulan kalender</b><small>Gunakan pemilih periode pada Monitoring ASN.</small></article></div>
+      </section>
+
+      <section class="section-block" id="riwayatAktivitas">
+        <div class="section-heading"><div><div class="eyebrow">AUDIT LOG</div><h2>Riwayat aktivitas admin & petugas</h2><p>Catatan tindakan penting untuk membantu pelacakan perubahan dan verifikasi.</p></div><button id="refreshActivity" type="button" class="tombol-kecil">↻ Perbarui</button></div>
+        <div class="tabel-bungkus admin-table-wrap"><table class="tabel admin-table"><thead><tr><th>Waktu</th><th>Pelaku</th><th>Aktivitas</th><th>Detail</th><th>ID terkait</th></tr></thead><tbody id="tabelAktivitas"><tr><td colspan="5" class="empty-cell">Memuat riwayat aktivitas…</td></tr></tbody></table></div>
+        <p class="table-footnote">Riwayat baru akan tersimpan setelah tabel activity_logs dan kebijakan akses disiapkan di Supabase.</p>
+      </section>
+      <footer class="admin-footer">eLOLA · Panel Administrasi <span>Data diperbarui saat halaman dimuat.</span></footer>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/utils.js"></script><script src="/js/supabase.js"></script><script src="/js/auth-guard.js"></script><script src="/js/dashboard.js"></script>
+</body>
+</html>
