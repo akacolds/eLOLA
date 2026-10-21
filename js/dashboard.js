@@ -1,4 +1,4 @@
-javascript document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", async function () {
   const utils = window.Utils;
 
   if (!utils || !window.SupabaseDB) {
