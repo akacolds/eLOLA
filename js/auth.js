@@ -63,34 +63,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
-        // Peran utama dibaca dari tabel profiles, bukan dari tombol yang dipilih di form.
+        // Ambil data profil
         let profil = await window.SupabaseDB.getProfile(data.user.id);
-        const peranMetadata = data.user.app_metadata?.peran || data.user.app_metadata?.role || "";
-        const normalisasiPeran = (nilai) => {
-          const peran = String(nilai || "").trim().toLowerCase();
-          if (["admin", "administrator", "admin dlh"].includes(peran)) return "admin";
-          if (["petugas", "petugas bank sampah", "staff", "operator"].includes(peran)) return "petugas";
-          if (["asn", "pns"].includes(peran)) return "asn";
-          if (["warga", "user", "pengguna"].includes(peran)) return "warga";
-          return "";
-        };
 
-        let peranAkun = normalisasiPeran(profil?.peran) || normalisasiPeran(peranMetadata);
-
-        // Profil baru hanya dibuat untuk peran publik. Pilihan Petugas di UI tidak boleh
-        // memberikan hak petugas/admin kepada akun yang belum punya peran resmi di database.
-        if (!profil && !peranAkun) {
-          if (peranAktif === "petugas") {
-            throw new Error("Peran Petugas/Admin belum terdaftar pada profil akun ini. Minta admin mengatur peran di Supabase.");
-          }
+        if (!profil) {
           const defaultNama = email.split("@")[0].replace(/[._\-\d]+/g, " ");
-          const peranPublik = peranAktif === "asn" ? "asn" : "warga";
           const { data: profilBaru, error: errInsert } = await sb
             .from("profiles")
             .insert([{
               id: data.user.id,
               nama: defaultNama,
-              peran: peranPublik,
+              peran: peranAktif,
               kelurahan: "Lalolara",
               rw: "RW 01",
               rt: "RT 01"
@@ -98,21 +81,16 @@ document.addEventListener("DOMContentLoaded", () => {
             .select()
             .maybeSingle();
 
-          if (errInsert) throw errInsert;
-          profil = profilBaru || { nama: defaultNama, peran: peranPublik };
-          peranAkun = peranPublik;
+          profil = (!errInsert && profilBaru) ? profilBaru : { peran: peranAktif };
         }
 
-        // Jangan menebak peran istimewa. Jika data profil bermasalah, arahkan ke warga
-        // hanya jika akun memang tidak memiliki peran admin/petugas yang sah.
-        peranAkun = peranAkun || "warga";
         notif("ok", "Berhasil masuk! Mengalihkan...");
 
         setTimeout(() => {
-          if (peranAkun === "admin") location.replace("/admin/dashboard.html");
-          else if (peranAkun === "petugas") location.replace("/petugas/verifikasi.html");
-          else location.replace("/warga/setoran.html");
-        }, 350);
+          if (profil.peran === "admin") location.href = "/admin/dashboard.html";
+          else if (profil.peran === "petugas") location.href = "/petugas/verifikasi.html";
+          else location.href = "/warga/setoran.html";
+        }, 500);
 
       } catch (err) {
         console.error("Login error:", err);

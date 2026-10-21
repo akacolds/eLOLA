@@ -10,37 +10,6 @@ window.Utils = (() => {
   const RW = ["RW 01", "RW 02", "RW 03", "RW 04", "RW 05"];
   const RT = ["RT 01", "RT 02", "RT 03", "RT 04"];
 
-  // Satu sumber konfigurasi wilayah untuk seluruh formulir.
-  // Sesuaikan RW/RT di sini berdasarkan data resmi kelurahan.
-  function isiPilihanWilayah() {
-    const isi = (id, daftar, placeholder = "") => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const lama = el.value;
-      el.replaceChildren();
-      if (placeholder) {
-        const opsi = document.createElement("option");
-        opsi.value = "";
-        opsi.textContent = placeholder;
-        el.appendChild(opsi);
-      }
-      daftar.forEach((nilai) => {
-        const opsi = document.createElement("option");
-        opsi.value = nilai;
-        opsi.textContent = nilai;
-        el.appendChild(opsi);
-      });
-      if (daftar.includes(lama)) el.value = lama;
-    };
-    isi("rw", RW);
-    isi("rt", RT, document.querySelector('#fDaftar #rt') ? "Pilih RT" : "");
-  }
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", isiPilihanWilayah, { once: true });
-  } else {
-    isiPilihanWilayah();
-  }
-
   const $ = (id) => document.getElementById(id);
   const fmt = (n) => Number(n).toLocaleString("id-ID", { maximumFractionDigits: 1 });
   const fmtInt = (n) => Math.round(Number(n)).toLocaleString("id-ID");

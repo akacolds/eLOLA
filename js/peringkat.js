@@ -1,57 +1,44 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const { $, fmtInt } = window.Utils;
-  const podium = $("podium");
-  const daftar = $("daftarRank");
+document.addEventListener("DOMContentLoaded", () => {
+  const { $, fmtInt, baca, RW, RT } = window.Utils;
+  const setoran = baca("elola_setoran", []).filter(s => s.status === "disetujui");
 
-  const tampilkanPesan = (pesan) => {
-    podium.innerHTML = `<p class="notif gagal" role="alert">${pesan}</p>`;
-    daftar.innerHTML = "";
-  };
-  const aman = (nilai) => String(nilai ?? "-").replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
+  const rekap = {};
+  RW.forEach(rw => RT.forEach(rt => { rekap[rw + "|" + rt] = { rw, rt, poin: 0, kg: 0 }; }));
 
-  if (!window.SupabaseDB || typeof window.SupabaseDB.getKlasemenRT !== "function") {
-    tampilkanPesan("Fitur klasemen belum siap. Periksa file JavaScript eLOLA.");
-    return;
-  }
-
-  try {
-    // RPC hanya mengembalikan total per RT/RW untuk setoran yang disetujui.
-    const data = await window.SupabaseDB.getKlasemenRT();
-    const list = (Array.isArray(data) ? data : []).map((s) => ({
-      rw: String(s.rw || "").trim(),
-      rt: String(s.rt || "").trim(),
-      poin: Number(s.poin) || 0,
-      kg: Number(s.kg) || 0
-    })).filter((s) => s.rw && s.rt)
-      .sort((a, b) => b.poin - a.poin || b.kg - a.kg || a.rw.localeCompare(b.rw) || a.rt.localeCompare(b.rt));
-
-    if (!list.length) {
-      podium.innerHTML = '<p class="notif" role="status">Belum ada setoran yang disetujui untuk ditampilkan.</p>';
-      daftar.innerHTML = "";
-      return;
+  setoran.forEach(s => {
+    const k = s.rw + "|" + s.rt;
+    if (rekap[k]) {
+      rekap[k].poin += s.poin;
+      rekap[k].kg += s.kg;
     }
+  });
 
-    const kelas = { 0: "j1", 1: "j2", 2: "j3" };
-    podium.innerHTML = [1, 0, 2].filter((idx) => list[idx]).map((idx) => {
-      const d = list[idx];
-      return `<div class="juara ${kelas[idx]}">
-        <div class="urut">${idx + 1}</div>
-        <b>${aman(d.rt)} / ${aman(d.rw)}</b>
-        <small>${fmtInt(d.poin)} poin</small>
-        <small>${d.kg.toLocaleString("id-ID", { maximumFractionDigits: 2 })} kg</small>
-      </div>`;
-    }).join("");
+  const list = Object.values(rekap).sort((a, b) => b.poin - a.poin);
 
-    daftar.innerHTML = list.slice(3).map((d, i) => `
-      <div class="rank-baris">
-        <div style="font-weight:700">#${i + 4}</div>
-        <div><b>${aman(d.rt)} / ${aman(d.rw)}</b><small style="display:block">${d.kg.toLocaleString("id-ID", { maximumFractionDigits: 2 })} kg</small></div>
-        <div style="font-weight:700">${fmtInt(d.poin)} poin</div>
-      </div>`).join("");
-  } catch (error) {
-    console.error("Gagal memuat klasemen Supabase:", error);
-    tampilkanPesan("Klasemen belum dapat dimuat. Jalankan SQL setup-klasemen.sql di Supabase, lalu muat ulang halaman.");
-  }
+  // Podium 1-3
+  $("podium").innerHTML = `
+    <div class="juara j2">
+      <div class="urut">2</div>
+      <b>${list[1].rt} / ${list[1].rw}</b>
+      <small>${fmtInt(list[1].poin)} poin</small>
+    </div>
+    <div class="juara j1">
+      <div class="urut">1</div>
+      <b>${list[0].rt} / ${list[0].rw}</b>
+      <small>${fmtInt(list[0].poin)} poin</small>
+    </div>
+    <div class="juara j3">
+      <div class="urut">3</div>
+      <b>${list[2].rt} / ${list[2].rw}</b>
+      <small>${fmtInt(list[2].poin)} poin</small>
+    </div>
+  `;
+
+  $("daftarRank").innerHTML = list.slice(3).map((d, i) => `
+    <div class="rank-baris">
+      <div style="font-weight:700">#${i + 4}</div>
+      <div><b>${d.rt} / ${d.rw}</b></div>
+      <div style="font-weight:700">${fmtInt(d.poin)} poin</div>
+    </div>
+  `).join("");
 });
