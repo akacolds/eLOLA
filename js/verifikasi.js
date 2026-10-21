@@ -35,37 +35,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.verif = async (id, aksi) => {
     try {
-      const hasil = await window.SupabaseDB.verifikasiSetoran(id, {
+      await window.SupabaseDB.verifikasiSetoran(id, {
         aksi,
         namaPetugas: user.nama || user.email,
         alasan: aksi === "tolak" ? "Tidak memenuhi kriteria pilah sampah." : ""
       });
-      try {
-        await window.SupabaseDB.logActivity({
-          action: aksi === "setujui" ? "approve_deposit" : "reject_deposit",
-          actionLabel: aksi === "setujui" ? "Menyetujui setoran" : "Menolak setoran",
-          description: `Petugas ${user.nama || user.email} ${aksi === "setujui" ? "menyetujui" : "menolak"} setoran #${id} (${Number(hasil?.kg || 0).toLocaleString("id-ID")} kg).`,
-          targetId: id,
-          metadata: { status: hasil?.status || (aksi === "setujui" ? "disetujui" : "ditolak"), kg: hasil?.kg || 0 }
-        });
-      } catch (logError) { console.warn("Setoran diproses, tetapi riwayat aktivitas gagal dicatat:", logError); }
       notif("ok", `Setoran #${id} berhasil di-${aksi}`);
       muatAntrean();
-      muatRiwayatAktivitas();
     } catch (e) {
       notif("err", e.message);
     }
   };
 
-  async function muatRiwayatAktivitas() {
-    const body = $("tabelAktivitasPetugas");
-    if (!body) return;
-    try {
-      const rows = await window.SupabaseDB.getActivityLogs({ limit: 20, role: "petugas" });
-      body.innerHTML = rows.length ? rows.map(a => `<tr><td>${String(tglJam(a.created_at)).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}</td><td>${String(a.action_label || a.action || "Aktivitas").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}</td><td>${String(a.description || "—").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}</td><td>${String(a.target_id || "—").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}</td></tr>`).join("") : '<tr><td colspan="4" class="empty-cell">Belum ada aktivitas petugas.</td></tr>';
-    } catch (e) { body.innerHTML = `<tr><td colspan="4" class="empty-cell">Riwayat belum tersedia. Jalankan setup-activity-log.sql. (${String(e.message).replace(/[&<>"']/g, "")})</td></tr>`; }
-  }
-  $("refreshActivityPetugas")?.addEventListener("click", muatRiwayatAktivitas);
   muatAntrean();
-  muatRiwayatAktivitas();
 });

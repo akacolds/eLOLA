@@ -59,17 +59,6 @@ window.SupabaseDB = (() => {
       return data;
     },
 
-    // --- DAFTAR PROFIL (untuk statistik admin) ---
-    async getProfiles() {
-      const sb = getClientOrThrow();
-      const { data, error } = await sb
-        .from("profiles")
-        .select("*")
-        .order("nama", { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
-
     // --- SETORAN ---
     async getSetoran(userId = null) {
       const sb = getClientOrThrow();
@@ -135,38 +124,6 @@ window.SupabaseDB = (() => {
 
       if (error) throw error;
       return data;
-    },
-
-    // --- RIWAYAT AKTIVITAS ADMIN & PETUGAS ---
-    async logActivity({ action, actionLabel = "Aktivitas", description = "", targetId = null, metadata = {} }) {
-      const sb = getClientOrThrow();
-      const { data: { user }, error: userError } = await sb.auth.getUser();
-      if (userError) throw userError;
-      if (!user) throw new Error("Sesi login tidak ditemukan.");
-      const { data: profile, error: profileError } = await sb.from("profiles").select("nama, peran").eq("id", user.id).maybeSingle();
-      if (profileError) throw profileError;
-      if (!profile || !["admin", "petugas"].includes(String(profile.peran || "").toLowerCase())) return null;
-      const { data, error } = await sb.from("activity_logs").insert([{
-        actor_id: user.id,
-        actor_name: profile.nama || user.email || "Pengguna",
-        actor_role: String(profile.peran).toLowerCase(),
-        action,
-        action_label: actionLabel,
-        description,
-        target_id: targetId == null ? null : String(targetId),
-        metadata: metadata || {}
-      }]).select().single();
-      if (error) throw error;
-      return data;
-    },
-
-    async getActivityLogs({ limit = 30, role = null } = {}) {
-      const sb = getClientOrThrow();
-      let query = sb.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(limit);
-      if (role) query = query.eq("actor_role", role);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
     },
 
     // --- HADIAH & PENUKARAN ---

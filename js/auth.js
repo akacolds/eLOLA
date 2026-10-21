@@ -11,10 +11,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setPeran(p) {
     peranAktif = p;
-    [pWarga, pAsn, pPetugas].forEach(btn => btn && btn.classList.remove("aktif"));
-    if (p === "warga" && pWarga) pWarga.classList.add("aktif");
-    if (p === "asn" && pAsn) pAsn.classList.add("aktif");
-    if (p === "petugas" && pPetugas) pPetugas.classList.add("aktif");
+    // Pastikan hanya tombol peran yang dipilih yang berwarna hijau.
+    // Sebelumnya class "utama" bawaan tombol Warga tidak pernah dilepas.
+    [pWarga, pAsn, pPetugas].forEach(btn => {
+      if (!btn) return;
+      btn.classList.remove("aktif", "utama");
+      btn.setAttribute("aria-pressed", "false");
+    });
+    const tombolTerpilih = p === "warga" ? pWarga : p === "asn" ? pAsn : pPetugas;
+    if (tombolTerpilih) {
+      tombolTerpilih.classList.add("aktif", "utama");
+      tombolTerpilih.setAttribute("aria-pressed", "true");
+    }
 
     if (p === "petugas") {
       if (lblIdMasuk) lblIdMasuk.textContent = "Email Petugas / Admin";
