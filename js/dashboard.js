@@ -29,9 +29,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   let semuaSetoran = [];
 
   function normal(value) {
-    return String(value == null ? "" : value)
-      .trim()
-      .toLowerCase();
+    return String(value ?? "").trim().toLowerCase();
   }
 
   function escapeHTML(value) {
@@ -43,35 +41,26 @@ document.addEventListener("DOMContentLoaded", async function () {
       "'": "&#39;"
     };
 
-    return String(value == null ? "" : value).replace(
-      /[&<>"']/g,
-      function (c) {
-        return map[c];
-      }
-    );
+    return String(value ?? "").replace(/[&<>"']/g, function (c) {
+      return map[c];
+    });
   }
 
   function angkaKg(s) {
     return Number(
-      s.kg != null
-        ? s.kg
-        : s.kg_klaim != null
-          ? s.kg_klaim
-          : s.berat_kg != null
-            ? s.berat_kg
-            : 0
+      s.kg ??
+      s.kg_klaim ??
+      s.berat_kg ??
+      0
     ) || 0;
   }
 
   function angkaPoin(s) {
     return Number(
-      s.poin_diterima != null
-        ? s.poin_diterima
-        : s.poin != null
-          ? s.poin
-          : s.estimasi_poin != null
-            ? s.estimasi_poin
-            : 0
+      s.poin_diterima ??
+      s.poin ??
+      s.estimasi_poin ??
+      0
     ) || 0;
   }
 
@@ -95,7 +84,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       return "ditolak";
     }
 
-    return "menunggu";
+    if (["menunggu", "pending", "diproses"].includes(s)) {
+      return "menunggu";
+    }
+
+    return s || "menunggu";
   }
 
   function statusLabel(value) {
@@ -103,8 +96,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (s === "disetujui") return "Disetujui";
     if (s === "ditolak") return "Ditolak";
+    if (s === "menunggu") return "Menunggu";
 
-    return "Menunggu";
+    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
   function statusClass(value) {
@@ -234,7 +228,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         "<td>" + fmtInt(angkaPoin(s)) + "</td>" +
         '<td><span class="admin-status ' +
         statusClass(s.status) + '">' +
-        statusLabel(s.status) +
+        escapeHTML(statusLabel(s.status)) +
         "</span></td>" +
         "</tr>"
       );
@@ -243,19 +237,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   function dataRekapAsn() {
     const bulan = bulanInput.value;
-
     const asn = semuaProfil.filter(isAsn);
 
     const setoranBulan = semuaSetoran.filter(function (s) {
       const t = waktu(s);
       const p = cariProfil(s.user_id);
 
-      return (
-        t &&
-        t.slice(0, 7) === bulan &&
-        p &&
-        isAsn(p)
-      );
+      return t && t.slice(0, 7) === bulan && p && isAsn(p);
     });
 
     const disetujui = setoranBulan.filter(function (s) {
@@ -284,23 +272,31 @@ document.addEventListener("DOMContentLoaded", async function () {
     }, 0);
 
     return {
-      bulan: bulan,
-      asn: asn,
-      setoranBulan: setoranBulan,
-      disetujui: disetujui,
-      kgPerUser: kgPerUser,
-      patuh: patuh,
-      totalKg: totalKg
+      bulan,
+      asn,
+      setoranBulan,
+      disetujui,
+      kgPerUser,
+      patuh,
+      totalKg
     };
   }
 
   function renderRekapRingkas() {
     const r = dataRekapAsn();
 
-    $("asnJumlah").textContent = fmtInt(r.asn.length);
-    $("asnPatuh").textContent =
-      fmtInt(r.patuh) + " / " + fmtInt(r.asn.length);
-    $("asnKg").textContent = fmt(r.totalKg) + " kg";
+    if ($("asnJumlah")) {
+      $("asnJumlah").textContent = fmtInt(r.asn.length);
+    }
+
+    if ($("asnPatuh")) {
+      $("asnPatuh").textContent =
+        fmtInt(r.patuh) + " / " + fmtInt(r.asn.length);
+    }
+
+    if ($("asnKg")) {
+      $("asnKg").textContent = fmt(r.totalKg) + " kg";
+    }
   }
 
   function buatPDF() {
@@ -353,7 +349,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       kiri,
       35
     );
-    doc.text("Total berat disetujui: " + fmt(r.totalKg) + " kg", kiri, 41);
+    doc.text(
+      "Total berat disetujui: " + fmt(r.totalKg) + " kg",
+      kiri,
+      41
+    );
 
     const x = [14, 23, 66, 95, 115, 135, 153, 198, 227];
     const headers = [
@@ -385,7 +385,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         instansi: p.instansi || "-",
         rw: p.rw || "-",
         rt: p.rt || "-",
-        kg: kg,
+        kg,
         patuh: kg >= 2
       };
     });
@@ -397,8 +397,14 @@ document.addEventListener("DOMContentLoaded", async function () {
       }
 
       const values = [
-        p.no, p.nama, p.nip, p.instansi, p.rw,
-        p.rt, fmt(p.kg), "2 kg",
+        p.no,
+        p.nama,
+        p.nip,
+        p.instansi,
+        p.rw,
+        p.rt,
+        fmt(p.kg),
+        "2 kg",
         p.patuh ? "Memenuhi" : "Belum memenuhi"
       ];
 
@@ -478,7 +484,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   try {
     const profilAktif = await window.AuthGuard(["admin"]);
-
     if (!profilAktif) return;
 
     const sb = window.SupabaseDB.getClient();
@@ -492,16 +497,10 @@ document.addEventListener("DOMContentLoaded", async function () {
           hasil.error.message
         );
 
-        return {
-          data: [],
-          error: hasil.error
-        };
+        return { data: [], error: hasil.error };
       }
 
-      return {
-        data: hasil.data || [],
-        error: null
-      };
+      return { data: hasil.data || [], error: null };
     }
 
     const hasil = await Promise.all([
@@ -527,14 +526,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     const profilById = new Map();
 
     (profilesRes.data || []).forEach(function (p) {
-      profilById.set(String(p.id), Object.assign({}, p));
+      profilById.set(String(p.id), { ...p });
     });
 
     (usersRes.data || []).forEach(function (u) {
       const id = String(u.id);
       const lama = profilById.get(id) || {};
 
-      profilById.set(id, Object.assign({}, u, lama, {
+      profilById.set(id, {
+        ...u,
+        ...lama,
         id: lama.id || u.id,
         nama: lama.nama || u.nama || "",
         peran: lama.peran || u.peran || "warga",
@@ -542,17 +543,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         rw: lama.rw || u.rw || null,
         rt: lama.rt || u.rt || null,
         email: u.email || lama.email || "",
-        instansi: u.instansi || lama.instansi || "",
+        instansi: lama.instansi || u.instansi || "",
         is_asn:
           lama.is_asn === true ||
           u.is_asn === true ||
           ["asn", "pns"].includes(normal(lama.peran)) ||
           ["asn", "pns"].includes(normal(u.peran))
-      }));
+      });
     });
 
     semuaProfil = Array.from(profilById.values());
 
+    // Catatan: kedua tabel digabung dengan ID sebagai kunci.
+    // Ini hanya aman jika ID mewakili transaksi yang sama di kedua tabel.
     const setoranById = new Map();
 
     (transaksiRes.data || []).forEach(function (s, i) {
@@ -560,9 +563,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         ? String(s.id)
         : "transaksi-" + i;
 
-      const berat = s.berat_kg ?? s.kg ?? 0;
+      const berat = s.berat_kg ?? s.kg ?? s.kg_klaim ?? 0;
 
-      setoranById.set(id, Object.assign({}, s, {
+      setoranById.set(id, {
+        ...s,
         kg: berat,
         kg_klaim: berat,
         poin:
@@ -571,7 +575,7 @@ document.addEventListener("DOMContentLoaded", async function () {
           s.estimasi_poin ??
           0,
         sumber_tabel: "transaksi_setoran"
-      }));
+      });
     });
 
     (setoranRes.data || []).forEach(function (s, i) {
@@ -579,37 +583,52 @@ document.addEventListener("DOMContentLoaded", async function () {
         ? String(s.id)
         : "setoran-" + i;
 
-      setoranById.set(id, Object.assign({}, s, {
+      if (setoranById.has(id)) {
+        console.warn(
+          "ID setoran sama ditemukan di kedua tabel:",
+          id
+        );
+      }
+
+      setoranById.set(id, {
+        ...s,
         sumber_tabel: "setoran"
-      }));
+      });
     });
 
     semuaSetoran = Array.from(setoranById.values()).map(function (s) {
       const p = profilById.get(String(s.user_id)) || null;
 
-      return Object.assign({}, s, {
+      return {
+        ...s,
         status: statusNormal(s.status),
         profiles: p,
         users: p
-      });
+      };
     });
 
     const disetujui = semuaSetoran.filter(function (s) {
       return statusNormal(s.status) === "disetujui";
     });
 
-    $("stKg").textContent =
-      fmt(disetujui.reduce(function (sum, s) {
-        return sum + angkaKg(s);
-      }, 0)) + " kg";
+    if ($("stKg")) {
+      $("stKg").textContent =
+        fmt(disetujui.reduce(function (sum, s) {
+          return sum + angkaKg(s);
+        }, 0)) + " kg";
+    }
 
-    $("stPoin").textContent = fmtInt(
-      disetujui.reduce(function (sum, s) {
-        return sum + angkaPoin(s);
-      }, 0)
-    );
+    if ($("stPoin")) {
+      $("stPoin").textContent = fmtInt(
+        disetujui.reduce(function (sum, s) {
+          return sum + angkaPoin(s);
+        }, 0)
+      );
+    }
 
-    $("stAkun").textContent = fmtInt(semuaProfil.length);
+    if ($("stAkun")) {
+      $("stAkun").textContent = fmtInt(semuaProfil.length);
+    }
 
     renderPengguna();
     renderSetoran();
@@ -620,6 +639,17 @@ document.addEventListener("DOMContentLoaded", async function () {
       " pengguna dan " + semuaSetoran.length + " setoran.",
       "ok"
     );
+
+    console.table(semuaSetoran.map(function (s) {
+      return {
+        id: s.id,
+        tabel: s.sumber_tabel,
+        user_id: s.user_id,
+        status: s.status,
+        kg: angkaKg(s),
+        poin: angkaPoin(s)
+      };
+    }));
 
     console.log("eLOLA dashboard:", {
       jumlahPengguna: semuaProfil.length,
