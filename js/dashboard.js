@@ -1,243 +1,470 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const tombolPDF = document.getElementById("exportPdfAsn");
 
-  if (!tombolPDF) {
-    console.warn("Tombol exportPdfAsn tidak ditemukan di HTML.");
-    return;
-  }
+document.addEventListener("DOMContentLoaded", async () => {
+  const $ = (id) => document.getElementById(id);
 
-  tombolPDF.addEventListener("click", () => {
-    const bulanInput = document.getElementById("bulanRekapAsn");
-
-    const jumlahASN =
-      document.getElementById("asnJumlah")?.textContent?.trim() || "0";
-
-    const asnPatuh =
-      document.getElementById("asnPatuh")?.textContent?.trim() || "0";
-
-    const totalKg =
-      document.getElementById("asnKg")?.textContent?.trim() || "0";
-
-    const tabel =
-      document.getElementById("tabelAsn") ||
-      document.getElementById("tabelLog");
-
-    const bulan = bulanInput?.value
-      ? new Date(bulanInput.value + "-01").toLocaleDateString("id-ID", {
-          month: "long",
-          year: "numeric"
-        })
-      : new Date().toLocaleDateString("id-ID", {
-          month: "long",
-          year: "numeric"
-        });
-
-    const tanggalCetak = new Date().toLocaleString("id-ID", {
-      dateStyle: "long",
-      timeStyle: "short"
+  const fmt = (angka) =>
+    Number(angka || 0).toLocaleString("id-ID", {
+      maximumFractionDigits: 2
     });
 
-    const tabelHTML = tabel
-      ? tabel.outerHTML
-      : "<p>Tabel data tidak ditemukan.</p>";
+  const fmtInt = (angka) =>
+    Number(angka || 0).toLocaleString("id-ID");
 
-    const halaman = window.open("", "_blank");
+  const escapeHTML = (value) =>
+    String(value ?? "").replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[c]);
 
-    if (!halaman) {
-      alert("Popup diblokir browser. Izinkan popup untuk website eLOLA.");
+  const role = (value) =>
+    String(value || "warga").trim().toLowerCase();
+
+  const isAsn = (p) =>
+    p?.is_asn === true ||
+    ["asn", "pns"].includes(role(p?.peran));
+
+  const statusNormal = (value) => {
+    const s = role(value);
+
+    if (["approved", "selesai", "disetujui"].includes(s)) {
+      return "disetujui";
+    }
+
+    if (["rejected", "ditolak"].includes(s)) {
+      return "ditolak";
+    }
+
+    return "menunggu";
+  };
+
+  const statusLabel = (value) => {
+    const s = statusNormal(value);
+
+    if (s === "disetujui") return "Disetujui";
+    if (s === "ditolak") return "Ditolak";
+
+    return "Menunggu";
+  };
+
+  const statusClass = (value) => {
+    const s = statusNormal(value);
+
+    if (s === "disetujui") return "ok";
+    if (s === "ditolak") return "tolak";
+
+    return "tunggu";
+  };
+
+  const angkaKg = (s) =>
+    Number(s.berat_kg ?? s.kg ?? s.kg_klaim ?? 0) || 0;
+
+  const angkaPoin = (s) =>
+    Number(
+      s.poin_diterima ??
+      s.poin ??
+      s.estimasi_poin ??
+      0
+    ) || 0;
+
+  const waktu = (s) =>
+    s.created_at || s.waktu || s.tanggal || null;
+
+  const namaPenyetor = (s) =>
+    s.profiles?.nama ||
+    s.users?.nama ||
+    s.nama ||
+    s.email ||
+    "Pengguna";
+
+  const wilayah = (s) =>
+    `${s.rw || s.profiles?.rw || s.users?.rw || "-"} / ${
+      s.rt || s.profiles?.rt || s.users?.rt || "-"
+    }`;
+
+  const bulanInput = $("bulanRekapAsn");
+
+  if (bulanInput && !bulanInput.value) {
+    const sekarang = new Date();
+
+    bulanInput.value =
+      `${sekarang.getFullYear()}-${String(
+        sekarang.getMonth() + 1
+      ).padStart(2, "0")}`;
+  }
+
+  let semuaProfil = [];
+  let semuaSetoran = [];
+
+  function beriNotif(teks, tipe = "info") {
+    const el = $("notifAdmin");
+
+    if (!el) return;
+
+    el.className = `notif ${tipe}`;
+    el.textContent = teks;
+  }
+
+  function renderPengguna() {
+    const tabel = $("tabelPengguna");
+    if (!tabel) return;
+
+    const q = ($("cariPengguna")?.value || "")
+      .trim()
+      .toLowerCase();
+
+    const data = semuaProfil.filter((p) =>
+      [
+        p.nama,
+        p.peran,
+        p.nik_nip,
+        p.rw,
+        p.rt,
+        p.instansi,
+        p.email
+      ].some((v) =>
+        String(v || "").toLowerCase().includes(q)
+      )
+    );
+
+    tabel.innerHTML = data.length
+      ? data.map((p) => `
+        <tr>
+          <td>${escapeHTML(p.nama || "-")}</td>
+          <td>${escapeHTML(p.peran || "warga")}</td>
+          <td>${escapeHTML(p.nik_nip || "-")}</td>
+          <td>${escapeHTML(p.rw || "-")} / ${escapeHTML(p.rt || "-")}</td>
+          <td>${escapeHTML(p.instansi || "-")}</td>
+        </tr>
+      `).join("")
+      : `<tr><td colspan="5">Tidak ada pengguna.</td></tr>`;
+  }
+
+  function renderSetoran() {
+    const tabel = $("tabelLog");
+    if (!tabel) return;
+
+    const filter = $("filterStatusSetoran")?.value || "semua";
+
+    const data = semuaSetoran.filter((s) =>
+      filter === "semua" ||
+      statusNormal(s.status) === filter
+    );
+
+    tabel.innerHTML = data.length
+      ? data.map((s) => {
+          const tanggal = waktu(s)
+            ? new Date(waktu(s)).toLocaleString("id-ID")
+            : "-";
+
+          return `
+            <tr>
+              <td>${escapeHTML(tanggal)}</td>
+              <td>${escapeHTML(namaPenyetor(s))}</td>
+              <td>${escapeHTML(wilayah(s))}</td>
+              <td>${fmt(angkaKg(s))} kg</td>
+              <td>${fmtInt(angkaPoin(s))}</td>
+              <td>
+                <span class="admin-status ${statusClass(s.status)}">
+                  ${statusLabel(s.status)}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join("")
+      : `<tr><td colspan="6">Belum ada data setoran.</td></tr>`;
+  }
+
+  function dataRekapAsn() {
+    const bulan = bulanInput?.value || "";
+
+    const asn = semuaProfil.filter(isAsn);
+
+    const setoranBulan = semuaSetoran.filter((s) => {
+      const tanggal = waktu(s);
+      const pemilik = semuaProfil.find(
+        (p) => p.id === s.user_id
+      );
+
+      return (
+        tanggal &&
+        tanggal.slice(0, 7) === bulan &&
+        pemilik &&
+        isAsn(pemilik)
+      );
+    });
+
+    const disetujui = setoranBulan.filter(
+      (s) => statusNormal(s.status) === "disetujui"
+    );
+
+    const kgPerUser = new Map();
+
+    disetujui.forEach((s) => {
+      const id = s.user_id;
+      kgPerUser.set(
+        id,
+        (kgPerUser.get(id) || 0) + angkaKg(s)
+      );
+    });
+
+    const patuh = asn.filter(
+      (p) => (kgPerUser.get(p.id) || 0) >= 2
+    ).length;
+
+    return {
+      bulan,
+      asn,
+      setoranBulan,
+      kgPerUser,
+      patuh,
+      totalKg: disetujui.reduce(
+        (total, s) => total + angkaKg(s),
+        0
+      )
+    };
+  }
+
+  function renderRekapAsn() {
+    const r = dataRekapAsn();
+
+    if ($("asnJumlah")) {
+      $("asnJumlah").textContent = fmtInt(r.asn.length);
+    }
+
+    if ($("asnPatuh")) {
+      $("asnPatuh").textContent =
+        `${fmtInt(r.patuh)} / ${fmtInt(r.asn.length)}`;
+    }
+
+    if ($("asnKg")) {
+      $("asnKg").textContent = `${fmt(r.totalKg)} kg`;
+    }
+  }
+
+  function buatPDF() {
+    if (!window.jspdf?.jsPDF) {
+      beriNotif("Library PDF belum termuat.", "error");
       return;
     }
 
-    halaman.document.open();
-    halaman.document.write(`
-      <!DOCTYPE html>
-      <html lang="id">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Laporan ASN eLOLA - ${bulan}</title>
+    const r = dataRekapAsn();
 
-        <style>
-          * {
-            box-sizing: border-box;
-          }
+    if (!r.bulan || !r.bulan.includes("-")) {
+      beriNotif("Pilih bulan laporan terlebih dahulu.", "error");
+      return;
+    }
 
-          body {
-            font-family: Arial, sans-serif;
-            color: #222;
-            margin: 30px;
-            font-size: 12px;
-          }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("l", "mm", "a4");
 
-          h1 {
-            color: #047857;
-            text-align: center;
-            margin-bottom: 5px;
-            font-size: 22px;
-          }
+    const namaBulan = new Date(
+      Number(r.bulan.slice(0, 4)),
+      Number(r.bulan.slice(5, 7)) - 1,
+      1
+    ).toLocaleDateString("id-ID", {
+      month: "long",
+      year: "numeric"
+    });
 
-          h2 {
-            text-align: center;
-            font-size: 15px;
-            margin-top: 5px;
-          }
+    doc.setFontSize(16);
+    doc.text("eLOLA - REKAPAN SETORAN ASN", 12, 15);
 
-          .subjudul {
-            text-align: center;
-            color: #555;
-            margin-bottom: 25px;
-          }
+    doc.setFontSize(10);
+    doc.text(`Periode: ${namaBulan}`, 12, 23);
+    doc.text(`Jumlah ASN: ${r.asn.length}`, 12, 30);
+    doc.text(`ASN memenuhi target 2 kg: ${r.patuh}`, 12, 36);
+    doc.text(`Total setoran disetujui: ${fmt(r.totalKg)} kg`, 12, 42);
 
-          .statistik {
-            display: flex;
-            gap: 12px;
-            margin: 20px 0;
-          }
+    let y = 52;
 
-          .stat {
-            flex: 1;
-            padding: 14px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-          }
+    const headers = [
+      "No", "Nama", "NIK/NIP", "Instansi",
+      "RW", "RT", "Berat (kg)", "Target"
+    ];
 
-          .stat p {
-            margin: 0 0 8px;
-            color: #555;
-          }
+    const xs = [12, 22, 75, 112, 158, 178, 198, 235];
 
-          .stat strong {
-            font-size: 20px;
-            color: #047857;
-          }
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
 
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-          }
+    headers.forEach((h, i) => {
+      doc.text(h, xs[i], y);
+    });
 
-          th, td {
-            border: 1px solid #bbb;
-            padding: 8px;
-            text-align: left;
-            overflow-wrap: anywhere;
-          }
+    y += 7;
+    doc.setFont("helvetica", "normal");
 
-          th {
-            background: #d1fae5;
-            color: #064e3b;
-          }
+    r.asn.forEach((p, i) => {
+      if (y > 190) {
+        doc.addPage();
+        y = 15;
+      }
 
-          tr {
-            page-break-inside: avoid;
-          }
+      const kg = r.kgPerUser.get(p.id) || 0;
 
-          .footer {
-            margin-top: 30px;
-            color: #666;
-            font-size: 10px;
-            text-align: right;
-          }
+      const values = [
+        String(i + 1),
+        p.nama || "-",
+        p.nik_nip || "-",
+        p.instansi || "-",
+        String(p.rw || "-"),
+        String(p.rt || "-"),
+        fmt(kg),
+        kg >= 2 ? "Memenuhi" : "Belum"
+      ];
 
-          button {
-            padding: 10px 16px;
-            background: #047857;
-            color: white;
-            border: 0;
-            border-radius: 5px;
-            cursor: pointer;
-          }
+      values.forEach((v, j) => {
+        doc.text(
+          doc.splitTextToSize(String(v), j === 1 ? 48 : 30)[0] || "-",
+          xs[j],
+          y
+        );
+      });
 
-          @media print {
-            body {
-              margin: 10mm;
-            }
+      y += 7;
+    });
 
-            .aksi {
-              display: none;
-            }
+    doc.save(`Rekapan-ASN-${r.bulan}.pdf`);
+    beriNotif("PDF berhasil dibuat.", "ok");
+  }
 
-            .statistik {
-              display: flex;
-            }
+  $("cariPengguna")?.addEventListener("input", renderPengguna);
+  $("filterStatusSetoran")?.addEventListener("change", renderSetoran);
+  bulanInput?.addEventListener("change", renderRekapAsn);
+  $("exportPdfAsn")?.addEventListener("click", buatPDF);
 
-            th {
-              print-color-adjust: exact;
-              -webkit-print-color-adjust: exact;
-            }
-          }
+  try {
+    if (!window.SupabaseDB?.getClient) {
+      throw new Error("SupabaseDB belum tersedia. Periksa js/supabase.js.");
+    }
 
-          @media screen and (max-width: 600px) {
-            body {
-              margin: 12px;
-            }
+    if (!window.AuthGuard) {
+      throw new Error("AuthGuard belum tersedia. Periksa js/auth-guard.js.");
+    }
 
-            .statistik {
-              flex-direction: column;
-            }
-          }
-        </style>
-      </head>
+    const profilAktif = await window.AuthGuard(["admin"]);
+    if (!profilAktif) return;
 
-      <body>
-        <div class="aksi">
-          <button onclick="window.print()">Cetak / Simpan PDF</button>
-        </div>
+    const sb = window.SupabaseDB.getClient();
 
-        <h1>eLOLA</h1>
-        <h2>Laporan Rekapitulasi ASN</h2>
-        <p class="subjudul">Periode: ${escapeHTML(bulan)}</p>
+    async function ambil(tabel) {
+      const { data, error } = await sb
+        .from(tabel)
+        .select("*");
 
-        <div class="statistik">
-          <div class="stat">
-            <p>Jumlah ASN</p>
-            <strong>${escapeHTML(jumlahASN)}</strong>
-          </div>
+      if (error) {
+        console.warn(`Gagal membaca ${tabel}:`, error.message);
+        return [];
+      }
 
-          <div class="stat">
-            <p>ASN Memenuhi Kewajiban</p>
-            <strong>${escapeHTML(asnPatuh)}</strong>
-          </div>
+      return data || [];
+    }
 
-          <div class="stat">
-            <p>Total Setoran</p>
-            <strong>${escapeHTML(totalKg)} kg</strong>
-          </div>
-        </div>
+    const [users, profiles, transaksi, setoran] =
+      await Promise.all([
+        ambil("users"),
+        ambil("profiles"),
+        ambil("transaksi_setoran"),
+        ambil("setoran")
+      ]);
 
-        <h3>Data Setoran</h3>
+    if (!users.length && !profiles.length) {
+      throw new Error(
+        "Data pengguna kosong atau tidak bisa dibaca. Periksa tabel dan kebijakan RLS Supabase."
+      );
+    }
 
-        ${tabelHTML}
+    const profilMap = new Map();
 
-        <div class="footer">
-          Dicetak melalui sistem eLOLA pada ${escapeHTML(tanggalCetak)}
-        </div>
+    profiles.forEach((p) => {
+      profilMap.set(p.id, { ...p });
+    });
 
-        <script>
-          function escapeHTML(value) {
-            return String(value)
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#39;");
-          }
-        <\/script>
-      </body>
-      </html>
-    `);
-    halaman.document.close();
-  });
+    users.forEach((u) => {
+      const lama = profilMap.get(u.id) || {};
 
-  console.log("Fitur ekspor PDF eLOLA siap digunakan.");
+      profilMap.set(u.id, {
+        ...lama,
+        ...u,
+        peran: u.peran || lama.peran || "warga",
+        nama: u.nama || lama.nama || "-",
+        email: u.email || lama.email || "",
+        rw: u.rw || lama.rw || null,
+        rt: u.rt || lama.rt || null,
+        instansi: u.instansi || lama.instansi || "-",
+        is_asn:
+          u.is_asn === true ||
+          role(u.peran) === "asn" ||
+          role(lama.peran) === "asn"
+      });
+    });
+
+    semuaProfil = [...profilMap.values()];
+
+    // Utamakan tabel setoran agar transaksi yang sama
+    // tidak dihitung dua kali jika ada di kedua tabel.
+    const setoranMap = new Map();
+
+    setoran.forEach((s) => {
+      setoranMap.set(s.id, { ...s });
+    });
+
+    transaksi.forEach((s) => {
+      if (!setoranMap.has(s.id)) {
+        setoranMap.set(s.id, { ...s });
+      }
+    });
+
+    semuaSetoran = [...setoranMap.values()].map((s) => {
+      const pemilik = profilMap.get(s.user_id) || {};
+
+      return {
+        ...s,
+        status: statusNormal(s.status),
+        profiles: s.profiles || pemilik,
+        users: s.users || pemilik
+      };
+    });
+
+    const disetujui = semuaSetoran.filter(
+      (s) => statusNormal(s.status) === "disetujui"
+    );
+
+    if ($("stKg")) {
+      $("stKg").textContent =
+        `${fmt(disetujui.reduce((total, s) => total + angkaKg(s), 0))} kg`;
+    }
+
+    if ($("stPoin")) {
+      $("stPoin").textContent = fmtInt(
+        disetujui.reduce((total, s) => total + angkaPoin(s), 0)
+      );
+    }
+
+    if ($("stAkun")) {
+      $("stAkun").textContent = fmtInt(semuaProfil.length);
+    }
+
+    renderPengguna();
+    renderSetoran();
+    renderRekapAsn();
+
+    beriNotif("Data dashboard berhasil dimuat.", "ok");
+
+    console.log("Dashboard eLOLA berhasil dimuat.", {
+      jumlahPengguna: semuaProfil.length,
+      jumlahSetoran: semuaSetoran.length
+    });
+
+  } catch (error) {
+    console.error("Dashboard eLOLA:", error);
+
+    beriNotif(
+      `Gagal memuat dashboard: ${error.message}`,
+      "error"
+    );
+  }
 });
-
-function escapeHTML(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
