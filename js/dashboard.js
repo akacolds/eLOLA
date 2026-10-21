@@ -1,53 +1,90 @@
-```javascript
-document.addEventListener("DOMContentLoaded", async () => {
-  const { $, fmt, fmtInt, tglJam } = window.Utils;
+javascript document.addEventListener("DOMContentLoaded", async function () {
+  const utils = window.Utils;
+
+  if (!utils || !window.SupabaseDB) {
+    console.error("Utils atau SupabaseDB belum dimuat.");
+    return;
+  }
+
+  const $ = utils.$;
+  const fmt = utils.fmt;
+  const fmtInt = utils.fmtInt;
+  const tglJam = utils.tglJam;
+
   const bulanInput = $("bulanRekapAsn");
 
-  if (!bulanInput) return;
+  if (!bulanInput) {
+    console.error("Elemen bulanRekapAsn tidak ditemukan.");
+    return;
+  }
 
   const sekarang = new Date();
-  bulanInput.value = `${sekarang.getFullYear()}-${String(
-    sekarang.getMonth() + 1
-  ).padStart(2, "0")}`;
 
-  let profilAktif = null;
+  bulanInput.value =
+    sekarang.getFullYear() +
+    "-" +
+    String(sekarang.getMonth() + 1).padStart(2, "0");
+
   let semuaProfil = [];
   let semuaSetoran = [];
 
-  const escapeHTML = (value) =>
-    String(value ?? "").replace(/[&<>"']/g, (c) => ({
+  function normal(value) {
+    return String(value == null ? "" : value)
+      .trim()
+      .toLowerCase();
+  }
+
+  function escapeHTML(value) {
+    const map = {
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
       '"': "&quot;",
       "'": "&#39;"
-    })[c]);
+    };
 
-  const normal = (value) =>
-    String(value ?? "").trim().toLowerCase();
+    return String(value == null ? "" : value).replace(
+      /[&<>"']/g,
+      function (c) {
+        return map[c];
+      }
+    );
+  }
 
-  const isAsn = (p) =>
-    p?.is_asn === true ||
-    ["asn", "pns"].includes(normal(p?.peran));
-
-  const angkaKg = (s) =>
-    Number(s.kg ?? s.kg_klaim ?? s.berat_kg ?? 0) || 0;
-
-  const angkaPoin = (s) =>
-    Number(
-      s.poin_diterima ??
-      s.poin ??
-      s.estimasi_poin ??
-      0
+  function angkaKg(s) {
+    return Number(
+      s.kg != null
+        ? s.kg
+        : s.kg_klaim != null
+          ? s.kg_klaim
+          : s.berat_kg != null
+            ? s.berat_kg
+            : 0
     ) || 0;
+  }
 
-  const waktu = (s) =>
-    s.created_at || s.waktu || null;
+  function angkaPoin(s) {
+    return Number(
+      s.poin_diterima != null
+        ? s.poin_diterima
+        : s.poin != null
+          ? s.poin
+          : s.estimasi_poin != null
+            ? s.estimasi_poin
+            : 0
+    ) || 0;
+  }
 
-  const tampilWaktu = (s) =>
-    waktu(s) ? tglJam(waktu(s)) : "-";
+  function waktu(s) {
+    return s.created_at || s.waktu || null;
+  }
 
-  const statusNormal = (value) => {
+  function tampilWaktu(s) {
+    const t = waktu(s);
+    return t ? tglJam(t) : "-";
+  }
+
+  function statusNormal(value) {
     const s = normal(value);
 
     if (["disetujui", "approved", "selesai"].includes(s)) {
@@ -59,29 +96,41 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     return "menunggu";
-  };
+  }
 
-  const statusLabel = (value) => {
+  function statusLabel(value) {
     const s = statusNormal(value);
 
     if (s === "disetujui") return "Disetujui";
     if (s === "ditolak") return "Ditolak";
-    return "Menunggu";
-  };
 
-  const statusClass = (value) => {
+    return "Menunggu";
+  }
+
+  function statusClass(value) {
     const s = statusNormal(value);
 
     if (s === "disetujui") return "ok";
     if (s === "ditolak") return "tolak";
+
     return "tunggu";
-  };
+  }
 
-  const pemilikSetoran = (s) =>
-    semuaProfil.find((p) => p.id === s.user_id) || null;
+  function isAsn(p) {
+    return (
+      p.is_asn === true ||
+      ["asn", "pns"].includes(normal(p.peran))
+    );
+  }
 
-  const namaPenyetor = (s) => {
-    const p = pemilikSetoran(s);
+  function cariProfil(userId) {
+    return semuaProfil.find(function (p) {
+      return String(p.id) === String(userId);
+    }) || null;
+  }
+
+  function namaPenyetor(s) {
+    const p = cariProfil(s.user_id);
 
     return (
       p?.nama ||
@@ -91,29 +140,32 @@ document.addEventListener("DOMContentLoaded", async () => {
       s.email ||
       "Pengguna"
     );
-  };
+  }
 
-  const wilayah = (s) => {
-    const p = pemilikSetoran(s);
+  function wilayah(s) {
+    const p = cariProfil(s.user_id);
 
-    return `${s.rw || p?.rw || "-"} / ${s.rt || p?.rt || "-"}`;
-  };
+    return (
+      (s.rw || p?.rw || "-") +
+      " / " +
+      (s.rt || p?.rt || "-")
+    );
+  }
 
-  function beriNotif(teks, tipe = "info") {
+  function beriNotif(teks, tipe) {
     const el = $("notifAdmin");
     if (!el) return;
 
-    el.className = `notif ${tipe}`;
+    el.className = "notif " + (tipe || "info");
     el.textContent = teks;
   }
 
   function renderPengguna() {
-    const q = ($("cariPengguna")?.value || "")
-      .trim()
-      .toLowerCase();
+    const input = $("cariPengguna");
+    const q = input ? input.value.trim().toLowerCase() : "";
 
-    const data = semuaProfil.filter((p) =>
-      [
+    const data = semuaProfil.filter(function (p) {
+      return [
         p.nama,
         p.peran,
         p.nik_nip,
@@ -121,50 +173,72 @@ document.addEventListener("DOMContentLoaded", async () => {
         p.rt,
         p.instansi,
         p.email
-      ].some((v) => String(v ?? "").toLowerCase().includes(q))
-    );
+      ].some(function (v) {
+        return String(v || "").toLowerCase().includes(q);
+      });
+    });
 
-    $("tabelPengguna").innerHTML = data.length
-      ? data.map((p) => `
-        <tr>
-          <td>${escapeHTML(p.nama || "-")}</td>
-          <td>${escapeHTML(p.peran || "warga")}</td>
-          <td>${escapeHTML(p.nik_nip || "-")}</td>
-          <td>${escapeHTML(p.rw || "-")} / ${escapeHTML(p.rt || "-")}</td>
-          <td>${escapeHTML(p.instansi || "-")}</td>
-        </tr>
-      `).join("")
-      : `<tr><td colspan="5">Tidak ada pengguna yang cocok.</td></tr>`;
+    const tabel = $("tabelPengguna");
+    if (!tabel) return;
+
+    if (!data.length) {
+      tabel.innerHTML =
+        '<tr><td colspan="5">Tidak ada pengguna yang cocok.</td></tr>';
+      return;
+    }
+
+    tabel.innerHTML = data.map(function (p) {
+      return (
+        "<tr>" +
+        "<td>" + escapeHTML(p.nama || "-") + "</td>" +
+        "<td>" + escapeHTML(p.peran || "warga") + "</td>" +
+        "<td>" + escapeHTML(p.nik_nip || "-") + "</td>" +
+        "<td>" + escapeHTML(p.rw || "-") + " / " +
+        escapeHTML(p.rt || "-") + "</td>" +
+        "<td>" + escapeHTML(p.instansi || "-") + "</td>" +
+        "</tr>"
+      );
+    }).join("");
   }
 
   function renderSetoran() {
-    const filter = $("filterStatusSetoran")?.value || "semua";
+    const select = $("filterStatusSetoran");
+    const filter = select ? select.value : "semua";
+    const tabel = $("tabelSemuaSetoran");
 
-    const data = semuaSetoran.filter((s) =>
-      filter === "semua" || statusNormal(s.status) === filter
-    );
+    if (!tabel) return;
 
-    $("tabelSemuaSetoran").innerHTML = data.length
-      ? data.map((s) => {
-        const p = pemilikSetoran(s);
+    const data = semuaSetoran.filter(function (s) {
+      return (
+        filter === "semua" ||
+        statusNormal(s.status) === filter
+      );
+    });
 
-        return `
-          <tr>
-            <td>${escapeHTML(tampilWaktu(s))}</td>
-            <td>${escapeHTML(namaPenyetor(s))}</td>
-            <td>${escapeHTML(p?.peran || "-")}</td>
-            <td>${escapeHTML(wilayah(s))}</td>
-            <td>${fmt(angkaKg(s))} kg</td>
-            <td>${fmtInt(angkaPoin(s))}</td>
-            <td>
-              <span class="admin-status ${statusClass(s.status)}">
-                ${statusLabel(s.status)}
-              </span>
-            </td>
-          </tr>
-        `;
-      }).join("")
-      : `<tr><td colspan="7">Belum ada data setoran untuk filter ini.</td></tr>`;
+    if (!data.length) {
+      tabel.innerHTML =
+        '<tr><td colspan="7">Belum ada data setoran untuk filter ini.</td></tr>';
+      return;
+    }
+
+    tabel.innerHTML = data.map(function (s) {
+      const p = cariProfil(s.user_id);
+
+      return (
+        "<tr>" +
+        "<td>" + escapeHTML(tampilWaktu(s)) + "</td>" +
+        "<td>" + escapeHTML(namaPenyetor(s)) + "</td>" +
+        "<td>" + escapeHTML(p?.peran || "-") + "</td>" +
+        "<td>" + escapeHTML(wilayah(s)) + "</td>" +
+        "<td>" + fmt(angkaKg(s)) + " kg</td>" +
+        "<td>" + fmtInt(angkaPoin(s)) + "</td>" +
+        '<td><span class="admin-status ' +
+        statusClass(s.status) + '">' +
+        statusLabel(s.status) +
+        "</span></td>" +
+        "</tr>"
+      );
+    }).join("");
   }
 
   function dataRekapAsn() {
@@ -172,27 +246,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const asn = semuaProfil.filter(isAsn);
 
-    const setoranBulan = semuaSetoran.filter((s) => {
-      const tanggal = waktu(s);
-      const p = pemilikSetoran(s);
+    const setoranBulan = semuaSetoran.filter(function (s) {
+      const t = waktu(s);
+      const p = cariProfil(s.user_id);
 
       return (
-        tanggal &&
-        tanggal.slice(0, 7) === bulan &&
+        t &&
+        t.slice(0, 7) === bulan &&
         p &&
         isAsn(p)
       );
     });
 
-    const disetujui = setoranBulan.filter(
-      (s) => statusNormal(s.status) === "disetujui"
-    );
+    const disetujui = setoranBulan.filter(function (s) {
+      return statusNormal(s.status) === "disetujui";
+    });
 
     const kgPerUser = new Map();
 
-    disetujui.forEach((s) => {
-      const id = s.user_id;
-      if (!id) return;
+    disetujui.forEach(function (s) {
+      if (s.user_id == null) return;
+
+      const id = String(s.user_id);
 
       kgPerUser.set(
         id,
@@ -200,21 +275,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
     });
 
-    const patuh = asn.filter(
-      (p) => (kgPerUser.get(p.id) || 0) >= 2
-    ).length;
+    const patuh = asn.filter(function (p) {
+      return (kgPerUser.get(String(p.id)) || 0) >= 2;
+    }).length;
+
+    const totalKg = disetujui.reduce(function (sum, s) {
+      return sum + angkaKg(s);
+    }, 0);
 
     return {
-      bulan,
-      asn,
-      setoranBulan,
-      disetujui,
-      kgPerUser,
-      patuh,
-      totalKg: disetujui.reduce(
-        (sum, s) => sum + angkaKg(s),
-        0
-      )
+      bulan: bulan,
+      asn: asn,
+      setoranBulan: setoranBulan,
+      disetujui: disetujui,
+      kgPerUser: kgPerUser,
+      patuh: patuh,
+      totalKg: totalKg
     };
   }
 
@@ -223,28 +299,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     $("asnJumlah").textContent = fmtInt(r.asn.length);
     $("asnPatuh").textContent =
-      `${fmtInt(r.patuh)} / ${fmtInt(r.asn.length)}`;
-    $("asnKg").textContent = `${fmt(r.totalKg)} kg`;
+      fmtInt(r.patuh) + " / " + fmtInt(r.asn.length);
+    $("asnKg").textContent = fmt(r.totalKg) + " kg";
   }
 
   function buatPDF() {
-    if (!window.jspdf?.jsPDF) {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
       beriNotif(
-        "Library PDF belum termuat. Periksa koneksi lalu muat ulang halaman.",
+        "Library PDF belum termuat. Periksa koneksi internet.",
         "error"
       );
       return;
     }
 
     const r = dataRekapAsn();
-    const [tahun, bulan] = r.bulan.split("-");
+    const bagianBulan = r.bulan.split("-");
+    const tahun = bagianBulan[0];
+    const bulan = bagianBulan[1];
 
     if (!tahun || !bulan) {
       beriNotif("Pilih bulan laporan terlebih dahulu.", "error");
       return;
     }
 
-    const { jsPDF } = window.jspdf;
+    const jsPDF = window.jspdf.jsPDF;
     const doc = new jsPDF({
       orientation: "landscape",
       unit: "mm",
@@ -268,22 +346,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(`Periode: ${namaBulan}`, kiri, 22);
-    doc.text(`Jumlah ASN: ${r.asn.length}`, kiri, 29);
-    doc.text(`Memenuhi target 2 kg: ${r.patuh} dari ${r.asn.length}`, kiri, 35);
-    doc.text(`Total berat disetujui: ${fmt(r.totalKg)} kg`, kiri, 41);
+    doc.text("Periode: " + namaBulan, kiri, 22);
+    doc.text("Jumlah ASN: " + r.asn.length, kiri, 29);
+    doc.text(
+      "Memenuhi target 2 kg: " + r.patuh + " dari " + r.asn.length,
+      kiri,
+      35
+    );
+    doc.text("Total berat disetujui: " + fmt(r.totalKg) + " kg", kiri, 41);
 
-    const headX = [14, 23, 66, 95, 115, 135, 153, 198, 227];
+    const x = [14, 23, 66, 95, 115, 135, 153, 198, 227];
     const headers = [
-      "No",
-      "Nama ASN",
-      "NIK/NIP",
-      "Instansi",
-      "RW",
-      "RT",
-      "Total (kg)",
-      "Target",
-      "Status target"
+      "No", "Nama ASN", "NIK/NIP", "Instansi", "RW",
+      "RT", "Total (kg)", "Target", "Status target"
     ];
 
     let y = 51;
@@ -293,52 +368,49 @@ document.addEventListener("DOMContentLoaded", async () => {
     doc.setFillColor(226, 242, 229);
     doc.rect(kiri, y - 5, 273, 8, "F");
 
-    headers.forEach((h, i) => doc.text(h, headX[i], y));
+    headers.forEach(function (h, i) {
+      doc.text(h, x[i], y);
+    });
 
     y += 6;
     doc.setFont("helvetica", "normal");
 
-    const rows = r.asn.map((p, i) => {
-      const kg = r.kgPerUser.get(p.id) || 0;
+    const rows = r.asn.map(function (p, i) {
+      const kg = r.kgPerUser.get(String(p.id)) || 0;
 
       return {
-        no: i + 1,
+        no: String(i + 1),
         nama: p.nama || "-",
         nip: p.nik_nip || "-",
         instansi: p.instansi || "-",
         rw: p.rw || "-",
         rt: p.rt || "-",
-        kg,
+        kg: kg,
         patuh: kg >= 2
       };
     });
 
-    rows.forEach((p) => {
+    rows.forEach(function (p) {
       if (y > 185) {
         doc.addPage();
         y = 16;
       }
 
       const values = [
-        String(p.no),
-        p.nama,
-        p.nip,
-        p.instansi,
-        p.rw,
-        p.rt,
-        fmt(p.kg),
-        "2 kg",
+        p.no, p.nama, p.nip, p.instansi, p.rw,
+        p.rt, fmt(p.kg), "2 kg",
         p.patuh ? "Memenuhi" : "Belum memenuhi"
       ];
 
       const widths = [6, 39, 26, 28, 14, 14, 35, 12, 34];
 
-      values.forEach((value, j) => {
-        doc.text(
-          doc.splitTextToSize(String(value), widths[j]).slice(0, 2),
-          headX[j],
-          y
+      values.forEach(function (value, j) {
+        const lines = doc.splitTextToSize(
+          String(value),
+          widths[j]
         );
+
+        doc.text(lines.slice(0, 2), x[j], y);
       });
 
       y += 7;
@@ -364,47 +436,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     y += 7;
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-
     doc.text(
-      "Tanggal       Nama ASN                         Wilayah          Berat (kg)       Poin       Status",
+      "Tanggal | Nama ASN | Wilayah | Berat (kg) | Poin | Status",
       kiri,
       y
     );
 
-    y += 5;
+    y += 6;
 
-    const details = r.setoranBulan
-      .slice()
-      .sort((a, b) => new Date(waktu(a)) - new Date(waktu(b)));
-
-    details.forEach((s) => {
+    r.setoranBulan.forEach(function (s) {
       if (y > 195) {
         doc.addPage();
         y = 16;
       }
 
-      const tanggal = new Date(waktu(s)).toLocaleDateString("id-ID");
-      const nama = namaPenyetor(s).slice(0, 30);
+      const tanggal = waktu(s)
+        ? new Date(waktu(s)).toLocaleDateString("id-ID")
+        : "-";
 
-      doc.text(
-        `${tanggal}   ${nama}   ${wilayah(s)}   ${fmt(angkaKg(s))}   ${fmtInt(angkaPoin(s))}   ${statusLabel(s.status)}`,
-        kiri,
-        y
-      );
+      const baris = [
+        tanggal,
+        namaPenyetor(s).slice(0, 25),
+        wilayah(s),
+        fmt(angkaKg(s)) + " kg",
+        fmtInt(angkaPoin(s)),
+        statusLabel(s.status)
+      ].join(" | ");
 
+      doc.text(baris, kiri, y);
       y += 5;
     });
 
-    doc.setFontSize(8);
-    doc.text(
-      "Catatan: total kg dan kepatuhan dihitung dari setoran berstatus Disetujui.",
-      kiri,
-      202
-    );
-
-    doc.save(`Rekapan-Setoran-ASN-${tahun}-${bulan}.pdf`);
-    beriNotif("PDF rekapan setoran ASN berhasil dibuat.", "ok");
+    doc.save("Rekapan-Setoran-ASN-" + tahun + "-" + bulan + ".pdf");
+    beriNotif("PDF rekapan berhasil dibuat.", "ok");
   }
 
   $("cariPengguna")?.addEventListener("input", renderPengguna);
@@ -413,69 +477,64 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("exportPdfAsn")?.addEventListener("click", buatPDF);
 
   try {
-    profilAktif = await window.AuthGuard(["admin"]);
+    const profilAktif = await window.AuthGuard(["admin"]);
+
     if (!profilAktif) return;
 
     const sb = window.SupabaseDB.getClient();
 
     async function ambil(tabel) {
-      const { data, error } = await sb.from(tabel).select("*");
+      const hasil = await sb.from(tabel).select("*");
 
-      if (error) {
-        console.error(`Gagal membaca ${tabel}:`, error.message);
-        return { data: [], error };
+      if (hasil.error) {
+        console.error(
+          "Gagal membaca tabel " + tabel + ":",
+          hasil.error.message
+        );
+
+        return {
+          data: [],
+          error: hasil.error
+        };
       }
 
-      return { data: data || [], error: null };
+      return {
+        data: hasil.data || [],
+        error: null
+      };
     }
 
-    const [usersRes, profilesRes, transaksiRes, setoranRes] =
-      await Promise.all([
-        ambil("users"),
-        ambil("profiles"),
-        ambil("transaksi_setoran"),
-        ambil("setoran")
-      ]);
+    const hasil = await Promise.all([
+      ambil("users"),
+      ambil("profiles"),
+      ambil("transaksi_setoran"),
+      ambil("setoran")
+    ]);
 
-    if (
-      usersRes.error &&
-      profilesRes.error
-    ) {
-      throw new Error(
-        `Gagal membaca users dan profiles: ${
-          usersRes.error.message
-        }; ${profilesRes.error.message}`
-      );
+    const usersRes = hasil[0];
+    const profilesRes = hasil[1];
+    const transaksiRes = hasil[2];
+    const setoranRes = hasil[3];
+
+    if (usersRes.error && profilesRes.error) {
+      throw new Error("Tidak dapat membaca users maupun profiles.");
     }
 
-    if (
-      transaksiRes.error &&
-      setoranRes.error
-    ) {
-      throw new Error(
-        `Gagal membaca kedua tabel setoran: ${
-          transaksiRes.error.message
-        }; ${setoranRes.error.message}`
-      );
+    if (transaksiRes.error && setoranRes.error) {
+      throw new Error("Tidak dapat membaca tabel setoran.");
     }
 
-    /*
-     * Gabungkan berdasarkan ID auth.
-     * profiles menjadi sumber utama untuk data profil.
-     * users melengkapi email, instansi, dan saldo.
-     */
     const profilById = new Map();
 
-    (profilesRes.data || []).forEach((p) => {
-      profilById.set(p.id, { ...p });
+    (profilesRes.data || []).forEach(function (p) {
+      profilById.set(String(p.id), Object.assign({}, p));
     });
 
-    (usersRes.data || []).forEach((u) => {
-      const lama = profilById.get(u.id) || {};
+    (usersRes.data || []).forEach(function (u) {
+      const id = String(u.id);
+      const lama = profilById.get(id) || {};
 
-      profilById.set(u.id, {
-        ...u,
-        ...lama,
+      profilById.set(id, Object.assign({}, u, lama, {
         id: lama.id || u.id,
         nama: lama.nama || u.nama || "",
         peran: lama.peran || u.peran || "warga",
@@ -489,22 +548,21 @@ document.addEventListener("DOMContentLoaded", async () => {
           u.is_asn === true ||
           ["asn", "pns"].includes(normal(lama.peran)) ||
           ["asn", "pns"].includes(normal(u.peran))
-      });
+      }));
     });
 
     semuaProfil = Array.from(profilById.values());
 
-    /*
-     * Satukan dua tabel, tetapi jangan menggandakan setoran.
-     * Jika kedua tabel punya transaksi dengan ID sama, utamakan setoran.
-     */
     const setoranById = new Map();
 
-    (transaksiRes.data || []).forEach((s) => {
+    (transaksiRes.data || []).forEach(function (s, i) {
+      const id = s.id != null
+        ? String(s.id)
+        : "transaksi-" + i;
+
       const berat = s.berat_kg ?? s.kg ?? 0;
 
-      setoranById.set(s.id, {
-        ...s,
+      setoranById.set(id, Object.assign({}, s, {
         kg: berat,
         kg_klaim: berat,
         poin:
@@ -513,39 +571,42 @@ document.addEventListener("DOMContentLoaded", async () => {
           s.estimasi_poin ??
           0,
         sumber_tabel: "transaksi_setoran"
-      });
+      }));
     });
 
-    (setoranRes.data || []).forEach((s) => {
-      const kunci = s.id ?? `setoran-${s.user_id}-${s.created_at}`;
+    (setoranRes.data || []).forEach(function (s, i) {
+      const id = s.id != null
+        ? String(s.id)
+        : "setoran-" + i;
 
-      setoranById.set(kunci, {
-        ...s,
+      setoranById.set(id, Object.assign({}, s, {
         sumber_tabel: "setoran"
-      });
+      }));
     });
 
-    semuaSetoran = Array.from(setoranById.values()).map((s) => {
-      const p = profilById.get(s.user_id) || null;
+    semuaSetoran = Array.from(setoranById.values()).map(function (s) {
+      const p = profilById.get(String(s.user_id)) || null;
 
-      return {
-        ...s,
+      return Object.assign({}, s, {
         status: statusNormal(s.status),
         profiles: p,
         users: p
-      };
+      });
     });
 
-    const disetujui = semuaSetoran.filter(
-      (s) => statusNormal(s.status) === "disetujui"
-    );
+    const disetujui = semuaSetoran.filter(function (s) {
+      return statusNormal(s.status) === "disetujui";
+    });
 
-    $("stKg").textContent = `${fmt(
-      disetujui.reduce((sum, s) => sum + angkaKg(s), 0)
-    )} kg`;
+    $("stKg").textContent =
+      fmt(disetujui.reduce(function (sum, s) {
+        return sum + angkaKg(s);
+      }, 0)) + " kg";
 
     $("stPoin").textContent = fmtInt(
-      disetujui.reduce((sum, s) => sum + angkaPoin(s), 0)
+      disetujui.reduce(function (sum, s) {
+        return sum + angkaPoin(s);
+      }, 0)
     );
 
     $("stAkun").textContent = fmtInt(semuaProfil.length);
@@ -555,7 +616,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderRekapRingkas();
 
     beriNotif(
-      `Data dimuat: ${semuaProfil.length} pengguna, ${semuaSetoran.length} setoran.`,
+      "Data dimuat: " + semuaProfil.length +
+      " pengguna dan " + semuaSetoran.length + " setoran.",
       "ok"
     );
 
@@ -574,18 +636,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("Dashboard admin gagal:", error);
 
     beriNotif(
-      `${error.message || "Gagal memuat data admin."} Periksa sesi admin dan izin akses Supabase.`,
+      (error.message || "Gagal memuat data admin.") +
+      " Periksa sesi admin dan izin akses Supabase.",
       "error"
     );
 
     if ($("tabelPengguna")) {
       $("tabelPengguna").innerHTML =
-        `<tr><td colspan="5">Data pengguna gagal dimuat.</td></tr>`;
+        '<tr><td colspan="5">Data pengguna gagal dimuat.</td></tr>';
     }
 
     if ($("tabelSemuaSetoran")) {
       $("tabelSemuaSetoran").innerHTML =
-        `<tr><td colspan="7">Data setoran gagal dimuat.</td></tr>`;
+        '<tr><td colspan="7">Data setoran gagal dimuat.</td></tr>';
     }
   }
 });
