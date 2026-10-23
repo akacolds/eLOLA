@@ -17,3 +17,6 @@ Catatan:
 - Migrasi menganggap transaksi lama yang belum punya status sebagai disetujui agar tidak masuk antrean baru.
 - Browser memakai Supabase anon/publishable key dan RLS; jangan pernah menaruh service_role key di frontend.
 - Pengurangan stok dan perubahan status merupakan dua operasi browser; untuk sistem produksi dengan banyak petugas serentak, sebaiknya dipindah ke fungsi database RPC transaksional agar stok tidak mengalami race condition.
+
+
+PEMBARUAN: Catatan pemohon dan nomor HP/WhatsApp wajib diisi saat mengajukan penukaran. Petugas wajib mengisi catatan saat memproses penukaran maupun memverifikasi setoran. Jalankan ulang SETUP-PENUKARAN-PETUGAS-ADMIN.sql di Supabase setelah backup.

@@ -102,10 +102,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.verif = async (id, aksi) => {
     try {
+      const alasan = prompt(`Catatan petugas untuk ${aksi === "setujui" ? "persetujuan" : "penolakan"} setoran (wajib):`, "")?.trim();
+      if (!alasan) { notif("err", "Catatan petugas wajib diisi sebelum verifikasi."); return; }
       await window.SupabaseDB.verifikasiSetoran(id, {
         aksi,
         namaPetugas: user.nama || user.email,
-        alasan: aksi === "tolak" ? "Tidak memenuhi kriteria pilah sampah." : ""
+        alasan
       });
       notif("ok", `Setoran #${id} berhasil di-${aksi === "setujui" ? "setujui" : "tolak"}.`);
       try {
@@ -138,6 +140,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       antreanTukarEl.innerHTML = list.map(t => `<article class="setoran-kartu" style="margin:12px 0;padding:16px;border:1px solid #dce8dd;border-radius:14px">
         <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><b>${aman(t.nama_hadiah || "Hadiah")}</b><span>${Number(t.poin)||0} poin</span></div>
         <small>${aman(t.user_id || "Akun warga/ASN")} · ${aman(tglJam(t.created_at))}</small>
+        <p><b>Nomor HP/WA:</b> ${aman(t.nomor_wa || "Tidak diisi")}</p>
+        <p><b>Catatan pemohon:</b> ${aman(t.catatan_pengguna || "-")}</p>
         <p>Status: menunggu persetujuan</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="tombol-kecil utama js-tukar-setuju" type="button">Setujui & kurangi stok</button><button class="tombol-kecil bahaya js-tukar-tolak" type="button">Tolak</button></div>
       </article>`).join("");
@@ -148,7 +152,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch(e) { antreanTukarEl.innerHTML=`<p class="notif err">Gagal memuat antrean penukaran: ${aman(e.message)}. Pastikan SQL setup penukaran sudah dijalankan.</p>`; }
   }
   async function prosesAntreanTukar(item, aksi) {
-    const catatan = aksi === "tolak" ? (prompt("Alasan penolakan:", "Permintaan tidak dapat diproses.") || "Permintaan ditolak.") : "";
+    const catatan = prompt(`Catatan petugas untuk ${aksi === "setujui" ? "persetujuan" : "penolakan"} penukaran (wajib):`, "")?.trim();
+    if (!catatan) { notifTukar("Catatan petugas wajib diisi.", "err"); return; }
     if (!confirm(`${aksi === "setujui" ? "Setujui" : "Tolak"} penukaran ${item.nama_hadiah || "hadiah"}?`)) return;
     try {
       await window.SupabaseDB.prosesPenukaran(item.id, aksi, user.nama || user.email || "Petugas", catatan);

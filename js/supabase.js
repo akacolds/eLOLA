@@ -183,6 +183,8 @@ window.SupabaseDB = (() => {
           nama_hadiah: hadiah.nama,
           poin: hadiah.harga,
           status: "menunggu",
+          catatan_pengguna: hadiah.catatan,
+          nomor_wa: hadiah.nomorWa,
           created_at: new Date().toISOString()
         }])
         .select()

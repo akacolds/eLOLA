@@ -50,7 +50,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.prosesTukar = async (id, nama, harga, stok) => {
     try {
-      await window.SupabaseDB.tukarHadiah(user.id, { id, nama, harga, stok });
+      const catatan = prompt("Catatan untuk penukaran (wajib):", "")?.trim();
+      if (!catatan) { notif("err", "Catatan penukaran wajib diisi."); return; }
+      const nomorWa = prompt("Nomor HP/WhatsApp aktif (wajib):", "")?.trim();
+      if (!nomorWa || !/^[+0-9][0-9\s().-]{7,19}$/.test(nomorWa)) {
+        notif("err", "Masukkan nomor HP/WhatsApp yang valid."); return;
+      }
+      await window.SupabaseDB.tukarHadiah(user.id, { id, nama, harga, stok, catatan, nomorWa });
       notif("ok", `Permintaan penukaran ${nama} dikirim. Poin ditahan sampai petugas memprosesnya.`);
       segarkan();
     } catch (e) {
