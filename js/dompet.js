@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // 2. Ambil riwayat penukaran dari tabel penukaran
       const tukarList = await window.SupabaseDB.getRiwayatPenukaran(user.id);
-      const poinKeluar = tukarList.reduce((s, x) => s + (x.poin || 0), 0);
+      const poinKeluar = tukarList.filter(x => ["menunggu", "disetujui"].includes(String(x.status || "disetujui").toLowerCase())).reduce((s, x) => s + (Number(x.poin) || 0), 0);
       const saldo = poinMasuk - poinKeluar;
 
       $("saldo").textContent = fmtInt(saldo);
@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td>${tglJam(t.created_at)}</td>
           <td>${t.nama_hadiah}</td>
           <td>-${fmtInt(t.poin)}</td>
+          <td>${String(t.status || "disetujui")}</td>
         </tr>
       `).join("");
     } catch (err) {
@@ -50,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.prosesTukar = async (id, nama, harga, stok) => {
     try {
       await window.SupabaseDB.tukarHadiah(user.id, { id, nama, harga, stok });
-      notif("ok", `Berhasil menukar ${nama}!`);
+      notif("ok", `Permintaan penukaran ${nama} dikirim. Poin ditahan sampai petugas memprosesnya.`);
       segarkan();
     } catch (e) {
       notif("err", e.message);

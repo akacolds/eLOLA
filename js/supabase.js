@@ -174,12 +174,7 @@ window.SupabaseDB = (() => {
 
     async tukarHadiah(userId, hadiah) {
       const sb = getClientOrThrow();
-      const { error: errStok } = await sb
-        .from("hadiah")
-        .update({ stok: hadiah.stok - 1 })
-        .eq("id", hadiah.id);
-      if (errStok) throw errStok;
-
+      // Permintaan masuk antrean petugas. Stok baru dikurangi setelah disetujui.
       const { data, error } = await sb
         .from("penukaran")
         .insert([{
@@ -187,11 +182,45 @@ window.SupabaseDB = (() => {
           hadiah_id: hadiah.id,
           nama_hadiah: hadiah.nama,
           poin: hadiah.harga,
+          status: "menunggu",
           created_at: new Date().toISOString()
         }])
         .select()
         .single();
+      if (error) throw error;
+      return data;
+    },
 
+    async getAntreanPenukaran() {
+      const sb = getClientOrThrow();
+      const { data, error } = await sb
+        .from("penukaran")
+        .select("*")
+        .eq("status", "menunggu")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+
+    async prosesPenukaran(id, aksi, namaPetugas = "Petugas", catatan = "") {
+      const sb = getClientOrThrow();
+      const { data: item, error: itemError } = await sb.from("penukaran").select("*").eq("id", id).single();
+      if (itemError) throw itemError;
+      if (item.status && item.status !== "menunggu") throw new Error("Permintaan ini sudah diproses.");
+      if (aksi === "setujui") {
+        const { data: hadiah, error: hadiahError } = await sb.from("hadiah").select("id,stok").eq("id", item.hadiah_id).single();
+        if (hadiahError) throw hadiahError;
+        if (Number(hadiah.stok) < 1) throw new Error("Stok hadiah habis.");
+        const { error: stokError } = await sb.from("hadiah").update({ stok: Number(hadiah.stok) - 1 }).eq("id", hadiah.id).gte("stok", 1);
+        if (stokError) throw stokError;
+      }
+      const payload = {
+        status: aksi === "setujui" ? "disetujui" : "ditolak",
+        petugas: namaPetugas,
+        catatan,
+        verified_at: new Date().toISOString()
+      };
+      const { data, error } = await sb.from("penukaran").update(payload).eq("id", id).eq("status", "menunggu").select().single();
       if (error) throw error;
       return data;
     }

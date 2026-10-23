@@ -128,5 +128,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
+  const antreanTukarEl = document.getElementById("antreanPenukaran");
+  const notifTukarEl = document.getElementById("notifTukar");
+  function notifTukar(teks, tipe="info") { notifTukarEl.textContent=teks; notifTukarEl.className=`notif ${tipe}`; }
+  async function muatAntreanPenukaran() {
+    try {
+      const list = await window.SupabaseDB.getAntreanPenukaran();
+      if (!list.length) { antreanTukarEl.innerHTML="<p style='color:var(--abu)'>Tidak ada permintaan penukaran poin yang menunggu.</p>"; return; }
+      antreanTukarEl.innerHTML = list.map(t => `<article class="setoran-kartu" style="margin:12px 0;padding:16px;border:1px solid #dce8dd;border-radius:14px">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><b>${aman(t.nama_hadiah || "Hadiah")}</b><span>${Number(t.poin)||0} poin</span></div>
+        <small>${aman(t.user_id || "Akun warga/ASN")} · ${aman(tglJam(t.created_at))}</small>
+        <p>Status: menunggu persetujuan</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="tombol-kecil utama js-tukar-setuju" type="button">Setujui & kurangi stok</button><button class="tombol-kecil bahaya js-tukar-tolak" type="button">Tolak</button></div>
+      </article>`).join("");
+      [...antreanTukarEl.querySelectorAll("article")].forEach((card,i)=>{
+        card.querySelector(".js-tukar-setuju").addEventListener("click",()=>prosesAntreanTukar(list[i],"setujui"));
+        card.querySelector(".js-tukar-tolak").addEventListener("click",()=>prosesAntreanTukar(list[i],"tolak"));
+      });
+    } catch(e) { antreanTukarEl.innerHTML=`<p class="notif err">Gagal memuat antrean penukaran: ${aman(e.message)}. Pastikan SQL setup penukaran sudah dijalankan.</p>`; }
+  }
+  async function prosesAntreanTukar(item, aksi) {
+    const catatan = aksi === "tolak" ? (prompt("Alasan penolakan:", "Permintaan tidak dapat diproses.") || "Permintaan ditolak.") : "";
+    if (!confirm(`${aksi === "setujui" ? "Setujui" : "Tolak"} penukaran ${item.nama_hadiah || "hadiah"}?`)) return;
+    try {
+      await window.SupabaseDB.prosesPenukaran(item.id, aksi, user.nama || user.email || "Petugas", catatan);
+      try {
+        const sb=window.SupabaseDB.getClient(); const {data:{user:au}={}}=await sb.auth.getUser();
+        await sb.from("activity_logs").insert({user_id:au?.id,nama:user.nama||user.email||"Petugas",aksi:aksi==="setujui"?"Menyetujui penukaran poin":"Menolak penukaran poin",keterangan:`Penukaran #${item.id}: ${item.nama_hadiah||"hadiah"}`});
+      } catch(logErr) { console.warn("Log penukaran tidak tercatat",logErr.message); }
+      notifTukar(`Permintaan penukaran #${item.id} ${aksi === "setujui" ? "disetujui" : "ditolak"}.`, "ok");
+      await muatAntreanPenukaran();
+    } catch(e) { notifTukar("Gagal memproses penukaran: "+e.message,"err"); }
+  }
+
   muatAntrean();
+  muatAntreanPenukaran();
 });

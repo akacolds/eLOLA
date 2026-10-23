@@ -112,6 +112,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     catch(e) { aktivitas=[]; $("statusAktivitas").textContent="Riwayat belum aktif: jalankan file setup-activity-log.sql di SQL Editor Supabase. " + e.message; $("statusAktivitas").className="notif info"; }
     renderAktivitas();
   }
+  function renderRiwayatTukar() {
+    const status = $("statusRiwayatTukar");
+    const tbody = $("tabelRiwayatTukar");
+    if (!penukaran.length) {
+      tbody.innerHTML = '<tr><td colspan="7">Belum ada permintaan penukaran atau data tidak tersedia.</td></tr>';
+      status.textContent = "Riwayat penukaran dibaca dari Supabase.";
+      status.className = "notif info";
+      return;
+    }
+    const byId = new Map(profiles.map(p => [String(p.id), p]));
+    tbody.innerHTML = penukaran.slice().sort((a,b)=>toDate(b)-toDate(a)).map(t => {
+      const p = byId.get(String(t.user_id)) || {};
+      const st = String(t.status || "disetujui").toLowerCase();
+      return `<tr><td>${escapeHTML(tglJam(t.created_at))}</td><td>${escapeHTML(val(p.nama,p.email,t.user_id))}</td><td>${escapeHTML(val(t.nama_hadiah))}</td><td>${fmtInt(t.poin||0)}</td><td><span class="chip ${st === "disetujui" ? "ok" : st === "ditolak" ? "tolak" : ""}">${escapeHTML(st)}</span></td><td>${escapeHTML(val(t.petugas))}</td><td>${escapeHTML(val(t.catatan))}</td></tr>`;
+    }).join("");
+    status.textContent = `Menampilkan ${penukaran.length} transaksi penukaran dari Supabase.`;
+    status.className = "notif ok";
+  }
   function renderAktivitas() {
     $("tabelAktivitas").innerHTML = aktivitas.slice().sort((a,b)=>toDate(b)-toDate(a)).slice(0,100).map(a=>`<tr><td>${escapeHTML(tglJam(a.created_at || a.waktu))}</td><td>${escapeHTML(val(a.nama,a.actor_name,a.user_id,a.aktor))}</td><td>${escapeHTML(val(a.aksi,a.action,a.aktivitas,a.event))}</td><td>${escapeHTML(val(a.keterangan,a.detail,a.deskripsi,a.target))}</td></tr>`).join("") || '<tr><td colspan="4">Belum ada aktivitas atau tabel log belum disiapkan.</td></tr>';
   }
@@ -157,7 +175,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     hadiah = await ambilTabel("hadiah");
     try { penukaran = await ambilTabel("penukaran"); } catch (e) { console.warn("Tabel penukaran belum bisa dibaca:", e.message); }
-    renderHadiah();
+    renderHadiah(); renderRiwayatTukar();
   } catch (e) {
     $("statusHadiah").textContent = "Katalog tidak dapat dimuat: " + e.message;
     $("statusHadiah").className = "notif err";
@@ -165,7 +183,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await catatAktivitas("Membuka dashboard admin", "Dashboard dimuat");
   await muatAktivitas();
   $("tambahHadiah").addEventListener("click",()=>bukaFormHadiah());
-  $("muatUlangHadiah").addEventListener("click",async()=>{try{hadiah=await ambilTabel("hadiah");renderHadiah();}catch(e){$("statusHadiah").textContent=e.message;$("statusHadiah").className="notif err";}});
+  $("muatUlangHadiah").addEventListener("click",async()=>{try{hadiah=await ambilTabel("hadiah");renderHadiah();penukaran=await ambilTabel("penukaran");renderRiwayatTukar();}catch(e){$("statusHadiah").textContent=e.message;$("statusHadiah").className="notif err";}});
   $("tutupModalHadiah").addEventListener("click",()=>$("modalHadiah").classList.add("hidden"));
   $("tabelHadiah").addEventListener("click",async ev=>{
     const edit=ev.target.closest("[data-edit-hadiah]"); const hapus=ev.target.closest("[data-hapus-hadiah]");
@@ -179,14 +197,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const payload={nama:$("hadiahNama").value.trim(),deskripsi:$("hadiahDeskripsi").value.trim(),harga:Number($("hadiahHarga").value),stok:Number($("hadiahStok").value)};
     if(!payload.nama||!Number.isInteger(payload.harga)||payload.harga<1||!Number.isInteger(payload.stok)||payload.stok<0){pesanHadiah("Nama, harga poin, dan stok harus valid.","err");return;}
     try{let q;if(id)q=await sb.from("hadiah").update(payload).eq("id",id);else q=await sb.from("hadiah").insert(payload);if(q.error)throw q.error;
-      await catatAktivitas(id?"Mengedit hadiah":"Menambah hadiah",payload.nama); hadiah=await ambilTabel("hadiah");renderHadiah();$("modalHadiah").classList.add("hidden");await muatAktivitas();
+      await catatAktivitas(id?"Mengedit hadiah":"Menambah hadiah",payload.nama); hadiah=await ambilTabel("hadiah");renderHadiah();penukaran=await ambilTabel("penukaran");renderRiwayatTukar();$("modalHadiah").classList.add("hidden");await muatAktivitas();
     }catch(e){pesanHadiah("Gagal menyimpan: "+e.message,"err");}
   });
 
   // Refresh ringan agar dashboard mengikuti setoran yang baru diverifikasi tanpa reload manual.
   window.addEventListener("focus", () => location.reload());
   setInterval(async () => {
-    try { setoran = await ambilTabel("setoran"); renderLog(); renderASN(); renderTren(); }
+    try { setoran = await ambilTabel("setoran"); renderLog(); renderASN(); renderTren(); penukaran = await ambilTabel("penukaran"); renderRiwayatTukar(); }
     catch (e) { console.warn("Penyegaran dashboard gagal:", e.message); }
   }, 60000);
 });
