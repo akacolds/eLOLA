@@ -831,3 +831,18 @@ body:has(> main.kartu.lebar) > main.kartu.lebar > .kanan {
   .profil-avatar { width: 28px; height: 28px; flex-basis: 28px; }
   .topbar-keluar { padding: 6px 8px; font-size: .7rem; }
 }
+
+/* Dashboard admin: monitoring Supabase dan fitur rekap */
+.baris-filter-admin { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:12px 0; }
+.baris-filter-admin label { margin:0; }
+.baris-filter-admin input, .baris-filter-admin select { width:auto; min-width:150px; flex:1 1 150px; }
+.admin-stat-asn { grid-template-columns:repeat(3,minmax(0,1fr)); margin:14px 0; }
+.admin-stat-asn > div:first-child { background:#e2f3dc; color:#1f5a2c; }
+.tren-admin { display:grid; gap:10px; padding:16px; border:1.5px solid var(--garis); border-radius:14px; background:#fff; }
+.tren-item { display:grid; grid-template-columns:70px minmax(40px,1fr) 72px; align-items:center; gap:12px; font-size:.84rem; }
+.tren-label { color:var(--abu); }
+.tren-track { height:12px; border-radius:999px; background:var(--latar); overflow:hidden; }
+.tren-track i { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#10b981,#047857); }
+.tren-item b { text-align:right; white-space:nowrap; }
+@media(max-width:600px) { .admin-stat-asn { grid-template-columns:1fr; } .baris-filter-admin input,.baris-filter-admin select { width:100%; flex-basis:100%; } .tren-item { grid-template-columns:55px minmax(30px,1fr) 65px; gap:8px; } }
+@media print { body { background:#fff!important; } .kiri,.user-topbar,.menu,.modal-profil { display:none!important; } .kartu.lebar { display:block; max-width:none; box-shadow:none; border:0; } .kanan { padding:0!important; } }

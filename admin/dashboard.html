@@ -37,7 +37,7 @@
         <button class="profil-top" id="profilTop" type="button" aria-label="Buka pengaturan profil" aria-haspopup="dialog">
           <span class="profil-avatar" id="profilAvatar">U</span>
           <span class="profil-info"><b id="profilNama">Memuat profil...</b><small id="profilPeran">Pengguna eLOLA</small></span>
-        </div>
+        </button>
         <button class="keluar-btn topbar-keluar" onclick="keluarAkun()" type="button">↪ Keluar</button>
       </div>
       <div class="kepala-halaman">
@@ -54,6 +54,43 @@
       </div>
 
       <h3 style="font-family:var(--font-judul);margin:24px 0 10px">Log Transaksi Setoran</h3>
+      <div id="dashboardStatus" class="notif info" role="status">Menghubungkan ke Supabase…</div>
+
+      <section id="fiturAdminTambahan">
+        <h3 style="font-family:var(--font-judul);margin:24px 0 10px">Monitoring Kepatuhan ASN</h3>
+        <div class="baris-filter-admin">
+          <label for="periodeASN">Periode</label>
+          <input id="periodeASN" type="month">
+          <label for="filterStatusASN">Status</label>
+          <select id="filterStatusASN"><option value="semua">Semua status</option><option value="patuh">Memenuhi target (≥ 2 kg)</option><option value="belum">Belum mencapai target (&lt; 2 kg)</option><option value="nihil">Belum menyetor</option></select>
+          <input id="cariASN" type="search" placeholder="Cari nama ASN…" aria-label="Cari nama ASN">
+          <button class="tombol-kecil utama" id="eksporASN" type="button">Ekspor CSV ASN</button>
+          <button class="tombol-kecil" id="cetakASN" type="button">Cetak / Simpan PDF</button>
+        </div>
+        <div class="saldo admin-stat-asn">
+          <div><b id="asnPatuh">0</b><span>Memenuhi target</span></div>
+          <div><b id="asnBelum">0</b><span>Belum mencapai 2 kg</span></div>
+          <div><b id="asnNihil">0</b><span>Belum menyetor</span></div>
+        </div>
+        <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Nama ASN</th><th>RT/RW</th><th>Berat disetujui</th><th>Status</th></tr></thead><tbody id="tabelASN"></tbody></table></div>
+
+        <h3 style="font-family:var(--font-judul);margin:24px 0 10px">Tren Setoran Disetujui (6 Bulan)</h3>
+        <div id="trenSetoran" class="tren-admin" aria-label="Grafik tren berat setoran"></div>
+
+        <h3 style="font-family:var(--font-judul);margin:24px 0 10px">Direktori Pengguna</h3>
+        <input id="cariPengguna" type="search" placeholder="Cari nama, email, atau wilayah…" aria-label="Cari pengguna">
+        <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th>Wilayah</th></tr></thead><tbody id="tabelPengguna"></tbody></table></div>
+
+        <h3 style="font-family:var(--font-judul);margin:24px 0 10px">Katalog Hadiah & Penukaran</h3>
+        <div class="saldo admin-stat-asn"><div><b id="jumlahHadiah">0</b><span>Jenis hadiah</span></div><div><b id="stokHadiah">0</b><span>Total stok</span></div><div><b id="jumlahTukar">0</b><span>Transaksi penukaran</span></div></div>
+        <div id="statusHadiah" class="notif info">Memuat katalog hadiah…</div>
+        <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Hadiah</th><th>Harga poin</th><th>Stok</th></tr></thead><tbody id="tabelHadiah"></tbody></table></div>
+
+        <h3 style="font-family:var(--font-judul);margin:24px 0 10px">Riwayat Aktivitas Admin/Petugas</h3>
+        <div id="statusAktivitas" class="notif info">Memeriksa tabel aktivitas…</div>
+        <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Waktu</th><th>Aktor</th><th>Aktivitas</th><th>Keterangan</th></tr></thead><tbody id="tabelAktivitas"></tbody></table></div>
+      </section>
+
       <div class="tabel-bungkus">
         <table class="tabel">
           <thead>
