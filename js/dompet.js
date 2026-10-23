@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <div class="hadiah">
           <b>${h.nama}</b>
           <p>${h.deskripsi || ""}</p>
-          <div style="font-size:1.1rem;font-weight:700">${fmtInt(h.harga)} poin</div>
+          <div class="harga-hadiah">${fmtInt(h.harga)} poin</div>
           <small>Stok: ${h.stok}</small>
           <button class="tombol" style="padding:8px" ${saldo < h.harga || h.stok < 1 ? 'disabled' : ''} onclick="prosesTukar(${h.id}, '${h.nama}', ${h.harga}, ${h.stok})">
             ${h.stok < 1 ? 'Habis' : 'Tukar'}

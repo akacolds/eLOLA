@@ -6,7 +6,7 @@ window.Utils = (() => {
     { k: "Kaca",    poin: 75,  ket: "Botol dan pecahan kaca" }
   ];
   const KUOTA_ASN = 2.0;
-  const POIN_RUPIAH = 10;
+  const POIN_RUPIAH = 100; // 100 poin = Rp10.000
   const RW = ["RW 01", "RW 02", "RW 03", "RW 04", "RW 05"];
   const RT = ["RT 01", "RT 02", "RT 03", "RT 04"];
 

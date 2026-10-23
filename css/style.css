@@ -136,6 +136,7 @@ table.tabel { width: 100%; border-collapse: collapse; font-size: .84rem; min-wid
 .saldo b { display: block; font-family: var(--font-judul); font-size: 1.7rem; }
 .katalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .hadiah { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1.5px solid var(--garis); border-radius: 16px; background: #fff; }
+.harga-hadiah { font-size: .9rem; font-weight: 700; color: var(--hijau-tua); }
 
 @media (max-width: 820px) {
   .kartu, .kartu.lebar { grid-template-columns: 1fr; }
