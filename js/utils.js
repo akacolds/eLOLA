@@ -1,9 +1,9 @@
 window.Utils = (() => {
   const JENIS = [
-    { k: "Plastik", poin: 150, ket: "Botol, gelas, kemasan" },
-    { k: "Kertas",  poin: 100, ket: "Kardus, koran, HVS" },
-    { k: "Logam",   poin: 250, ket: "Kaleng, besi, aluminium" },
-    { k: "Kaca",    poin: 75,  ket: "Botol dan pecahan kaca" }
+    { k: "Plastik", poin: 15, ket: "Botol, gelas, kemasan" },
+    { k: "Kertas",  poin: 10, ket: "Kardus, koran, HVS" },
+    { k: "Logam",   poin: 25, ket: "Kaleng, besi, aluminium" },
+    { k: "Kaca",    poin: 7.5, ket: "Botol dan pecahan kaca" }
   ];
   const KUOTA_ASN = 2.0;
   const POIN_RUPIAH = 100; // 100 poin = Rp10.000

@@ -106,7 +106,7 @@ input:focus, select:focus { outline: none; border-color: var(--hijau); box-shado
 .langkah button { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--hijau-tua); background: #fff; color: var(--hijau-tua); font: 700 1.1rem var(--font); cursor: pointer; }
 .langkah input { width: 68px; padding: 6px; text-align: center; }
 .estimasi { display: flex; justify-content: space-between; margin: 18px 0; padding: 14px 16px; border-radius: 14px; background: var(--latar); }
-.estimasi b { font-family: var(--font-judul); font-size: 1.4rem; }
+.estimasi b { font-family: var(--font-judul); font-size: 1.15rem; }
 
 /* Podium & Klasemen */
 .podium { display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 12px; align-items: end; margin-top: 20px; }
