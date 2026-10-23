@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td>${tglJam(t.created_at)}</td>
           <td>${t.nama_hadiah}</td>
           <td>-${fmtInt(t.poin)}</td>
-          <td>${String(t.status || "disetujui")}</td>
+          <td>${String(t.status || "disetujui").toLowerCase() === "menunggu" ? "proses" : String(t.status || "disetujui")}</td>
         </tr>
       `).join("");
     } catch (err) {

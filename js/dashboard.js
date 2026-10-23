@@ -125,7 +125,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     tbody.innerHTML = penukaran.slice().sort((a,b)=>toDate(b)-toDate(a)).map(t => {
       const p = byId.get(String(t.user_id)) || {};
       const st = String(t.status || "disetujui").toLowerCase();
-      return `<tr><td>${escapeHTML(tglJam(t.created_at))}</td><td>${escapeHTML(val(p.nama,p.email,t.user_id))}</td><td>${escapeHTML(val(t.nama_hadiah))}</td><td>${fmtInt(t.poin||0)}</td><td><span class="chip ${st === "disetujui" ? "ok" : st === "ditolak" ? "tolak" : ""}">${escapeHTML(st)}</span></td><td>${escapeHTML(val(t.petugas))}</td><td>${escapeHTML(val(t.nomor_wa))}</td><td>${escapeHTML(val(t.catatan_pengguna))}</td><td>${escapeHTML(val(t.catatan))}</td></tr>`;
+      const labelStatus = st === "menunggu" ? "proses" : st;
+      return `<tr><td>${escapeHTML(tglJam(t.created_at))}</td><td>${escapeHTML(val(p.nama,p.email,t.user_id))}</td><td>${escapeHTML(val(t.nama_hadiah))}</td><td>${fmtInt(t.poin||0)}</td><td><span class="chip ${st === "disetujui" ? "ok" : st === "ditolak" ? "tolak" : ""}">${escapeHTML(labelStatus)}</span></td><td>${escapeHTML(val(t.petugas))}</td><td>${escapeHTML(val(t.nomor_wa))}</td><td>${escapeHTML(val(t.catatan_pengguna))}</td><td>${escapeHTML(val(t.catatan))}</td></tr>`;
     }).join("");
     status.textContent = `Menampilkan ${penukaran.length} transaksi penukaran dari Supabase.`;
     status.className = "notif ok";

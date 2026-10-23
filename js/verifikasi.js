@@ -142,7 +142,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <small>${aman(t.user_id || "Akun warga/ASN")} · ${aman(tglJam(t.created_at))}</small>
         <p><b>Nomor HP/WA:</b> ${aman(t.nomor_wa || "Tidak diisi")}</p>
         <p><b>Catatan pemohon:</b> ${aman(t.catatan_pengguna || "-")}</p>
-        <p>Status: menunggu persetujuan</p>
+        <p>Status: <b>proses</b> (menunggu konfirmasi petugas)</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="tombol-kecil utama js-tukar-setuju" type="button">Setujui & kurangi stok</button><button class="tombol-kecil bahaya js-tukar-tolak" type="button">Tolak</button></div>
       </article>`).join("");
       [...antreanTukarEl.querySelectorAll("article")].forEach((card,i)=>{
