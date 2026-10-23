@@ -16,6 +16,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const isAsn = String(user.peran || "").toLowerCase() === "asn";
   let statusKuota = null;
 
+  // Wilayah setoran harus berasal dari profil Supabase, bukan pilihan statis.
+  // Ini mencegah warga memilih RT/RW yang berbeda dari data akunnya.
+  const inputRwWilayah = $("rw");
+  const inputRtWilayah = $("rt");
+  if (inputRwWilayah) inputRwWilayah.value = String(user.rw || "").trim();
+  if (inputRtWilayah) inputRtWilayah.value = String(user.rt || "").trim();
+  if (!inputRwWilayah?.value || !inputRtWilayah?.value) {
+    notif("err", "RT/RW akun belum lengkap. Hubungi admin untuk memperbarui profil sebelum menyetor.");
+    const tombolKirim = $("bSetor");
+    if (tombolKirim) tombolKirim.disabled = true;
+  }
+
   // Status kewajiban ASN dibuat dari data setoran terverifikasi bulan berjalan.
   if (isAsn && $("fSetor")) {
     statusKuota = document.createElement("section");
@@ -126,6 +138,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("fSetor").onsubmit = async (e) => {
     e.preventDefault();
     const btn = $("bSetor");
+    if (!String(user.id || "").trim() || !String(user.rw || "").trim() || !String(user.rt || "").trim()) {
+      notif("err", "ID akun atau data RT/RW tidak lengkap. Hubungi admin.");
+      return;
+    }
     btn.disabled = true; btn.textContent = "Mengirim...";
 
     let totKg = 0, totPoin = 0;
@@ -147,8 +163,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       await window.SupabaseDB.tambahSetoran({
         userId: user.id,
-        rw: $("rw").value,
-        rt: $("rt").value,
+        rw: String(user.rw).trim(),
+        rt: String(user.rt).trim(),
         rincian: rincianBersih,
         kg: bulat1(totKg),
         poin: Math.round(totPoin),
