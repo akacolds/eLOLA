@@ -4,10 +4,10 @@
     const akun = baca("elola_akun", {});
     const staf = {
       "ADM-001": { nama: "Admin DLH", peran: "admin", sandi: "elola123" },
-      "PTG-001": { nama: "Petugas Lalolara", peran: "petugas", sandi: "elola123" }
+      "PTG-001": { nama: "Petugas Wundumbatu", peran: "petugas", sandi: "elola123" }
     };
     Object.entries(staf).forEach(([id, a]) => {
-      if (!akun[id]) akun[id] = { nikNip: "", kelurahan: "Lalolara", rw: "", rt: "", ...a };
+      if (!akun[id]) akun[id] = { nikNip: "", kelurahan: "Wundumbatu", rw: "", rt: "", ...a };
     });
     tulis("elola_akun", akun);
 

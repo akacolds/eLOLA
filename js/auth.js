@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
               id: data.user.id,
               nama: defaultNama,
               peran: peranPublik,
-              kelurahan: "Lalolara",
+              kelurahan: "Wundumbatu",
               rw: "RW 01",
               rt: "RT 01"
             }])
@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
             nama: nama,
             peran: peranAktif,
             nik_nip: nikNip,
-            kelurahan: "Lalolara",
+            kelurahan: "Wundumbatu",
             rw: "RW 01",
             rt: rt,
             foto: ""
