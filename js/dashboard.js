@@ -87,14 +87,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("jumlahHadiah").textContent = hadiah.length;
     $("stokHadiah").textContent = fmtInt(hadiah.reduce((n,h)=>n+(Number(h.stok)||0),0));
     $("jumlahTukar").textContent = penukaran.length;
-    $("tabelHadiah").innerHTML = hadiah.map(h=>`<tr><td>${escapeHTML(val(h.nama,h.judul,h.name))}</td><td>${fmtInt(h.harga ?? h.poin ?? 0)}</td><td>${fmtInt(h.stok ?? 0)}</td></tr>`).join("") || '<tr><td colspan="3">Tabel hadiah kosong atau tidak tersedia.</td></tr>';
-    $("statusHadiah").textContent = "Ringkasan baca-saja. Pengelolaan hadiah tidak dilakukan dari dashboard ini.";
+    $("tabelHadiah").innerHTML = hadiah.map(h=>`<tr><td>${escapeHTML(val(h.nama,h.judul,h.name))}<small style="display:block">${escapeHTML(val(h.deskripsi,""))}</small></td><td>${fmtInt(h.harga ?? h.poin ?? 0)}</td><td>${fmtInt(h.stok ?? 0)}</td><td><button class="tombol-kecil utama" data-edit-hadiah="${escapeHTML(h.id)}" type="button">Edit</button> <button class="tombol-kecil" data-hapus-hadiah="${escapeHTML(h.id)}" type="button">Hapus</button></td></tr>`).join("") || '<tr><td colspan="4">Tabel hadiah kosong atau tidak tersedia.</td></tr>';
+    $("statusHadiah").textContent = "Bisa mengedit, menambah, dan menghapus hadiah. Perubahan disimpan ke Supabase.";
     $("statusHadiah").className = "notif info";
+  }
+  function pesanHadiah(teks, tipe="info") { const el=$("pesanHadiahForm"); el.textContent=teks; el.className=`notif ${tipe}`; }
+  function bukaFormHadiah(h=null) {
+    $("formHadiah").reset(); $("hadiahId").value=h?.id ?? "";
+    $("hadiahNama").value=h?.nama ?? ""; $("hadiahDeskripsi").value=h?.deskripsi ?? "";
+    $("hadiahHarga").value=h?.harga ?? ""; $("hadiahStok").value=h?.stok ?? 0;
+    $("judulModalHadiah").textContent=h ? "Edit Hadiah" : "Tambah Hadiah";
+    $("pesanHadiahForm").className="notif hidden"; $("modalHadiah").classList.remove("hidden");
+  }
+  async function catatAktivitas(aksi, keterangan="") {
+    if (!sb) return;
+    const { data: { user: authUser } = {} } = await sb.auth.getUser();
+    const profile = profiles.find(p=>String(p.id)===String(authUser?.id)) || {};
+    const payload={user_id:authUser?.id, nama:profile.nama || authUser?.email || "Admin", aksi, keterangan};
+    const {error}=await sb.from("activity_logs").insert(payload);
+    if(error) console.warn("Log aktivitas gagal disimpan:",error.message);
+  }
+  async function muatAktivitas() {
+    try { aktivitas=await ambilTabel("activity_logs"); $("statusAktivitas").textContent="Riwayat aktivitas dari Supabase."; $("statusAktivitas").className="notif ok"; }
+    catch(e) { aktivitas=[]; $("statusAktivitas").textContent="Riwayat belum aktif: jalankan file setup-activity-log.sql di SQL Editor Supabase. " + e.message; $("statusAktivitas").className="notif info"; }
+    renderAktivitas();
   }
   function renderAktivitas() {
     $("tabelAktivitas").innerHTML = aktivitas.slice().sort((a,b)=>toDate(b)-toDate(a)).slice(0,100).map(a=>`<tr><td>${escapeHTML(tglJam(a.created_at || a.waktu))}</td><td>${escapeHTML(val(a.nama,a.actor_name,a.user_id,a.aktor))}</td><td>${escapeHTML(val(a.aksi,a.action,a.aktivitas,a.event))}</td><td>${escapeHTML(val(a.keterangan,a.detail,a.deskripsi,a.target))}</td></tr>`).join("") || '<tr><td colspan="4">Belum ada aktivitas atau tabel log belum disiapkan.</td></tr>';
   }
-  function eksporCSV() {
+  async function eksporCSV() {
+    await catatAktivitas("Ekspor rekap ASN", `Periode ${$("periodeASN").value || monthKey(new Date())}`);
     const rows = [["Nama ASN","Email","RW","RT","Berat disetujui (kg)","Status"], ...asnRows.map(x=>[x.nama,x.email,x.rw,x.rt,x.kg,x.status])];
     const csv = rows.map(row=>row.map(v=>'"'+String(v ?? "").replace(/"/g,'""')+'"').join(",")).join("\r\n");
     const blob = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8;"});
@@ -140,13 +162,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("statusHadiah").textContent = "Katalog tidak dapat dimuat: " + e.message;
     $("statusHadiah").className = "notif err";
   }
-  // Log aktivitas bersifat opsional karena skema tabel berbeda antar instalasi.
-  for (const table of ["activity_logs", "aktivitas", "riwayat_aktivitas"]) {
-    try { aktivitas = await ambilTabel(table); $("statusAktivitas").textContent = `Riwayat dibaca dari tabel ${table}.`; $("statusAktivitas").className = "notif ok"; break; }
-    catch (_) { /* coba nama tabel alternatif */ }
-  }
-  if (!aktivitas.length) { $("statusAktivitas").textContent = "Tabel log aktivitas belum tersedia atau akses SELECT belum diizinkan. Statistik dan verifikasi setoran tetap berfungsi."; $("statusAktivitas").className = "notif info"; }
-  renderAktivitas();
+  await catatAktivitas("Membuka dashboard admin", "Dashboard dimuat");
+  await muatAktivitas();
+  $("tambahHadiah").addEventListener("click",()=>bukaFormHadiah());
+  $("muatUlangHadiah").addEventListener("click",async()=>{try{hadiah=await ambilTabel("hadiah");renderHadiah();}catch(e){$("statusHadiah").textContent=e.message;$("statusHadiah").className="notif err";}});
+  $("tutupModalHadiah").addEventListener("click",()=>$("modalHadiah").classList.add("hidden"));
+  $("tabelHadiah").addEventListener("click",async ev=>{
+    const edit=ev.target.closest("[data-edit-hadiah]"); const hapus=ev.target.closest("[data-hapus-hadiah]");
+    if(edit){const h=hadiah.find(x=>String(x.id)===edit.dataset.editHadiah);if(h)bukaFormHadiah(h);}
+    if(hapus){const h=hadiah.find(x=>String(x.id)===hapus.dataset.hapusHadiah);if(!h)return;if(!confirm(`Hapus hadiah ${h.nama||h.judul||h.id}?`))return;
+      try{const {error}=await sb.from("hadiah").delete().eq("id",h.id);if(error)throw error;await catatAktivitas("Menghapus hadiah",String(h.nama||h.judul||h.id));hadiah=await ambilTabel("hadiah");renderHadiah();await muatAktivitas();}
+      catch(e){$("statusHadiah").textContent="Gagal menghapus: "+e.message;$("statusHadiah").className="notif err";}}
+  });
+  $("formHadiah").addEventListener("submit",async ev=>{
+    ev.preventDefault(); const id=$("hadiahId").value;
+    const payload={nama:$("hadiahNama").value.trim(),deskripsi:$("hadiahDeskripsi").value.trim(),harga:Number($("hadiahHarga").value),stok:Number($("hadiahStok").value)};
+    if(!payload.nama||!Number.isInteger(payload.harga)||payload.harga<1||!Number.isInteger(payload.stok)||payload.stok<0){pesanHadiah("Nama, harga poin, dan stok harus valid.","err");return;}
+    try{let q;if(id)q=await sb.from("hadiah").update(payload).eq("id",id);else q=await sb.from("hadiah").insert(payload);if(q.error)throw q.error;
+      await catatAktivitas(id?"Mengedit hadiah":"Menambah hadiah",payload.nama); hadiah=await ambilTabel("hadiah");renderHadiah();$("modalHadiah").classList.add("hidden");await muatAktivitas();
+    }catch(e){pesanHadiah("Gagal menyimpan: "+e.message,"err");}
+  });
 
   // Refresh ringan agar dashboard mengikuti setoran yang baru diverifikasi tanpa reload manual.
   window.addEventListener("focus", () => location.reload());

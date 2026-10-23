@@ -108,6 +108,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         alasan: aksi === "tolak" ? "Tidak memenuhi kriteria pilah sampah." : ""
       });
       notif("ok", `Setoran #${id} berhasil di-${aksi === "setujui" ? "setujui" : "tolak"}.`);
+      try {
+        const sb = window.SupabaseDB?.getClient?.();
+        if (sb) {
+          const { data: { user: authUser } = {} } = await sb.auth.getUser();
+          const { error: logError } = await sb.from("activity_logs").insert({
+            user_id: authUser?.id,
+            nama: user.nama || user.email || "Petugas",
+            aksi: aksi === "setujui" ? "Menyetujui setoran" : "Menolak setoran",
+            keterangan: `Setoran #${id}`
+          });
+          if (logError) console.warn("Aktivitas tidak tercatat:", logError.message);
+        }
+      } catch (logErr) { console.warn("Gagal menulis log aktivitas:", logErr.message); }
       await muatAntrean();
     } catch (e) {
       console.error("Gagal memverifikasi setoran:", e);

@@ -82,9 +82,10 @@
         <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th>Wilayah</th></tr></thead><tbody id="tabelPengguna"></tbody></table></div>
 
         <h3 style="font-family:var(--font-judul);margin:24px 0 10px">Katalog Hadiah & Penukaran</h3>
+        <div class="baris-filter-admin"><button class="tombol-kecil utama" id="tambahHadiah" type="button">+ Tambah Hadiah</button><button class="tombol-kecil" id="muatUlangHadiah" type="button">Muat Ulang</button></div>
         <div class="saldo admin-stat-asn"><div><b id="jumlahHadiah">0</b><span>Jenis hadiah</span></div><div><b id="stokHadiah">0</b><span>Total stok</span></div><div><b id="jumlahTukar">0</b><span>Transaksi penukaran</span></div></div>
         <div id="statusHadiah" class="notif info">Memuat katalog hadiah…</div>
-        <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Hadiah</th><th>Harga poin</th><th>Stok</th></tr></thead><tbody id="tabelHadiah"></tbody></table></div>
+        <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Hadiah</th><th>Harga poin</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="tabelHadiah"></tbody></table></div>
 
         <h3 style="font-family:var(--font-judul);margin:24px 0 10px">Riwayat Aktivitas Admin/Petugas</h3>
         <div id="statusAktivitas" class="notif info">Memeriksa tabel aktivitas…</div>
@@ -117,6 +118,21 @@
       <button class="tombol" id="simpanProfilBtn" type="submit">Simpan Perubahan</button>
     </form>
     <p class="hubungi-admin">Lupa password lama? Hubungi Admin eLOLA untuk bantuan pemulihan akun.</p>
+  </div>
+</div>
+<div class="modal-profil hidden" id="modalHadiah" role="dialog" aria-modal="true" aria-labelledby="judulModalHadiah">
+  <div class="modal-profil-kartu">
+    <button class="modal-profil-tutup" id="tutupModalHadiah" type="button" aria-label="Tutup">×</button>
+    <h2 id="judulModalHadiah">Kelola Hadiah</h2>
+    <div id="pesanHadiahForm" class="notif hidden" role="status"></div>
+    <form id="formHadiah">
+      <input id="hadiahId" type="hidden">
+      <label for="hadiahNama">Nama hadiah</label><input id="hadiahNama" maxlength="120" required>
+      <label for="hadiahDeskripsi">Deskripsi</label><textarea id="hadiahDeskripsi" rows="3" maxlength="500"></textarea>
+      <label for="hadiahHarga">Harga poin</label><input id="hadiahHarga" type="number" min="1" step="1" required>
+      <label for="hadiahStok">Stok</label><input id="hadiahStok" type="number" min="0" step="1" required>
+      <button class="tombol" id="simpanHadiah" type="submit">Simpan Hadiah</button>
+    </form>
   </div>
 </div>
 <!-- CDN Supabase JS -->
