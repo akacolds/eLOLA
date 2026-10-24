@@ -9,7 +9,6 @@
   <style>
     .menu-antrean{display:flex;align-items:center;gap:8px}.titik-antrean{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 3px #fee2e2}.titik-antrean[hidden]{display:none}
     .menu-antrean:not(.aktif){opacity:.86}
-    .panel-antrean[hidden]{display:none!important}.kepala-halaman p{display:none}
   </style>
 </head>
 <body>
@@ -46,31 +45,23 @@
         </div>
         <button class="keluar-btn topbar-keluar" onclick="keluarAkun()" type="button">↪ Keluar</button>
       </div>
-      <div class="kepala-halaman"><div><h1 id="judulAntrean">Setoran Sampah</h1></div></div>
+      <div class="kepala-halaman">
+        <div>
+          <h1>Antrean Verifikasi Setoran</h1>
+          <p>Cocokkan timbangan lapangan dengan data klaim setoran sebelum disetujui.</p>
+        </div>
+      </div>
 
-      <section class="panel-antrean" data-panel-antrean="setoran">
-        <div id="notif" class="notif hidden"></div>
-        <div id="antrean"></div>
-      </section>
-      <section class="panel-antrean" data-panel-antrean="hadiah" hidden>
-        <div id="notifTukar" class="notif hidden"></div>
-        <div id="antreanPenukaran"></div>
-      </section>
-      <section class="panel-antrean" data-panel-antrean="dana" hidden>
-        <div id="notifDana" class="notif hidden"></div>
-        <div id="antreanDana"></div>
-      </section>
-      <script>
-        (() => {
-          const judul = { setoran: 'Setoran Sampah', hadiah: 'Penukaran Hadiah', dana: 'Penarikan Dana' };
-          document.querySelectorAll('[data-menu-antrean]').forEach(menu => menu.addEventListener('click', () => {
-            const aktif = menu.dataset.menuAntrean;
-            document.querySelectorAll('[data-menu-antrean]').forEach(item => item.classList.toggle('aktif', item === menu));
-            document.querySelectorAll('[data-panel-antrean]').forEach(panel => panel.hidden = panel.dataset.panelAntrean !== aktif);
-            document.getElementById('judulAntrean').textContent = judul[aktif] || 'Antrean';
-          }));
-        })();
-      </script>
+      <h2 style="margin-top:26px">Antrean Penukaran Poin</h2>
+      <p>Permintaan hadiah dari warga/ASN akan muncul di sini. Stok dikurangi setelah petugas menyetujui.</p>
+      <div id="notifTukar" class="notif hidden"></div>
+      <div id="antreanPenukaran"></div>
+      <hr style="margin:28px 0;border:0;border-top:1px solid #dce8dd">
+      <div id="notif" class="notif hidden"></div>
+      <h2>Antrean Verifikasi Setoran</h2>
+      <div id="antrean"></div>
+      <hr style="margin:28px 0;border:0;border-top:1px solid #dce8dd">
+      <h2>Antrean Penarikan Dana</h2><p>Periksa permintaan penarikan dan proses sesuai prosedur.</p><div id="notifDana" class="notif hidden"></div><div id="antreanDana"></div>
     </section>
   </main>
 
