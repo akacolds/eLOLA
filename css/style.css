@@ -855,3 +855,36 @@ body:has(> main.kartu.lebar) > main.kartu.lebar > .kanan {
 #modalTarikDana .modal-profil-kartu{max-height:90vh;overflow:auto}
 #formTarikDana input,#formTarikDana select{width:100%;box-sizing:border-box}
 #formTarikDana .tombol{width:100%;margin-top:8px}
+
+
+/* Riwayat setoran: tampilan lebih jelas dan responsif */
+.riwayat-setoran-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:34px 0 14px;padding:20px 22px;border:1px solid #dcebe0;border-radius:18px;background:linear-gradient(135deg,#f2fbf4,#fff);}
+.riwayat-setoran-heading h3{font-family:var(--font-judul);font-size:1.25rem;margin:4px 0 5px;color:#164b31;}
+.riwayat-setoran-heading p{margin:0;color:#637568;font-size:.92rem;}
+.riwayat-eyebrow{font-size:.68rem;letter-spacing:.12em;font-weight:800;color:#16834b;}
+.riwayat-icon{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:14px;background:#dff5e5;color:#147642;font-size:1.4rem;font-weight:800;}
+.riwayat-setoran-bungkus{margin-top:0;border-color:#e0e9e2;border-radius:16px;box-shadow:0 8px 24px rgba(25,75,42,.045);}
+.riwayat-setoran-bungkus .tabel{width:100%;border-collapse:separate;border-spacing:0;}
+.riwayat-setoran-bungkus .tabel thead th{background:#f5faf6;color:#52705b;font-size:.72rem;text-transform:uppercase;letter-spacing:.045em;padding:14px 13px;white-space:nowrap;}
+.riwayat-setoran-bungkus .tabel tbody td{padding:15px 13px;border-top:1px solid #edf2ee;vertical-align:top;font-size:.88rem;}
+.riwayat-setoran-bungkus .tabel tbody tr:hover{background:#fbfefb;}
+.riwayat-id,.riwayat-poin,.riwayat-catatan{display:block;margin-top:5px;color:#738176;font-size:.76rem;line-height:1.45;}
+.riwayat-rincian{min-width:150px;max-width:300px;line-height:1.55;color:#3e5144;}
+.riwayat-rupiah{color:#167342;white-space:nowrap;}
+.riwayat-foto{display:inline-block;margin-top:6px;color:#167342;font-weight:700;text-decoration:none;}
+.riwayat-foto:hover{text-decoration:underline;}
+.riwayat-setoran-bungkus .chip.menunggu{background:#fff4d9;color:#8a5a00;border:1px solid #f3dfab;}
+.riwayat-kosong{text-align:center!important;padding:28px!important;color:#758477;}
+@media(max-width:680px){
+ .riwayat-setoran-heading{padding:16px;margin-top:26px;border-radius:14px;}
+ .riwayat-setoran-bungkus{overflow:visible;border:0;background:transparent;box-shadow:none;}
+ .riwayat-setoran-bungkus .tabel,.riwayat-setoran-bungkus .tabel tbody{display:block;width:100%;}
+ .riwayat-setoran-bungkus .tabel thead{display:none;}
+ .riwayat-setoran-bungkus .tabel tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 12px;padding:15px;border:1px solid #e0e9e2;border-radius:15px;background:#fff;box-shadow:0 5px 16px rgba(25,75,42,.04);}
+ .riwayat-setoran-bungkus .tabel tbody td{display:block;padding:0;border:0;min-width:0;overflow-wrap:anywhere;}
+ .riwayat-setoran-bungkus .tabel tbody td:before{content:attr(data-label);display:block;margin-bottom:5px;color:#7a897d;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;}
+ .riwayat-setoran-bungkus .tabel tbody td:nth-child(2){grid-column:1/-1;}
+ .riwayat-setoran-bungkus .tabel tbody td:nth-child(5){grid-column:1/-1;}
+ .riwayat-rincian{max-width:none;min-width:0;}
+ .riwayat-kosong{grid-column:1/-1!important;text-align:center!important;}
+}

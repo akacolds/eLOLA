@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         rt: String(user.rt).trim(),
         rincian: rincianBersih,
         kg: bulat1(totKg),
-        poin: 0,
+        poin: Math.floor(totRupiah / (Number(window.Utils.POIN_RUPIAH) || 100)),
         totalRp: Math.round(totRupiah),
         fotoUrl
       });
@@ -209,15 +209,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       await perbaruiKuotaAsn(list);
       const wadah = $("isiRiwayat");
       if (!wadah) return;
-      wadah.innerHTML = list.map(s => `
-        <tr>
-          <td>${tglJam(s.created_at)}</td>
-          <td>${Object.entries(s.rincian || {}).map(([k, v]) => `${k} ${typeof v === "object" ? v.kg : v}kg`).join(", ")}${s.foto_url ? `<br><a href="${s.foto_url}" target="_blank" rel="noopener">Lihat foto</a>` : ""}</td>
-          <td>${s.kg} kg</td>
-          <td>${window.Utils.rupiah(s.total_rp ?? s.totalRp ?? 0)}</td>
-          <td><span class="chip ${s.status === 'disetujui' ? 'ok' : s.status === 'ditolak' ? 'tolak' : ''}">${s.status}</span></td>
-        </tr>
-      `).join("");
+      wadah.innerHTML = list.map(s => {
+        const rincian = Object.entries(s.rincian || {}).map(([k, v]) => `${k}: ${typeof v === "object" ? v.kg : v} kg`).join(", ") || "Rincian tidak tersedia";
+        const status = String(s.status || "menunggu").toLowerCase();
+        const statusLabel = status === "menunggu" ? "Menunggu verifikasi" : status === "disetujui" ? "Disetujui" : status === "ditolak" ? "Ditolak" : status;
+        const kelas = status === "disetujui" ? "ok" : status === "ditolak" ? "tolak" : "menunggu";
+        const totalRp = Number(s.total_rp ?? s.totalRp) || 0;
+        const poin = Number(s.poin) || Math.floor(totalRp / (Number(window.Utils.POIN_RUPIAH) || 100));
+        return `<tr class="riwayat-setoran-row">
+          <td data-label="Tanggal"><strong>${tglJam(s.created_at)}</strong><small class="riwayat-id">Setoran #${String(s.id ?? "-")}</small></td>
+          <td data-label="Jenis sampah"><div class="riwayat-rincian">${rincian}${s.foto_url ? ` <a class="riwayat-foto" href="${s.foto_url}" target="_blank" rel="noopener">Lihat foto ↗</a>` : ""}</div></td>
+          <td data-label="Berat"><strong>${fmt(bulat1(Number(s.kg) || 0))} kg</strong></td>
+          <td data-label="Estimasi nilai"><strong class="riwayat-rupiah">${window.Utils.rupiah(totalRp)}</strong><small class="riwayat-poin">${fmt(poin)} poin jika disetujui</small></td>
+          <td data-label="Status"><span class="chip ${kelas}">${statusLabel}</span>${s.catatan ? `<small class="riwayat-catatan">${String(s.catatan).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}</small>` : ""}</td>
+        </tr>`;
+      }).join("") || '<tr><td colspan="5" class="riwayat-kosong">Belum ada riwayat setoran. Setoran pertama bakal muncul di sini.</td></tr>';
     } catch (err) {
       console.error(err);
     }

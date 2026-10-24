@@ -27,7 +27,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.warn("Riwayat penarikan belum tersedia:", err.message);
       }
 
-      const poinMasuk = setoran.reduce((s, x) => s + (Number(x.poin) || 0), 0);
+      // Kompatibilitas data lama: sebagian setoran tersimpan dengan poin=0.
+      // Kurs proyek: 1 poin = Rp100. Jika poin belum terisi, hitung dari total_rp.
+      const poinMasuk = setoran.reduce((s, x) => {
+        const poinTersimpan = Number(x.poin) || 0;
+        const totalRp = Number(x.total_rp ?? x.totalRp) || 0;
+        return s + (poinTersimpan > 0 ? poinTersimpan : Math.floor(totalRp / poinPerRupiah));
+      }, 0);
       const kgTotal = setoran.reduce((s, x) => s + (Number(x.kg) || 0), 0);
       const poinTukar = riwayatTukar.filter(x => ["menunggu", "disetujui"].includes(String(x.status || "disetujui").toLowerCase())).reduce((s, x) => s + (Number(x.poin) || 0), 0);
       const poinTarik = riwayatTarik.filter(x => ["menunggu", "disetujui"].includes(String(x.status || "").toLowerCase())).reduce((s, x) => s + (Number(x.poin_dipotong) || 0), 0);
