@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  const user = await window.AuthGuard(["petugas", "admin"]);
+  const user = await window.AuthGuard(["petugas"]);
   if (!user) return;
 
   const { $, notif, tglJam } = window.Utils;
@@ -57,6 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function muatAntrean() {
     try {
       const list = (await window.SupabaseDB.getSetoran()).filter(s => String(s.status || "").toLowerCase() === "menunggu");
+      const badge = document.getElementById("badgeSetoran"); if (badge) badge.hidden = list.length === 0;
       wadah.innerHTML = "";
       if (!list.length) {
         wadah.innerHTML = "<p style='color:var(--abu)'>Tidak ada antrean setoran saat ini.</p>";
@@ -137,6 +138,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function muatAntreanPenukaran() {
     try {
       const list = await window.SupabaseDB.getAntreanPenukaran();
+      const badge = document.getElementById("badgeHadiah"); if (badge) badge.hidden = list.length === 0;
       if (!list.length) { antreanTukarEl.innerHTML="<p style='color:var(--abu)'>Tidak ada permintaan penukaran poin yang menunggu.</p>"; return; }
       antreanTukarEl.innerHTML = list.map(t => `<article class="setoran-kartu" style="margin:12px 0;padding:16px;border:1px solid #dce8dd;border-radius:14px">
         <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><b>${aman(t.nama_hadiah || "Hadiah")}</b><span>${Number(t.poin)||0} poin</span></div>
@@ -167,6 +169,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch(e) { notifTukar("Gagal memproses penukaran: "+e.message,"err"); }
   }
 
+  // Menu menampilkan satu antrean pada satu waktu agar tiga alur kerja tidak tercampur.
+  const bagianMenu = {
+    setoran: [document.getElementById("antrean"), document.getElementById("notif")],
+    hadiah: [document.getElementById("antreanPenukaran"), document.getElementById("notifTukar")],
+    dana: [document.getElementById("antreanDana"), document.getElementById("notifDana")]
+  };
+  document.querySelectorAll("[data-menu-antrean]").forEach(link => link.addEventListener("click", () => {
+    const pilihan = link.dataset.menuAntrean;
+    document.querySelectorAll("[data-menu-antrean]").forEach(a => a.classList.toggle("aktif", a === link));
+    Object.entries(bagianMenu).forEach(([key, els]) => els.forEach(el => { if (el) el.style.display = key === pilihan ? "" : "none"; }));
+    const judul = {setoran:"Antrean Verifikasi Setoran", hadiah:"Antrean Penukaran Poin", dana:"Antrean Penarikan Dana"};
+    const h = document.querySelector(".kepala-halaman h1"); if (h) h.textContent = judul[pilihan];
+  }));
+  // Hitung antrean penarikan untuk titik merah. RLS tetap mengikuti kebijakan Supabase.
+  async function muatBadgeDana() {
+    try {
+      const sb = window.SupabaseDB.getClient();
+      const { data, error } = await sb.from("penarikan_dana").select("id").eq("status", "menunggu");
+      if (error) throw error;
+      const badge = document.getElementById("badgeDana"); if (badge) badge.hidden = !(data && data.length);
+      const area = document.getElementById("antreanDana");
+      if (area) area.innerHTML = data && data.length ? `<p>Ada ${data.length} permintaan penarikan yang menunggu.</p><p>Proses permintaan melalui fungsi penarikan petugas yang sudah disiapkan pada database.</p>` : '<p style="color:var(--abu)">Tidak ada permintaan penarikan dana yang menunggu.</p>';
+    } catch (e) {
+      const area = document.getElementById("antreanDana"); if (area) area.innerHTML = `<p class="notif err">Gagal memuat antrean penarikan: ${aman(e.message)}</p>`;
+    }
+  }
+  // Awal: tampilkan menu setoran saja.
+  document.querySelectorAll("[data-menu-antrean]").forEach(a => { if (a.dataset.menuAntrean !== "setoran") a.click(); });
+  document.querySelector('[data-menu-antrean="setoran"]')?.click();
   muatAntrean();
   muatAntreanPenukaran();
+  muatBadgeDana();
+  setInterval(() => { muatAntrean(); muatAntreanPenukaran(); muatBadgeDana(); }, 60000);
 });

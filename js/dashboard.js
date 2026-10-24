@@ -157,10 +157,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const profile = byId.get(String(t.user_id)) || {};
       const st = String(t.status || "menunggu").toLowerCase();
       const metode = st && String(t.metode).toLowerCase() === "cash" ? "Cash / tunai" : `E-wallet · ${val(t.provider)}`;
-      const actions = st === "menunggu"
-        ? `<button class="tombol-kecil utama" data-selesaikan-penarikan="${escapeHTML(t.id)}" type="button">Tandai sudah cair</button> <button class="tombol-kecil" data-tolak-penarikan="${escapeHTML(t.id)}" type="button">Tolak</button>`
-        : "-";
-      return `<tr><td>${escapeHTML(tglJam(t.created_at))}</td><td>${escapeHTML(val(profile.nama,profile.email,t.user_id))}<small style="display:block">${escapeHTML(val(profile.peran))}</small></td><td>${escapeHTML(rupiahAdmin(t.nominal_rp))}</td><td>${fmtInt(t.poin_dipotong||0)}</td><td>${escapeHTML(metode)}</td><td>${escapeHTML(val(t.nomor_tujuan))}</td><td><span class="chip ${st === "disetujui" ? "ok" : st === "ditolak" ? "tolak" : ""}">${escapeHTML(st)}</span></td><td>${escapeHTML(val(t.catatan_admin,t.petugas))}</td><td>${actions}</td></tr>`;
+      return `<tr><td>${escapeHTML(tglJam(t.created_at))}</td><td>${escapeHTML(val(profile.nama,profile.email,t.user_id))}<small style="display:block">${escapeHTML(val(profile.peran))}</small></td><td>${escapeHTML(rupiahAdmin(t.nominal_rp))}</td><td>${fmtInt(t.poin_dipotong||0)}</td><td>${escapeHTML(metode)}</td><td>${escapeHTML(val(t.nomor_tujuan))}</td><td><span class="chip ${st === "disetujui" ? "ok" : st === "ditolak" ? "tolak" : ""}">${escapeHTML(st)}</span></td><td>${escapeHTML(val(t.catatan_admin,t.petugas))}</td></tr>`;
     }).join("") || '<tr><td colspan="9">Tidak ada permintaan yang cocok.</td></tr>';
   }
   async function muatPenarikan() {
@@ -177,6 +174,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
   async function prosesAksiPenarikan(id, aksi) {
+    // Dashboard admin hanya untuk membaca riwayat. Pemrosesan dilakukan petugas.
+    return;
     const item = penarikan.find(t => String(t.id) === String(id));
     if (!item || String(item.status).toLowerCase() !== "menunggu") return;
     let catatan = "";
@@ -206,12 +205,7 @@ Lanjut tandai selesai?`);
   $("filterStatusPenarikan").addEventListener("change", renderRiwayatPenarikan);
   $("filterMetodePenarikan").addEventListener("change", renderRiwayatPenarikan);
   $("muatUlangPenarikan").addEventListener("click", muatPenarikan);
-  $("tabelPenarikan").addEventListener("click", ev => {
-    const done = ev.target.closest("[data-selesaikan-penarikan]");
-    const reject = ev.target.closest("[data-tolak-penarikan]");
-    if (done) prosesAksiPenarikan(done.dataset.selesaikanPenarikan, "setujui");
-    if (reject) prosesAksiPenarikan(reject.dataset.tolakPenarikan, "tolak");
-  });
+
 
   function renderAktivitas() {
     $("tabelAktivitas").innerHTML = aktivitas.slice().sort((a,b)=>toDate(b)-toDate(a)).slice(0,100).map(a=>`<tr><td>${escapeHTML(tglJam(a.created_at || a.waktu))}</td><td>${escapeHTML(val(a.nama,a.actor_name,a.user_id,a.aktor))}</td><td>${escapeHTML(val(a.aksi,a.action,a.aktivitas,a.event))}</td><td>${escapeHTML(val(a.keterangan,a.detail,a.deskripsi,a.target))}</td></tr>`).join("") || '<tr><td colspan="4">Belum ada aktivitas atau tabel log belum disiapkan.</td></tr>';
