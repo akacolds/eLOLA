@@ -170,26 +170,38 @@ window.SupabaseDB = (() => {
       if (userId) q = q.eq("user_id", userId);
       const { data, error } = await q;
       if (error) throw error;
+      return data || [];
+    },
+
+    async getRiwayatPenarikan(userId = null) {
+      const sb = getClientOrThrow();
+      let q = sb.from("penarikan_dana").select("*").order("created_at", { ascending: false });
+      if (userId) q = q.eq("user_id", userId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
+    },
+
+    async ajukanPenarikan(payload) {
+      const sb = getClientOrThrow();
+      const { data, error } = await sb.rpc("elola_ajukan_penarikan", {
+        p_nominal_rp: Number(payload.nominalRp),
+        p_metode: payload.metode,
+        p_provider: payload.provider || null,
+        p_nomor_tujuan: payload.nomorTujuan
+      });
+      if (error) throw error;
       return data;
     },
 
     async tukarHadiah(userId, hadiah) {
       const sb = getClientOrThrow();
-      // Permintaan masuk antrean petugas. Stok baru dikurangi setelah disetujui.
-      const { data, error } = await sb
-        .from("penukaran")
-        .insert([{
-          user_id: userId,
-          hadiah_id: hadiah.id,
-          nama_hadiah: hadiah.nama,
-          poin: hadiah.harga,
-          status: "menunggu",
-          catatan_pengguna: hadiah.catatan,
-          nomor_wa: hadiah.nomorWa,
-          created_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
+      // RPC mengunci saldo di database agar permintaan hadiah dan tarik dana tidak double-spend.
+      const { data, error } = await sb.rpc("elola_ajukan_penukaran", {
+        p_hadiah_id: Number(hadiah.id),
+        p_catatan: hadiah.catatan,
+        p_nomor_wa: hadiah.nomorWa
+      });
       if (error) throw error;
       return data;
     },

@@ -38,7 +38,7 @@
         <button class="profil-top" id="profilTop" type="button" aria-label="Buka pengaturan profil" aria-haspopup="dialog">
           <span class="profil-avatar" id="profilAvatar">U</span>
           <span class="profil-info"><b id="profilNama">Memuat profil...</b><small id="profilPeran">Pengguna eLOLA</small></span>
-        </div>
+        </button>
         <button class="keluar-btn topbar-keluar" onclick="keluarAkun()" type="button">↪ Keluar</button>
       </div>
       <div class="kepala-halaman">
@@ -56,7 +56,10 @@
         <div><b id="kgTotal">0 kg</b><span>Total Sampah Disetor</span></div>
       </div>
 
-      <h3 style="font-family:var(--font-judul);margin-bottom:12px">Katalog Penukaran</h3>
+      <div class="judul-katalog-tarik">
+        <div><h3 style="font-family:var(--font-judul);margin-bottom:5px">Katalog Penukaran</h3><p style="margin:0;color:var(--abu)">Tukar poin dengan hadiah atau cairkan saldo rupiah.</p></div>
+        <button class="tombol" id="btnTarikDana" type="button">💸 Tarik Dana</button>
+      </div>
       <div class="katalog" id="katalog"></div>
 
       <div style="margin-top:28px">
@@ -70,8 +73,31 @@
           </table>
         </div>
       </div>
+      <div style="margin-top:28px">
+        <h3 style="font-family:var(--font-judul);margin-bottom:10px">Riwayat Penarikan Dana</h3>
+        <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Waktu</th><th>Nominal</th><th>Metode</th><th>Tujuan</th><th>Status</th><th>Catatan Admin</th></tr></thead><tbody id="isiPenarikan"><tr><td colspan="6">Memuat riwayat...</td></tr></tbody></table></div>
+      </div>
     </section>
   </main>
+
+<div class="modal-profil hidden" id="modalTarikDana" role="dialog" aria-modal="true" aria-labelledby="judulTarikDana">
+  <div class="modal-profil-kartu">
+    <button class="modal-profil-tutup" id="tutupTarikDana" type="button" aria-label="Tutup">×</button>
+    <h2 id="judulTarikDana">Tarik Dana</h2>
+    <p class="modal-profil-keterangan">Masukkan nominal rupiah dan pilih cara pencairan. Permintaan akan menahan poin sampai diproses admin.</p>
+    <div id="infoSaldoTarik" class="notif info" role="status">Memeriksa saldo...</div>
+    <div id="pesanTarikDana" class="notif hidden" role="status"></div>
+    <form id="formTarikDana">
+      <label for="nominalTarik">Nominal penarikan (Rp)</label><input id="nominalTarik" type="number" inputmode="numeric" min="100" step="100" required placeholder="Contoh: 10000">
+      <small id="konversiTarik" style="display:block;color:var(--abu);margin:-4px 0 12px">100 poin = Rp10.000</small>
+      <label for="metodeTarik">Metode pencairan</label><select id="metodeTarik" required><option value="ewallet">E-wallet</option><option value="cash">Cash / tunai</option></select>
+      <div id="areaProviderTarik"><label for="providerTarik">Pilih e-wallet</label><select id="providerTarik" required><option value="DANA">DANA</option><option value="GoPay">GoPay</option><option value="OVO">OVO</option><option value="ShopeePay">ShopeePay</option><option value="LinkAja">LinkAja</option></select></div>
+      <label for="nomorTujuanTarik" id="labelTujuanTarik">Nomor e-wallet tujuan</label><input id="nomorTujuanTarik" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" minlength="8" required placeholder="Masukkan nomor e-wallet">
+      <small style="display:block;color:var(--abu);margin:6px 0 12px">Pastikan nomor tujuan benar. Dana dikirim manual setelah diverifikasi admin.</small>
+      <button class="tombol" id="kirimTarikDana" type="submit">Ajukan Penarikan</button>
+    </form>
+  </div>
+</div>
 
 <div class="modal-profil hidden" id="modalProfil" role="dialog" aria-modal="true" aria-labelledby="judulModalProfil">
   <div class="modal-profil-kartu">

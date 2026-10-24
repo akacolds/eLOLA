@@ -97,6 +97,18 @@
         <div id="statusRiwayatTukar" class="notif info">Memuat riwayat penukaran…</div>
         <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Waktu</th><th>Akun</th><th>Hadiah</th><th>Poin</th><th>Status</th><th>Petugas</th><th>No. HP/WA</th><th>Catatan Pemohon</th><th>Catatan Petugas</th></tr></thead><tbody id="tabelRiwayatTukar"></tbody></table></div>
 
+        <h3 style="font-family:var(--font-judul);margin:28px 0 10px">Riwayat Penarikan Dana</h3>
+        <p style="color:var(--abu)">Semua permintaan cash dan e-wallet warga/ASN. Tombol “Tandai sudah cair” hanya dipakai setelah transfer benar-benar dilakukan.</p>
+        <div class="baris-filter-admin">
+          <input id="cariPenarikan" type="search" placeholder="Cari nama, nomor tujuan, atau provider…" aria-label="Cari penarikan dana">
+          <select id="filterStatusPenarikan" aria-label="Filter status penarikan"><option value="semua">Semua status</option><option value="menunggu">Menunggu</option><option value="disetujui">Sudah dicairkan</option><option value="ditolak">Ditolak</option></select>
+          <select id="filterMetodePenarikan" aria-label="Filter metode"><option value="semua">Semua metode</option><option value="ewallet">E-wallet</option><option value="cash">Cash</option></select>
+          <button class="tombol-kecil" id="muatUlangPenarikan" type="button">Muat Ulang Riwayat</button>
+        </div>
+        <div class="saldo admin-stat-asn"><div><b id="jumlahPenarikan">0</b><span>Total permintaan</span></div><div><b id="jumlahPenarikanMenunggu">0</b><span>Menunggu proses</span></div><div><b id="totalPenarikanSelesai">Rp 0</b><span>Total sudah dicairkan</span></div></div>
+        <div id="statusPenarikan" class="notif info">Memuat riwayat penarikan…</div>
+        <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Waktu</th><th>Pemohon</th><th>Nominal</th><th>Poin</th><th>Metode</th><th>Nomor Tujuan</th><th>Status</th><th>Catatan Admin</th><th>Aksi</th></tr></thead><tbody id="tabelPenarikan"><tr><td colspan="9">Memuat riwayat...</td></tr></tbody></table></div>
+
         <h3 style="font-family:var(--font-judul);margin:24px 0 10px">Riwayat Aktivitas Admin/Petugas</h3>
         <div id="statusAktivitas" class="notif info">Memeriksa tabel aktivitas…</div>
         <div class="tabel-bungkus"><table class="tabel"><thead><tr><th>Waktu</th><th>Aktor</th><th>Aktivitas</th><th>Keterangan</th></tr></thead><tbody id="tabelAktivitas"></tbody></table></div>

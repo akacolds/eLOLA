@@ -847,3 +847,11 @@ body:has(> main.kartu.lebar) > main.kartu.lebar > .kanan {
 .tren-item b { text-align:right; white-space:nowrap; }
 @media(max-width:600px) { .admin-stat-asn { grid-template-columns:1fr; } .baris-filter-admin input,.baris-filter-admin select { width:100%; flex-basis:100%; } .tren-item { grid-template-columns:55px minmax(30px,1fr) 65px; gap:8px; } }
 @media print { body { background:#fff!important; } .kiri,.user-topbar,.menu,.modal-profil { display:none!important; } .kartu.lebar { display:block; max-width:none; box-shadow:none; border:0; } .kanan { padding:0!important; } }
+
+
+/* Tarik dana eLOLA */
+.judul-katalog-tarik{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+.judul-katalog-tarik .tombol{width:auto;white-space:nowrap}
+#modalTarikDana .modal-profil-kartu{max-height:90vh;overflow:auto}
+#formTarikDana input,#formTarikDana select{width:100%;box-sizing:border-box}
+#formTarikDana .tombol{width:100%;margin-top:8px}

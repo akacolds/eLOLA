@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const monthKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
   const now = new Date();
   $("periodeASN").value = monthKey(now);
-  let profiles = [], setoran = [], hadiah = [], penukaran = [], aktivitas = [];
+  let profiles = [], setoran = [], hadiah = [], penukaran = [], penarikan = [], aktivitas = [];
   let asnRows = [];
 
   async function ambilTabel(nama, kolom = "*") {
@@ -131,6 +131,88 @@ document.addEventListener("DOMContentLoaded", async () => {
     status.textContent = `Menampilkan ${penukaran.length} transaksi penukaran dari Supabase.`;
     status.className = "notif ok";
   }
+  function rupiahAdmin(n) { return window.Utils.rupiah(Number(n) || 0); }
+  function renderRiwayatPenarikan() {
+    const byId = new Map(profiles.map(p => [String(p.id), p]));
+    const tbody = $("tabelPenarikan");
+    if (!tbody) return;
+    const q = ($("cariPenarikan")?.value || "").trim().toLowerCase();
+    const filterStatus = $("filterStatusPenarikan")?.value || "semua";
+    const filterMetode = $("filterMetodePenarikan")?.value || "semua";
+    const waiting = penarikan.filter(t => String(t.status).toLowerCase() === "menunggu").length;
+    const cleared = penarikan.filter(t => String(t.status).toLowerCase() === "disetujui").reduce((sum,t)=>sum+(Number(t.nominal_rp)||0),0);
+    $("jumlahPenarikan").textContent = fmtInt(penarikan.length);
+    $("jumlahPenarikanMenunggu").textContent = fmtInt(waiting);
+    $("totalPenarikanSelesai").textContent = rupiahAdmin(cleared);
+
+    const visible = penarikan.filter(t => {
+      const profile = byId.get(String(t.user_id)) || {};
+      const text = `${profile.nama||""} ${profile.email||""} ${t.nomor_tujuan||""} ${t.provider||""} ${t.metode||""} ${t.id||""}`.toLowerCase();
+      return (filterStatus === "semua" || String(t.status).toLowerCase() === filterStatus)
+        && (filterMetode === "semua" || String(t.metode).toLowerCase() === filterMetode)
+        && text.includes(q);
+    }).sort((a,b)=>toDate(b)-toDate(a));
+
+    tbody.innerHTML = visible.map(t => {
+      const profile = byId.get(String(t.user_id)) || {};
+      const st = String(t.status || "menunggu").toLowerCase();
+      const metode = st && String(t.metode).toLowerCase() === "cash" ? "Cash / tunai" : `E-wallet · ${val(t.provider)}`;
+      const actions = st === "menunggu"
+        ? `<button class="tombol-kecil utama" data-selesaikan-penarikan="${escapeHTML(t.id)}" type="button">Tandai sudah cair</button> <button class="tombol-kecil" data-tolak-penarikan="${escapeHTML(t.id)}" type="button">Tolak</button>`
+        : "-";
+      return `<tr><td>${escapeHTML(tglJam(t.created_at))}</td><td>${escapeHTML(val(profile.nama,profile.email,t.user_id))}<small style="display:block">${escapeHTML(val(profile.peran))}</small></td><td>${escapeHTML(rupiahAdmin(t.nominal_rp))}</td><td>${fmtInt(t.poin_dipotong||0)}</td><td>${escapeHTML(metode)}</td><td>${escapeHTML(val(t.nomor_tujuan))}</td><td><span class="chip ${st === "disetujui" ? "ok" : st === "ditolak" ? "tolak" : ""}">${escapeHTML(st)}</span></td><td>${escapeHTML(val(t.catatan_admin,t.petugas))}</td><td>${actions}</td></tr>`;
+    }).join("") || '<tr><td colspan="9">Tidak ada permintaan yang cocok.</td></tr>';
+  }
+  async function muatPenarikan() {
+    try {
+      penarikan = await ambilTabel("penarikan_dana");
+      renderRiwayatPenarikan();
+      $("statusPenarikan").textContent = `Menampilkan ${penarikan.length} riwayat penarikan dari Supabase.`;
+      $("statusPenarikan").className = "notif ok";
+    } catch (e) {
+      penarikan = [];
+      renderRiwayatPenarikan();
+      $("statusPenarikan").textContent = "Fitur penarikan belum siap atau izin RLS belum benar. Jalankan SETUP-TARIK-DANA.sql di Supabase. Detail: " + e.message;
+      $("statusPenarikan").className = "notif err";
+    }
+  }
+  async function prosesAksiPenarikan(id, aksi) {
+    const item = penarikan.find(t => String(t.id) === String(id));
+    if (!item || String(item.status).toLowerCase() !== "menunggu") return;
+    let catatan = "";
+    if (aksi === "setujui") {
+      const benar = confirm(`Pastikan ${rupiahAdmin(item.nominal_rp)} sudah benar-benar dicairkan ke ${item.provider || "nomor WA"} ${item.nomor_tujuan}.
+
+Lanjut tandai selesai?`);
+      if (!benar) return;
+      catatan = prompt("Catatan admin (opsional):", "Dana sudah dicairkan") ?? "Dana sudah dicairkan";
+    } else {
+      catatan = (prompt("Alasan penolakan (wajib):", "") || "").trim();
+      if (!catatan) { $("statusPenarikan").textContent = "Alasan penolakan wajib diisi."; $("statusPenarikan").className = "notif err"; return; }
+      if (!confirm("Tolak permintaan ini? Poin pengguna akan kembali tersedia.")) return;
+    }
+    try {
+      const { error } = await sb.rpc("elola_proses_penarikan", { p_id: Number(id), p_aksi: aksi, p_catatan: catatan });
+      if (error) throw error;
+      await catatAktivitas(aksi === "setujui" ? "Menandai penarikan sudah dicairkan" : "Menolak penarikan dana", `ID ${id} · ${rupiahAdmin(item.nominal_rp)}`);
+      await muatPenarikan();
+      await muatAktivitas();
+    } catch (e) {
+      $("statusPenarikan").textContent = "Gagal memproses penarikan: " + e.message;
+      $("statusPenarikan").className = "notif err";
+    }
+  }
+  $("cariPenarikan").addEventListener("input", renderRiwayatPenarikan);
+  $("filterStatusPenarikan").addEventListener("change", renderRiwayatPenarikan);
+  $("filterMetodePenarikan").addEventListener("change", renderRiwayatPenarikan);
+  $("muatUlangPenarikan").addEventListener("click", muatPenarikan);
+  $("tabelPenarikan").addEventListener("click", ev => {
+    const done = ev.target.closest("[data-selesaikan-penarikan]");
+    const reject = ev.target.closest("[data-tolak-penarikan]");
+    if (done) prosesAksiPenarikan(done.dataset.selesaikanPenarikan, "setujui");
+    if (reject) prosesAksiPenarikan(reject.dataset.tolakPenarikan, "tolak");
+  });
+
   function renderAktivitas() {
     $("tabelAktivitas").innerHTML = aktivitas.slice().sort((a,b)=>toDate(b)-toDate(a)).slice(0,100).map(a=>`<tr><td>${escapeHTML(tglJam(a.created_at || a.waktu))}</td><td>${escapeHTML(val(a.nama,a.actor_name,a.user_id,a.aktor))}</td><td>${escapeHTML(val(a.aksi,a.action,a.aktivitas,a.event))}</td><td>${escapeHTML(val(a.keterangan,a.detail,a.deskripsi,a.target))}</td></tr>`).join("") || '<tr><td colspan="4">Belum ada aktivitas atau tabel log belum disiapkan.</td></tr>';
   }
@@ -232,11 +314,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     try{let q=id?await sb.from("jenis_produk").update(payload).eq("id",id):await sb.from("jenis_produk").insert(payload);if(q.error)throw q.error;await catatAktivitas(id?"Mengedit jenis produk":"Menambah jenis produk",payload.nama);await muatProduk();$("modalProduk").classList.add("hidden");}catch(e){pesanProduk("Gagal menyimpan produk: "+e.message,"err");}
   });
   await muatProduk();
+  await muatPenarikan();
 
   // Refresh ringan agar dashboard mengikuti setoran yang baru diverifikasi tanpa reload manual.
   window.addEventListener("focus", () => location.reload());
   setInterval(async () => {
-    try { setoran = await ambilTabel("setoran"); renderLog(); renderASN(); renderTren(); penukaran = await ambilTabel("penukaran"); renderRiwayatTukar(); }
+    try { setoran = await ambilTabel("setoran"); renderLog(); renderASN(); renderTren(); penukaran = await ambilTabel("penukaran"); renderRiwayatTukar(); await muatPenarikan(); }
     catch (e) { console.warn("Penyegaran dashboard gagal:", e.message); }
   }, 60000);
 });
