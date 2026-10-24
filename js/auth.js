@@ -137,6 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const nama = $("nama").value.trim();
       const email = $("emailDaftar").value.trim().toLowerCase();
       const password = $("sDaftar").value;
+      const rw = $("rw").value;
       const rt = $("rt").value;
       const nikNip = $("nikNip") ? $("nikNip").value.trim() : "";
       const btn = fDaftar.querySelector("button[type=submit]");
@@ -160,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
             peran: peranAktif,
             nik_nip: nikNip,
             kelurahan: "Wundumbatu",
-            rw: "RW 01",
+            rw: rw,
             rt: rt,
             foto: ""
           }]);
