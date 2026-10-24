@@ -22,6 +22,7 @@
         <nav class="menu">
           <a href="/warga/setoran.html" class="aktif">Setor Sampah</a>
           <a href="/warga/dompet.html">Dompet & Hadiah</a>
+          <a href="/jenis-produk.html">Jenis Produk Diterima</a>
           <a href="/peringkat.html">Klasemen RT</a>
         </nav>
       </div>
@@ -43,7 +44,7 @@
       <div class="kepala-halaman">
         <div>
           <h1>Formulir Setoran</h1>
-          <p>Timbang sampah anorganikmu dan dapatkan poin tabungan.</p>
+          <p>Pilih jenis sampah, masukkan berat, lalu lihat estimasi nilai dalam rupiah.</p>
         </div>
       </div>
 
@@ -61,8 +62,11 @@
           </div>
         </div>
 
+        <label for="cariJenis">Cari jenis sampah</label>
+        <input id="cariJenis" type="search" placeholder="Contoh: plastik, kardus, tembaga..." autocomplete="off">
         <span class="judul-kecil">Pilih Jenis & Berat Sampah</span>
         <div id="daftarJenis"></div>
+        <p id="jenisKosong" class="hidden">Jenis sampah tidak ditemukan.</p>
 
         <section class="foto-setoran-box" aria-labelledby="judulFotoSetoran">
           <div class="foto-setoran-heading">
@@ -88,7 +92,7 @@
 
         <div class="estimasi">
           <div><small>Total Berat</small><b id="totKg">0 kg</b></div>
-          <div><small>Estimasi Poin</small><b id="totPoin">0</b></div>
+          <div><small>Estimasi Nilai</small><b id="totRupiah">Rp 0</b></div>
         </div>
 
         <button type="submit" class="tombol" id="bSetor" disabled>Kirim Setoran →</button>
@@ -99,7 +103,7 @@
         <div class="tabel-bungkus">
           <table class="tabel">
             <thead>
-              <tr><th>Waktu</th><th>Rincian</th><th>Berat</th><th>Poin</th><th>Status</th></tr>
+              <tr><th>Waktu</th><th>Rincian</th><th>Berat</th><th>Estimasi Rp</th><th>Status</th></tr>
             </thead>
             <tbody id="isiRiwayat"></tbody>
           </table>

@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   let fileFotoTerpilih = null;
   let urlPreviewFoto = null;
   const berat = Object.fromEntries(JENIS.map(j => [j.k, 0]));
+  const harga = Object.fromEntries(JENIS.map(j => [j.k, j.harga]));
+  const cariJenis = $("cariJenis");
   const isAsn = String(user.peran || "").toLowerCase() === "asn";
   let statusKuota = null;
 
@@ -100,7 +102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     baris.className = "baris-jenis";
     baris.id = "baris-" + j.k;
     baris.innerHTML = `
-      <div><b>${j.k}</b><span class="sub">${j.ket} · ${j.poin} poin/kg</span></div>
+      <div><b>${j.k}</b><span class="sub">${j.ket} · ${window.Utils.rupiah(j.harga)}/kg</span></div>
       <div class="langkah">
         <button type="button" class="btn-kurang" data-k="${j.k}">−</button>
         <input type="number" id="in-${j.k}" min="0" max="99" step="0.5" value="0">
@@ -117,6 +119,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   });
 
+  if (cariJenis) cariJenis.addEventListener("input", () => {
+    const q = cariJenis.value.trim().toLocaleLowerCase("id-ID");
+    let terlihat = 0;
+    JENIS.forEach(j => { const el = $("baris-" + j.k); const cocok = j.k.toLocaleLowerCase("id-ID").includes(q); el.classList.toggle("hidden", !cocok); if (cocok) terlihat++; });
+    $("jenisKosong").classList.toggle("hidden", terlihat > 0);
+  });
+
   function ubah(k, d) {
     berat[k] = Math.max(0, bulat1((berat[k] || 0) + d));
     $("in-" + k).value = berat[k];
@@ -124,14 +133,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function hitung() {
-    let totKg = 0, totPoin = 0;
+    let totKg = 0, totRupiah = 0;
     JENIS.forEach(j => {
       totKg += berat[j.k];
-      totPoin += berat[j.k] * j.poin;
+      totRupiah += berat[j.k] * j.harga;
       $("baris-" + j.k).classList.toggle("aktif", berat[j.k] > 0);
     });
     $("totKg").textContent = fmt(bulat1(totKg)) + " kg";
-    $("totPoin").textContent = fmt(Math.round(totPoin));
+    $("totRupiah").textContent = window.Utils.rupiah(totRupiah);
     $("bSetor").disabled = totKg <= 0;
   }
 
@@ -144,13 +153,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     btn.disabled = true; btn.textContent = "Mengirim...";
 
-    let totKg = 0, totPoin = 0;
+    let totKg = 0, totRupiah = 0;
     const rincianBersih = {};
     JENIS.forEach(j => {
       if (berat[j.k] > 0) {
-        rincianBersih[j.k] = berat[j.k];
+        rincianBersih[j.k] = { kg: berat[j.k], harga_per_kg: j.harga, subtotal_rp: Math.round(berat[j.k] * j.harga) };
         totKg += berat[j.k];
-        totPoin += berat[j.k] * j.poin;
+        totRupiah += berat[j.k] * j.harga;
       }
     });
 
@@ -167,7 +176,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         rt: String(user.rt).trim(),
         rincian: rincianBersih,
         kg: bulat1(totKg),
-        poin: Math.round(totPoin),
+        poin: 0,
+        totalRp: Math.round(totRupiah),
         fotoUrl
       });
 
@@ -193,9 +203,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       wadah.innerHTML = list.map(s => `
         <tr>
           <td>${tglJam(s.created_at)}</td>
-          <td>${Object.entries(s.rincian || {}).map(([k, v]) => `${k} ${v}kg`).join(", ")}${s.foto_url ? `<br><a href="${s.foto_url}" target="_blank" rel="noopener">Lihat foto</a>` : ""}</td>
+          <td>${Object.entries(s.rincian || {}).map(([k, v]) => `${k} ${typeof v === "object" ? v.kg : v}kg`).join(", ")}${s.foto_url ? `<br><a href="${s.foto_url}" target="_blank" rel="noopener">Lihat foto</a>` : ""}</td>
           <td>${s.kg} kg</td>
-          <td>${s.poin}</td>
+          <td>${window.Utils.rupiah(s.total_rp ?? s.totalRp ?? 0)}</td>
           <td><span class="chip ${s.status === 'disetujui' ? 'ok' : s.status === 'ditolak' ? 'tolak' : ''}">${s.status}</span></td>
         </tr>
       `).join("");

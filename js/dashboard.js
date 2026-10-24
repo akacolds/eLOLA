@@ -28,12 +28,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const byId = new Map(profiles.map(p => [String(p.id), p]));
     const sah = setoran.filter(s => String(s.status).toLowerCase() === "disetujui");
     $("stKg").textContent = fmt(sah.reduce((sum,s) => sum + (Number(s.kg ?? s.kg_klaim) || 0), 0)) + " kg";
-    $("stPoin").textContent = fmtInt(sah.reduce((sum,s) => sum + (Number(s.poin) || 0), 0));
+    $("stPoin").textContent = window.Utils.rupiah(sah.reduce((sum,s) => sum + (Number(s.total_rp) || 0), 0));
     $("stAkun").textContent = fmtInt(profiles.length);
     $("tabelLog").innerHTML = setoran.slice().sort((a,b)=>toDate(b)-toDate(a)).map(s => {
       const p = byId.get(String(s.user_id)) || {};
       const st = String(s.status || "menunggu").toLowerCase();
-      return `<tr><td>${escapeHTML(tglJam(s.created_at || s.waktu))}</td><td>${escapeHTML(val(p.nama,s.user_id))}</td><td>${escapeHTML(val(s.rw,"RW -"))} / ${escapeHTML(val(s.rt,"RT -"))}</td><td>${escapeHTML(Number(s.kg ?? s.kg_klaim) || 0)} kg</td><td>${escapeHTML(fmtInt(s.poin || 0))}</td><td><span class="chip ${st === "disetujui" ? "ok" : st === "ditolak" ? "tolak" : ""}">${escapeHTML(st)}</span></td></tr>`;
+      return `<tr><td>${escapeHTML(tglJam(s.created_at || s.waktu))}</td><td>${escapeHTML(val(p.nama,s.user_id))}</td><td>${escapeHTML(val(s.rw,"RW -"))} / ${escapeHTML(val(s.rt,"RT -"))}</td><td>${escapeHTML(Number(s.kg ?? s.kg_klaim) || 0)} kg</td><td>${escapeHTML(window.Utils.rupiah(s.total_rp || 0))}</td><td><span class="chip ${st === "disetujui" ? "ok" : st === "ditolak" ? "tolak" : ""}">${escapeHTML(st)}</span></td></tr>`;
     }).join("") || '<tr><td colspan="6">Belum ada data setoran yang dapat dibaca.</td></tr>';
   }
   function renderASN() {

@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  const { $, fmtInt } = window.Utils;
+  const { $, fmtInt, rupiah } = window.Utils;
   const wilayah = "Wundumbatu";
   const podium = $("podium");
   const daftar = $("daftarRank");
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const [{ data: profiles, error: profileError }, { data: setoran, error: setoranError }] = await Promise.all([
       sb.from("profiles").select("id, nama, kelurahan, rw, rt"),
-      sb.from("setoran").select("id, user_id, rw, rt, poin, kg, status, created_at")
+      sb.from("setoran").select("id, user_id, rw, rt, total_rp, kg, status, created_at")
     ]);
     if (profileError) throw profileError;
     if (setoranError) throw setoranError;
@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const rekap = new Map();
     for (let i = 1; i <= 7; i++) {
       const rw = formatRW(i);
-      rekap.set(rwKey(rw), { rw, poin: 0, kg: 0, jumlahSetoran: 0, partisipan: new Set() });
+      rekap.set(rwKey(rw), { rw, totalRp: 0, kg: 0, jumlahSetoran: 0, partisipan: new Set() });
     }
 
     (setoran || []).filter(s => String(s.status || "").toLowerCase() === "disetujui").forEach(s => {
@@ -41,21 +41,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       const key = rwKey(rwValue);
       const item = rekap.get(key);
       if (!item) return;
-      item.poin += Number(s.poin) || 0;
+      item.totalRp += Number(s.total_rp) || 0;
       item.kg += Number(s.kg) || 0;
       item.jumlahSetoran += 1;
       item.partisipan.add(String(s.user_id));
     });
 
     const list = [...rekap.values()].sort((a, b) =>
-      b.poin - a.poin || a.rw.localeCompare(b.rw, "id")
+      b.totalRp - a.totalRp || a.rw.localeCompare(b.rw, "id")
     );
 
     const juara = (item, rank, kelas) => item ? `
       <div class="juara ${kelas}">
         <div class="urut">${rank}</div>
         <b>${esc(item.rw)}</b>
-        <small>${fmtInt(Math.round(item.poin))} poin</small>
+        <small>${rupiah(item.totalRp)}</small>
         <small>${Number(item.kg).toLocaleString("id-ID", { maximumFractionDigits: 1 })} kg</small>
       </div>` : "";
 
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <div class="rank-baris">
           <div style="font-weight:700">#${i + 1}</div>
           <div><b>${esc(d.rw)}</b><small style="display:block;color:var(--abu)">${d.jumlahSetoran} setoran disetujui · ${Number(d.kg).toLocaleString("id-ID", { maximumFractionDigits: 1 })} kg · ${d.partisipan.size} pengguna</small></div>
-          <div style="font-weight:700">${fmtInt(Math.round(d.poin))} poin</div>
+          <div style="font-weight:700">${rupiah(d.totalRp)}</div>
         </div>`).join("");
     }
   } catch (err) {

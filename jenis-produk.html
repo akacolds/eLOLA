@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Jenis Produk yang Diterima – eLOLA</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Instrument+Sans:wght@400;600;700&display=swap"><link rel="stylesheet" href="/css/style.css"><style>.daftar-produk{width:100%;border-collapse:collapse;margin-top:18px}.daftar-produk th,.daftar-produk td{text-align:left;padding:12px;border-bottom:1px solid var(--garis)}.daftar-produk th{background:#e7f2e5}.cari-produk{width:100%;margin-top:14px}.catatan-harga{color:var(--abu);font-size:.9rem;margin-top:12px;line-height:1.5}@media(max-width:700px){.kartu.lebar{grid-template-columns:1fr}.kiri{padding:24px}.kanan{padding:20px!important}.daftar-produk th,.daftar-produk td{padding:9px 6px;font-size:.9rem}}</style></head><body><main class="kartu lebar"><section class="kiri"><div class="logo"><svg viewBox="0 0 42 42"><rect width="42" height="42" rx="11" fill="#58b45d"/><path d="M21 9c-6 5-8 10-8 14a8 8 0 0 0 16 0c0-4-2-9-8-14z" fill="#fff"/><path d="M21 14v17" stroke="#58b45d" stroke-width="2.2" stroke-linecap="round"/></svg><div><b>eLOLA</b><small>Bank Sampah Digital</small></div></div><div><h2>Jenis Produk yang Diterima</h2><p>Daftar jenis sampah dan harga pembelian per kilogram.</p></div><a class="tombol-kecil" href="/warga/setoran.html">← Kembali ke Setoran</a></section><section class="kanan"><div class="kepala-halaman"><div><h1>Jenis Produk yang Diterima</h1><p>Harga acuan bank sampah dalam rupiah.</p></div></div><label for="cariProduk">Cari produk</label><input id="cariProduk" class="cari-produk" type="search" placeholder="Cari nama sampah..."><div class="tabel-bungkus"><table class="daftar-produk"><thead><tr><th>Jenis Produk</th><th>Harga</th></tr></thead><tbody id="produkRows"><tr><td>Plastik</td><td>Rp 700 / kg</td></tr>
+<tr><td>Kardus</td><td>Rp 800 / kg</td></tr>
+<tr><td>Kertas HVS</td><td>Rp 1.000 / kg</td></tr>
+<tr><td>Kertas Buram / koran</td><td>Rp 500 / kg</td></tr>
+<tr><td>Kertas warna</td><td>Rp 150 / kg</td></tr>
+<tr><td>Kertas campur</td><td>Rp 700 / kg</td></tr>
+<tr><td>Besi campur</td><td>Rp 2.500 / kg</td></tr>
+<tr><td>Rancak</td><td>Rp 10.000 / kg</td></tr>
+<tr><td>Besi tebal</td><td>Rp 3.000 / kg</td></tr>
+<tr><td>Besi tipis</td><td>Rp 1.800 / kg</td></tr>
+<tr><td>Alma panci</td><td>Rp 17.000 / kg</td></tr>
+<tr><td>Kuningan</td><td>Rp 40.000 / kg</td></tr>
+<tr><td>Alma kaleng sprite</td><td>Rp 11.000 / kg</td></tr>
+<tr><td>Kaleng biskuit / susu</td><td>Rp 1.000 / kg</td></tr>
+<tr><td>Alma wajan</td><td>Rp 11.000 / kg</td></tr>
+<tr><td>Jergen (Jerigen)</td><td>Rp 1.000 / kg</td></tr>
+<tr><td>Besi Siku</td><td>Rp 13.000 / kg</td></tr>
+<tr><td>Minyak jelantah</td><td>Rp 1.000 / kg</td></tr>
+<tr><td>TBG (Tembaga)</td><td>Rp 115.000 / kg</td></tr>
+<tr><td>Seng</td><td>Rp 600 / kg</td></tr>
+<tr><td>Aqua gelas</td><td>Rp 1.400 / kg</td></tr>
+<tr><td>Tutup botol warna</td><td>Rp 1.200 / kg</td></tr>
+<tr><td>Pot putih</td><td>Rp 3.000 / kg</td></tr>
+<tr><td>Tutup botol campur</td><td>Rp 1.000 / kg</td></tr>
+<tr><td>Pot warna (Biru Muda)</td><td>Rp 400 / kg</td></tr>
+<tr><td>Pot Biru Muda botol</td><td>Rp 2.000 / kg</td></tr>
+<tr><td>Pot warna gelas</td><td>Rp 400 / kg</td></tr>
+<tr><td>Infus</td><td>Rp 1.000 / kg</td></tr></tbody></table></div><p class="catatan-harga">Harga pada daftar ini mengikuti nilai yang diberikan. Harga aktual dapat dikonfirmasi petugas saat penimbangan.</p></section></main><script>const produk=[{nama:'Plastik',harga:700}, {nama:'Kardus',harga:800}, {nama:'Kertas HVS',harga:1000}, {nama:'Kertas Buram / koran',harga:500}, {nama:'Kertas warna',harga:150}, {nama:'Kertas campur',harga:700}, {nama:'Besi campur',harga:2500}, {nama:'Rancak',harga:10000}, {nama:'Besi tebal',harga:3000}, {nama:'Besi tipis',harga:1800}, {nama:'Alma panci',harga:17000}, {nama:'Kuningan',harga:40000}, {nama:'Alma kaleng sprite',harga:11000}, {nama:'Kaleng biskuit / susu',harga:1000}, {nama:'Alma wajan',harga:11000}, {nama:'Jergen (Jerigen)',harga:1000}, {nama:'Besi Siku',harga:13000}, {nama:'Minyak jelantah',harga:1000}, {nama:'TBG (Tembaga)',harga:115000}, {nama:'Seng',harga:600}, {nama:'Aqua gelas',harga:1400}, {nama:'Tutup botol warna',harga:1200}, {nama:'Pot putih',harga:3000}, {nama:'Tutup botol campur',harga:1000}, {nama:'Pot warna (Biru Muda)',harga:400}, {nama:'Pot Biru Muda botol',harga:2000}, {nama:'Pot warna gelas',harga:400}, {nama:'Infus',harga:1000}];const rows=document.getElementById('produkRows');const search=document.getElementById('cariProduk');function render(){const q=search.value.trim().toLocaleLowerCase('id-ID');rows.innerHTML=produk.filter(p=>p.nama.toLocaleLowerCase('id-ID').includes(q)).map(p=>`<tr><td>${p.nama}</td><td>${new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(p.harga)} / kg</td></tr>`).join('')||'<tr><td colspan="2">Produk tidak ditemukan.</td></tr>'}search.addEventListener('input',render);render();</script></body></html>

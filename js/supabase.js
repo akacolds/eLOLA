@@ -96,7 +96,7 @@ window.SupabaseDB = (() => {
       return data.publicUrl;
     },
 
-    async tambahSetoran({ userId, rw, rt, rincian, kg, poin, fotoUrl = "" }) {
+    async tambahSetoran({ userId, rw, rt, rincian, kg, poin = 0, totalRp = 0, fotoUrl = "" }) {
       const sb = getClientOrThrow();
       const payload = {
         user_id: userId,
@@ -106,7 +106,8 @@ window.SupabaseDB = (() => {
         klaim: rincian,
         kg: kg,
         kg_klaim: kg,
-        poin: poin,
+        poin: 0,
+        total_rp: totalRp,
         foto_url: fotoUrl,
         status: "menunggu",
         catatan: "",

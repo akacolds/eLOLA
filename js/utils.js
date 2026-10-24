@@ -1,9 +1,33 @@
 window.Utils = (() => {
   const JENIS = [
-    { k: "Plastik", poin: 15, ket: "Botol, gelas, kemasan" },
-    { k: "Kertas",  poin: 10, ket: "Kardus, koran, HVS" },
-    { k: "Logam",   poin: 25, ket: "Kaleng, besi, aluminium" },
-    { k: "Kaca",    poin: 7.5, ket: "Botol dan pecahan kaca" }
+    { k: 'Plastik', harga: 700, ket: "Harga per kg" },
+    { k: 'Kardus', harga: 800, ket: "Harga per kg" },
+    { k: 'Kertas HVS', harga: 1000, ket: "Harga per kg" },
+    { k: 'Kertas Buram / koran', harga: 500, ket: "Harga per kg" },
+    { k: 'Kertas warna', harga: 150, ket: "Harga per kg" },
+    { k: 'Kertas campur', harga: 700, ket: "Harga per kg" },
+    { k: 'Besi campur', harga: 2500, ket: "Harga per kg" },
+    { k: 'Rancak', harga: 10000, ket: "Harga per kg" },
+    { k: 'Besi tebal', harga: 3000, ket: "Harga per kg" },
+    { k: 'Besi tipis', harga: 1800, ket: "Harga per kg" },
+    { k: 'Alma panci', harga: 17000, ket: "Harga per kg" },
+    { k: 'Kuningan', harga: 40000, ket: "Harga per kg" },
+    { k: 'Alma kaleng sprite', harga: 11000, ket: "Harga per kg" },
+    { k: 'Kaleng biskuit / susu', harga: 1000, ket: "Harga per kg" },
+    { k: 'Alma wajan', harga: 11000, ket: "Harga per kg" },
+    { k: 'Jergen (Jerigen)', harga: 1000, ket: "Harga per kg" },
+    { k: 'Besi Siku', harga: 13000, ket: "Harga per kg" },
+    { k: 'Minyak jelantah', harga: 1000, ket: "Harga per kg" },
+    { k: 'TBG (Tembaga)', harga: 115000, ket: "Harga per kg" },
+    { k: 'Seng', harga: 600, ket: "Harga per kg" },
+    { k: 'Aqua gelas', harga: 1400, ket: "Harga per kg" },
+    { k: 'Tutup botol warna', harga: 1200, ket: "Harga per kg" },
+    { k: 'Pot putih', harga: 3000, ket: "Harga per kg" },
+    { k: 'Tutup botol campur', harga: 1000, ket: "Harga per kg" },
+    { k: 'Pot warna (Biru Muda)', harga: 400, ket: "Harga per kg" },
+    { k: 'Pot Biru Muda botol', harga: 2000, ket: "Harga per kg" },
+    { k: 'Pot warna gelas', harga: 400, ket: "Harga per kg" },
+    { k: 'Infus', harga: 1000, ket: "Harga per kg" }
   ];
   const KUOTA_ASN = 2.0;
   const POIN_RUPIAH = 100; // 100 poin = Rp10.000

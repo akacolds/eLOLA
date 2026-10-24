@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       list.forEach(s => {
         const namaPenyetor = s.profiles?.nama || s.user_id || "Pengguna";
         const fotoUrl = typeof s.foto_url === "string" ? s.foto_url.trim() : "";
-        const rincian = Object.entries(s.rincian || {}).map(([k, v]) => `${aman(k)}: ${aman(v)} kg`).join(", ") || "Rincian belum tersedia";
+        const rincian = Object.entries(s.rincian || {}).map(([k, v]) => `${aman(k)}: ${aman(typeof v === "object" ? v.kg : v)} kg${typeof v === "object" && v.subtotal_rp != null ? ` (${window.Utils.rupiah(v.subtotal_rp)})` : ""}`).join(", ") || "Rincian belum tersedia";
         const el = document.createElement("article");
         el.className = "setoran-kartu";
         el.innerHTML = `
@@ -77,6 +77,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <small>${aman(tglJam(s.created_at))}</small>
           <p style="margin:8px 0">${rincian}</p>
           <p style="margin:6px 0"><b>Estimasi berat:</b> ${aman(s.kg ?? s.kg_klaim ?? "-")} kg</p>
+          <p style="margin:6px 0"><b>Estimasi nilai:</b> ${aman(window.Utils.rupiah(s.total_rp || 0))}</p>
           <div style="margin:12px 0;padding:12px;border:1px solid #dce8dd;border-radius:12px;background:#f7fbf7">
             ${fotoUrl ? `
               <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
