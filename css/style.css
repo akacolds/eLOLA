@@ -888,3 +888,21 @@ body:has(> main.kartu.lebar) > main.kartu.lebar > .kanan {
  .riwayat-rincian{max-width:none;min-width:0;}
  .riwayat-kosong{grid-column:1/-1!important;text-align:center!important;}
 }
+
+
+/* Perbaikan overflow horizontal pada halaman Setoran di HP */
+html, body { max-width: 100%; overflow-x: clip; }
+body { box-sizing: border-box; }
+.kartu, .kartu.lebar, .kanan, .kartu.lebar .kanan, #fSetor, #daftarJenis, .foto-setoran-box, .estimasi, .riwayat-setoran-heading, .riwayat-setoran-bungkus { min-width: 0; max-width: 100%; box-sizing: border-box; }
+#fSetor > div[style*="grid-template-columns"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+#daftarJenis > *, #daftarJenis input, #daftarJenis select { min-width: 0; max-width: 100%; box-sizing: border-box; }
+@media (max-width: 480px) {
+  body { padding-left: 0; padding-right: 0; }
+  .kartu.lebar { width: 100%; margin: 0; border-radius: 0; }
+  .kanan, .kartu.lebar .kanan { padding-left: 12px; padding-right: 12px; }
+  #fSetor > div[style*="grid-template-columns"] { gap: 8px !important; }
+  .estimasi { gap: 8px; }
+  .estimasi > div { min-width: 0; overflow-wrap: anywhere; }
+  .riwayat-setoran-heading { gap: 8px; }
+  .riwayat-setoran-heading p { overflow-wrap: anywhere; }
+}
