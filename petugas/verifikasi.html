@@ -46,21 +46,22 @@
         <button class="keluar-btn topbar-keluar" onclick="keluarAkun()" type="button">↪ Keluar</button>
       </div>
       <div class="kepala-halaman">
-        <div><h1 id="judulAntrean">Setoran Sampah</h1></div>
+        <div>
+          <h1>Antrean Verifikasi Setoran</h1>
+          <p>Cocokkan timbangan lapangan dengan data klaim setoran sebelum disetujui.</p>
+        </div>
       </div>
 
-      <section class="panel-antrean aktif" id="panelSetoran">
-        <div id="notif" class="notif hidden"></div>
-        <div id="antrean"></div>
-      </section>
-      <section class="panel-antrean" id="panelHadiah" hidden>
-        <div id="notifTukar" class="notif hidden"></div>
-        <div id="antreanPenukaran"></div>
-      </section>
-      <section class="panel-antrean" id="panelDana" hidden>
-        <div id="notifDana" class="notif hidden"></div>
-        <div id="antreanDana"></div>
-      </section>
+      <h2 style="margin-top:26px">Antrean Penukaran Poin</h2>
+      <p>Permintaan hadiah dari warga/ASN akan muncul di sini. Stok dikurangi setelah petugas menyetujui.</p>
+      <div id="notifTukar" class="notif hidden"></div>
+      <div id="antreanPenukaran"></div>
+      <hr style="margin:28px 0;border:0;border-top:1px solid #dce8dd">
+      <div id="notif" class="notif hidden"></div>
+      <h2>Antrean Verifikasi Setoran</h2>
+      <div id="antrean"></div>
+      <hr style="margin:28px 0;border:0;border-top:1px solid #dce8dd">
+      <h2>Antrean Penarikan Dana</h2><p>Periksa permintaan penarikan dan proses sesuai prosedur.</p><div id="notifDana" class="notif hidden"></div><div id="antreanDana"></div>
     </section>
   </main>
 
@@ -88,40 +89,5 @@
   <script src="/js/auth-guard.js"></script>
   <script src="/js/profile.js"></script>
   <script src="/js/verifikasi.js"></script>
-
-<style>
-.panel-antrean[hidden]{display:none!important}
-.panel-antrean{margin-top:18px}
-.menu .menu-antrean.aktif{font-weight:700}
-.titik-antrean[hidden]{display:none!important}
-</style>
-<script>
-document.addEventListener("DOMContentLoaded",()=>{
- const config={
-  setoran:{panel:"panelSetoran",judul:"Setoran Sampah"},
-  hadiah:{panel:"panelHadiah",judul:"Penukaran Hadiah"},
-  dana:{panel:"panelDana",judul:"Penarikan Dana"}
- };
- const links=[...document.querySelectorAll("[data-menu-antrean]")];
- function pilih(kunci,ubahHash=false){
-  const item=config[kunci]||config.setoran;
-  Object.entries(config).forEach(([k,v])=>{
-   const panel=document.getElementById(v.panel);
-   if(panel) panel.hidden=k!==kunci;
-  });
-  links.forEach(a=>a.classList.toggle("aktif",a.dataset.menuAntrean===kunci));
-  const judul=document.getElementById("judulAntrean");
-  if(judul) judul.textContent=item.judul;
-  if(ubahHash) history.replaceState(null,"","#"+item.panel);
- }
- links.forEach(a=>a.addEventListener("click",e=>{
-  e.preventDefault(); pilih(a.dataset.menuAntrean,true);
- }));
- const hash=location.hash;
- const awal=hash==="#panelHadiah"?"hadiah":hash==="#panelDana"?"dana":"setoran";
- pilih(awal);
-});
-</script>
-
 </body>
 </html>

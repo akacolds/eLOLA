@@ -114,16 +114,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       <div><b>${j.k}</b><span class="sub">${j.ket} · ${window.Utils.rupiah(j.harga)}/kg</span></div>
       <div class="langkah">
         <button type="button" class="btn-kurang" data-k="${j.k}">−</button>
-        <input type="number" id="in-${j.k}" min="0" max="99" step="0.5" value="0">
+        <input type="number" id="in-${j.k}" min="0" max="99" step="0.1" value="0">
         <button type="button" class="btn-tambah" data-k="${j.k}">+</button>
       </div>
     `;
     daftarJenis.append(baris);
 
-    baris.querySelector(".btn-kurang").onclick = () => ubah(j.k, -0.5);
-    baris.querySelector(".btn-tambah").onclick = () => ubah(j.k, 0.5);
+    baris.querySelector(".btn-kurang").onclick = () => ubah(j.k, -0.1);
+    baris.querySelector(".btn-tambah").onclick = () => ubah(j.k, 0.1);
     baris.querySelector("input").oninput = (e) => {
-      berat[j.k] = Math.max(0, parseFloat(e.target.value) || 0);
+      berat[j.k] = Math.max(0, Number(String(e.target.value).replace(",", ".")) || 0);
       hitung();
     };
   });
@@ -136,7 +136,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   function ubah(k, d) {
-    berat[k] = Math.max(0, bulat1((berat[k] || 0) + d));
+    berat[k] = Math.max(0, Math.round(((berat[k] || 0) + d) * 10) / 10);
     $("in-" + k).value = berat[k];
     hitung();
   }
