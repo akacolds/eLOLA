@@ -24,6 +24,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     statusEl.textContent = text;
     statusEl.className = `notif ${tipe}`;
   }
+  let bukuHistoris = [];
+  function renderBukuHistoris() {
+    const tbody = $("tabelBukuHistoris");
+    if (!tbody) return;
+    tbody.innerHTML = bukuHistoris.slice().sort((a,b)=>String(a.tanggal).localeCompare(String(b.tanggal))).map(r => {
+      const tgl = r.tanggal ? new Date(`${r.tanggal}T00:00:00`).toLocaleDateString("id-ID") : "-";
+      return `<tr><td>${escapeHTML(tgl)}</td><td>${escapeHTML(val(r.nama_nasabah))}</td><td>${escapeHTML(val(r.alamat))}</td><td>${escapeHTML(val(r.jenis_transaksi))}</td><td style="min-width:300px;white-space:normal">${escapeHTML(val(r.keterangan))}</td><td>${escapeHTML(r.saldo_tercatat_rp == null ? "-" : window.Utils.rupiah(r.saldo_tercatat_rp))}</td></tr>`;
+    }).join("") || '<tr><td colspan="6">Belum ada arsip buku tabungan.</td></tr>';
+  }
+  async function muatBukuHistoris() {
+    const status = $("statusBukuHistoris");
+    if (!status) return;
+    try {
+      bukuHistoris = await ambilTabel("buku_tabungan_historis");
+      renderBukuHistoris();
+      status.textContent = `Menampilkan ${bukuHistoris.length} catatan buku tabungan historis.`;
+      status.className = "notif ok";
+    } catch (e) {
+      bukuHistoris = [];
+      renderBukuHistoris();
+      status.textContent = "Arsip tidak dapat dibaca. Pastikan IMPORT-BUKU-TABUNGAN-NURWATI.sql sudah dijalankan dan izin SELECT tabel buku_tabungan_historis mengizinkan admin. Detail: " + e.message;
+      status.className = "notif err";
+    }
+  }
   function renderLog() {
     const byId = new Map(profiles.map(p => [String(p.id), p]));
     const sah = setoran.filter(s => String(s.status).toLowerCase() === "disetujui");
@@ -309,6 +333,7 @@ Lanjut tandai selesai?`);
   });
   await muatProduk();
   await muatPenarikan();
+  await muatBukuHistoris();
 
   // Refresh ringan agar dashboard mengikuti setoran yang baru diverifikasi tanpa reload manual.
   window.addEventListener("focus", () => location.reload());
