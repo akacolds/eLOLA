@@ -2,7 +2,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const user = await window.AuthGuard(["warga", "asn"]);
   if (!user) return;
 
-  const { $, fmt, bulat1, JENIS, notif, tglJam } = window.Utils;
+  const { $, fmt, bulat1, notif, tglJam } = window.Utils;
+  let JENIS = window.Utils.JENIS;
+  try {
+    const sbKatalog = window.SupabaseDB?.getClient();
+    if (sbKatalog) {
+      const { data, error } = await sbKatalog.from("jenis_produk").select("nama,harga_per_kg,aktif").eq("aktif", true).order("nama");
+      if (!error && Array.isArray(data) && data.length) JENIS = data.map(p => ({ k: p.nama, harga: Number(p.harga_per_kg) || 0, ket: "Harga per kg" }));
+      else if (error) console.warn("Katalog produk memakai data cadangan:", error.message);
+    }
+  } catch (e) { console.warn("Gagal memuat katalog produk:", e.message); }
   const daftarJenis = $("daftarJenis");
   const inputFoto = $("fotoSetoran");
   const inputKamera = $("kameraSetoran");

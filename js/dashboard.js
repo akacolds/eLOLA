@@ -202,6 +202,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     }catch(e){pesanHadiah("Gagal menyimpan: "+e.message,"err");}
   });
 
+  // --- Kelola jenis produk yang diterima ---
+  let jenisProduk = [];
+  const formatRp = n => "Rp " + Math.round(Number(n)||0).toLocaleString("id-ID");
+  function pesanProduk(teks, tipe="info") { const el=$("pesanProdukForm"); el.textContent=teks; el.className="notif "+tipe; }
+  function renderProduk() {
+    $("tabelProduk").innerHTML = jenisProduk.map(p => `<tr><td>${escapeHTML(p.nama)}</td><td>${escapeHTML(formatRp(p.harga_per_kg))}</td><td><span class="chip ${p.aktif ? "ok" : "tolak"}">${p.aktif ? "Aktif" : "Nonaktif"}</span></td><td><button type="button" class="tombol-kecil" data-edit-produk="${escapeHTML(p.id)}">Edit</button> <button type="button" class="tombol-kecil" data-toggle-produk="${escapeHTML(p.id)}">${p.aktif ? "Nonaktifkan" : "Aktifkan"}</button></td></tr>`).join("") || '<tr><td colspan="4">Belum ada jenis produk.</td></tr>';
+    $("statusProduk").textContent = `${jenisProduk.length} jenis produk terdaftar.`; $("statusProduk").className="notif info";
+  }
+  async function muatProduk() {
+    try { jenisProduk = await ambilTabel("jenis_produk"); jenisProduk.sort((a,b)=>String(a.nama).localeCompare(String(b.nama),"id")); renderProduk(); }
+    catch(e) { $("statusProduk").textContent="Katalog produk belum tersedia. Jalankan SETUP-JENIS-PRODUK.sql di Supabase. Detail: "+e.message; $("statusProduk").className="notif err"; }
+  }
+  function bukaFormProduk(p=null) {
+    $("formProduk").reset(); $("produkId").value=p?.id||""; $("produkNama").value=p?.nama||""; $("produkHarga").value=p?.harga_per_kg??0; $("produkAktif").checked=p?.aktif!==false;
+    $("judulModalProduk").textContent=p?"Edit Jenis Produk":"Tambah Jenis Produk"; $("pesanProdukForm").className="notif hidden"; $("modalProduk").classList.remove("hidden");
+  }
+  $("tambahProduk").addEventListener("click",()=>bukaFormProduk());
+  $("muatUlangProduk").addEventListener("click",muatProduk);
+  $("tutupModalProduk").addEventListener("click",()=>$("modalProduk").classList.add("hidden"));
+  $("tabelProduk").addEventListener("click",async ev=>{
+    const edit=ev.target.closest("[data-edit-produk]"),toggle=ev.target.closest("[data-toggle-produk]");
+    if(edit){const p=jenisProduk.find(x=>String(x.id)===edit.dataset.editProduk);if(p)bukaFormProduk(p);}
+    if(toggle){const p=jenisProduk.find(x=>String(x.id)===toggle.dataset.toggleProduk);if(!p)return;try{const {error}=await sb.from("jenis_produk").update({aktif:!p.aktif,updated_at:new Date().toISOString()}).eq("id",p.id);if(error)throw error;await catatAktivitas(p.aktif?"Menonaktifkan jenis produk":"Mengaktifkan jenis produk",p.nama);await muatProduk();}catch(e){$("statusProduk").textContent="Gagal mengubah status: "+e.message;$("statusProduk").className="notif err";}}
+  });
+  $("formProduk").addEventListener("submit",async ev=>{
+    ev.preventDefault();const id=$("produkId").value;const payload={nama:$("produkNama").value.trim(),harga_per_kg:Number($("produkHarga").value),aktif:$("produkAktif").checked,updated_at:new Date().toISOString()};
+    if(!payload.nama||!Number.isInteger(payload.harga_per_kg)||payload.harga_per_kg<0){pesanProduk("Nama dan harga harus valid.","err");return;}
+    try{let q=id?await sb.from("jenis_produk").update(payload).eq("id",id):await sb.from("jenis_produk").insert(payload);if(q.error)throw q.error;await catatAktivitas(id?"Mengedit jenis produk":"Menambah jenis produk",payload.nama);await muatProduk();$("modalProduk").classList.add("hidden");}catch(e){pesanProduk("Gagal menyimpan produk: "+e.message,"err");}
+  });
+  await muatProduk();
+
   // Refresh ringan agar dashboard mengikuti setoran yang baru diverifikasi tanpa reload manual.
   window.addEventListener("focus", () => location.reload());
   setInterval(async () => {
