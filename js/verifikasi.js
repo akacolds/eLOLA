@@ -186,15 +186,48 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function muatBadgeDana() {
     try {
       const sb = window.SupabaseDB.getClient();
-      const { data, error } = await sb.from("penarikan_dana").select("id").eq("status", "menunggu");
+      const { data, error } = await sb.from("penarikan_dana").select("*").eq("status", "menunggu").order("created_at", { ascending: true });
       if (error) throw error;
-      const badge = document.getElementById("badgeDana"); if (badge) badge.hidden = !(data && data.length);
+      const daftar = data || [];
+      const badge = document.getElementById("badgeDana"); if (badge) badge.hidden = daftar.length === 0;
       const area = document.getElementById("antreanDana");
-      if (area) area.innerHTML = data && data.length ? `<p>Ada ${data.length} permintaan penarikan yang menunggu.</p><p>Proses permintaan melalui fungsi penarikan petugas yang sudah disiapkan pada database.</p>` : '<p style="color:var(--abu)">Tidak ada permintaan penarikan dana yang menunggu.</p>';
+      if (!area) return;
+      if (!daftar.length) { area.innerHTML = '<p style="color:var(--abu)">Tidak ada permintaan penarikan dana yang menunggu.</p>'; return; }
+      area.innerHTML = daftar.map(d => `<article class="setoran-kartu" style="margin:12px 0;padding:16px;border:1px solid #dce8dd;border-radius:14px">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><b>Permintaan #${aman(d.id)}</b><span class="badge-status">MENUNGGU</span></div>
+        <small>${aman(tglJam(d.created_at))}</small>
+        <p><b>Pemohon:</b> ${aman(d.user_id || "Pengguna")}</p>
+        <p><b>Nominal:</b> ${aman(window.Utils.rupiah(d.nominal_rp || 0))} (${aman(d.poin_dipotong || 0)} poin)</p>
+        <p><b>Metode:</b> ${aman(d.metode === "cash" ? "Tunai" : (d.provider || "E-wallet"))}</p>
+        <p><b>Nomor tujuan:</b> ${aman(d.nomor_tujuan || "-")}</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="tombol-kecil utama js-dana-setuju">Tandai sudah dicairkan</button><button type="button" class="tombol-kecil bahaya js-dana-tolak">Tolak</button></div>
+      </article>`).join("");
+      area.querySelectorAll("article").forEach((card, i) => {
+        card.querySelector(".js-dana-setuju").addEventListener("click", () => prosesPenarikan(daftar[i], "setujui"));
+        card.querySelector(".js-dana-tolak").addEventListener("click", () => prosesPenarikan(daftar[i], "tolak"));
+      });
     } catch (e) {
       const area = document.getElementById("antreanDana"); if (area) area.innerHTML = `<p class="notif err">Gagal memuat antrean penarikan: ${aman(e.message)}</p>`;
     }
   }
+  async function prosesPenarikan(item, aksi) {
+    const catatan = prompt(`Catatan petugas untuk ${aksi === "setujui" ? "konfirmasi pencairan" : "penolakan"} (wajib):`, "")?.trim();
+    if (!catatan) return;
+    const label = aksi === "setujui" ? "menandai dana sudah dicairkan" : "menolak permintaan";
+    if (!confirm(`Yakin ${label} #${item.id}? Untuk persetujuan, pastikan dana benar-benar sudah dikirim.`)) return;
+    try {
+      const sb = window.SupabaseDB.getClient();
+      const { error } = await sb.rpc("elola_proses_penarikan", { p_id: item.id, p_aksi: aksi, p_catatan: catatan });
+      if (error) throw error;
+      const areaNotif = document.getElementById("notifDana");
+      if (areaNotif) { areaNotif.textContent = `Permintaan #${item.id} berhasil ${aksi === "setujui" ? "ditandai sudah dicairkan" : "ditolak"}.`; areaNotif.className = "notif ok"; }
+      await muatBadgeDana();
+    } catch (e) {
+      const areaNotif = document.getElementById("notifDana");
+      if (areaNotif) { areaNotif.textContent = `Gagal memproses penarikan: ${e.message || e}`; areaNotif.className = "notif err"; }
+    }
+  }
+
   // Awal: tampilkan menu setoran saja.
   document.querySelectorAll("[data-menu-antrean]").forEach(a => { if (a.dataset.menuAntrean !== "setoran") a.click(); });
   document.querySelector('[data-menu-antrean="setoran"]')?.click();
